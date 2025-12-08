@@ -100,8 +100,14 @@ public partial class MainForm : Form {
             _renderer.RequestRender();
         });
 
+        _eventManager.Register<UpdateRequired>(_ => {
+            _uiState.SetStartButtonVisible(false);
+            _renderer.RequestRender();
+        });
+
         _eventManager.Register<UpdatePipelineCompleted>(_ => {
             _uiState.SetProgress(0);
+            _uiState.SetStartButtonVisible(true);
             _renderer.RequestRender();
         });
 

@@ -7,5 +7,6 @@ public record ProgressEvent(int Percent);
 public record ChangelogEvent(string Text);
 public record UpdateStepStarted(string StepName);
 public record UpdateStepCompleted(string StepName);
+public record UpdatePipelineStarted();
 public record UpdatePipelineCompleted();
-
+public record UpdateRequired();

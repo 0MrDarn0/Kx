@@ -44,6 +44,8 @@ public class CheckVersionStep(string rootDirectory) : IUpdateStep {
             Localization.Translate("status.update_required", ctx.CurrentVersion, ctx.Metadata.Version)
         ));
 
+        eventManager.NotifyAll(new UpdateRequired());
+
         await Task.CompletedTask;
     }
 }

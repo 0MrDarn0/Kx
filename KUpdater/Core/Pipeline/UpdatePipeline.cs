@@ -24,6 +24,8 @@ public class UpdatePipeline {
     }
 
     public async Task RunAsync(UpdateContext context, IEventManager eventManager) {
+        eventManager.NotifyAll(new UpdatePipelineStarted());
+
         foreach (var step in _steps) {
             eventManager.NotifyAll(new UpdateStepStarted(step.Name));
             await step.ExecuteAsync(context, eventManager);

@@ -39,9 +39,10 @@ public class MainTheme(Form form, ControlManager controlManager, UIState state, 
     }
 
     protected override void UpdateLastState() {
-        _controlManager.Update<UI.Control.Label>("lb_update_status", l => l.Text = _state.Status);
-        _controlManager.Update<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)_state.Progress);
-        _controlManager.Update<UI.Control.TextBox>("tb_changelog", tb => tb.Text = _state.Changelog);
+        _controlManager.TryUpdate<UI.Control.Label>("lb_update_status", l => l.Text = _state.Status);
+        _controlManager.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)_state.Progress);
+        _controlManager.TryUpdate<UI.Control.TextBox>("tb_changelog", tb => tb.Text = _state.Changelog);
+        _controlManager.TryUpdate<UI.Control.Button>("btn_start", btn => btn.Visible = _state.StartButtonVisible);
     }
 
 
