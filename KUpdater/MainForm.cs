@@ -102,11 +102,12 @@ public partial class MainForm : Form {
 
         _eventManager.Register<UpdateRequired>(_ => {
             _uiState.SetStartButtonVisible(false);
+            _uiState.SetProgressVisible(true);
             _renderer.RequestRender();
         });
 
         _eventManager.Register<UpdatePipelineCompleted>(_ => {
-            _uiState.SetProgress(0);
+            _uiState.SetProgressVisible(false);
             _uiState.SetStartButtonVisible(true);
             _renderer.RequestRender();
         });

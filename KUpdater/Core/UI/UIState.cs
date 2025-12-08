@@ -10,9 +10,11 @@ public class UIState {
     // Update-bezogene States
     public string Status { get; private set; } = "Status: Waiting...";
     public double Progress { get; private set; } = 0.0;
+    public bool ProgressVisible { get; private set; } = false;
     public string Changelog { get; private set; } = "Changelog ...";
     public bool StartButtonVisible { get; private set; } = true;
 
+    public void SetProgressVisible(bool visible) => ProgressVisible = visible;
     public void SetStartButtonVisible(bool visible) => StartButtonVisible = visible;
     public void SetStatus(string text) => Status = text;
     public void SetProgress(double percent) => Progress = Math.Clamp(percent / 100.0, 0.0, 1.0);

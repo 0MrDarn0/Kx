@@ -178,7 +178,9 @@ return {
   -- rechts -27px Abstand, Höhe 5px)
     Controls.Add(
       ProgressBar("pb_update_progress",
-      anchor(27, 30, -27, 5, "bottom_left"))
+      anchor(27, 30, -27, 5, "bottom_left"),
+      Font("Segoe UI", 11, "Regular"),
+      Color.Orange)
     )
 
 

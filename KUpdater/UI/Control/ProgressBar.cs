@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core.Attributes;
+using KUpdater.Extensions;
 using MoonSharp.Interpreter;
 using SkiaSharp;
 
@@ -36,6 +37,7 @@ public class ProgressBar : IControl {
         get => _backgroundColor;
         set { _backgroundColor = value; _bgPaint.Color = value; }
     }
+
     private bool _disposed;
 
     // 🧩 Skia Paints cachen
@@ -43,24 +45,45 @@ public class ProgressBar : IControl {
     private readonly SKPaint _borderPaint;
     private readonly SKPaint _bgPaint;
 
-    public ProgressBar(string id, Func<Rectangle> boundsFunc) {
+    // 🧩 Font/Text Ressourcen
+    private SKTypeface? _typeface;
+    private SKFont? _skFont;
+    private SKPaint? _skTextPaint;
+    private readonly bool _ownsFont;
+
+    public Font Font { get; set; }
+    public Color TextColor { get; set; } = Color.Black;
+
+    public ProgressBar(string id, Func<Rectangle> boundsFunc, Font font, Color textColor, bool ownsFont = true) {
         Id = id;
         _boundsFunc = boundsFunc;
+        Font = font;
+        TextColor = textColor;
+        _ownsFont = ownsFont;
 
         _fillPaint = new SKPaint { Color = _fillColor, IsAntialias = true };
         _borderPaint = new SKPaint { Color = _borderColor, Style = SKPaintStyle.Stroke, StrokeWidth = 2, IsAntialias = true };
         _bgPaint = new SKPaint { Color = _backgroundColor, IsAntialias = true };
+
+        InitTextResources();
     }
 
-    public ProgressBar(string id, Table bounds)
+    public ProgressBar(string id, Table bounds, Font font, Color textColor, bool ownsFont = true)
         : this(id, () => new Rectangle(
             (int)(bounds.Get("x").CastToNumber() ?? 0),
             (int)(bounds.Get("y").CastToNumber() ?? 0),
             (int)(bounds.Get("width").CastToNumber() ?? 0),
             (int)(bounds.Get("height").CastToNumber() ?? 0)
-        )) {
+        ), font, textColor, ownsFont) {
     }
 
+    private void InitTextResources() {
+        SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+        SKFontStyleSlant slant = Font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+        _typeface = SKTypeface.FromFamilyName(Font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
+        _skFont = new SKFont(_typeface, Font.Size * 1.33f);
+        _skTextPaint = new SKPaint { Color = TextColor.ToSKColor(), IsAntialias = true };
+    }
     public void Draw(Graphics g) {
         if (!Visible)
             return;
@@ -86,6 +109,14 @@ public class ProgressBar : IControl {
 
         // Rahmen
         canvas.DrawRect(rect.X, rect.Y, rect.Width, rect.Height, _borderPaint);
+
+        // Prozent-Text mittig
+        string percentText = $"{(int)(Progress * 100)}%";
+        var metrics = _skFont!.Metrics;
+        float x = rect.X + rect.Width / 2;
+        float y = rect.Y + rect.Height / 2 - (metrics.Ascent + metrics.Descent) / 2 - metrics.Descent * 0.3f;
+
+        canvas.DrawText(percentText, x, y, SKTextAlign.Center, _skFont, _skTextPaint!);
     }
 
     public bool OnMouseMove(Point p) => false;
@@ -93,10 +124,9 @@ public class ProgressBar : IControl {
     public bool OnMouseUp(Point p) => false;
     public bool OnMouseWheel(int delta, Point p) => false;
 
-
     public void Dispose() {
         Dispose(true);
-        GC.SuppressFinalize(this); // verhindert unnötigen Finalizer
+        GC.SuppressFinalize(this);
     }
 
     protected virtual void Dispose(bool disposing) {
@@ -104,13 +134,18 @@ public class ProgressBar : IControl {
             return;
 
         if (disposing) {
-            // Managed Ressourcen freigeben
             _fillPaint.Dispose();
             _borderPaint.Dispose();
             _bgPaint.Dispose();
+
+            if (_ownsFont)
+                Font.Dispose();
+
+            _typeface?.Dispose();
+            _skFont?.Dispose();
+            _skTextPaint?.Dispose();
         }
 
-        // Unmanaged Ressourcen hier freigeben
         _disposed = true;
     }
 }
