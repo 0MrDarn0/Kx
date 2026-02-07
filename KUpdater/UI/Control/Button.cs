@@ -16,7 +16,7 @@ public class Button : IControl {
     public string Text { get; set; }
     public Font Font { get; set; }
     public Color Color { get; set; }
-    public string ThemeKey { get; set; }
+    public string SkinKey { get; set; }
     public Action? OnClick { get; set; }
     public bool Visible { get; set; } = true;
     public bool IsHovered { get; private set; }
@@ -28,21 +28,20 @@ public class Button : IControl {
 
     // 🧩 Cache für Bilder
     private readonly Dictionary<string, SKBitmap> _stateBitmaps = [];
-    private readonly Dictionary<string, Image> _stateImages = [];
 
     // 🧩 paint,font and Typeface cachen
     private SKTypeface? _typeface;
     private SKFont? _skFont;
     private SKPaint? _skPaint;
 
-    public Button(string id, Func<Rectangle> boundsFunc, string text, Font font, Color color, string themeKey, Action? onClick, IResourceProvider? resourceProvider = null, bool ownsFont = true) {
+    public Button(string id, Func<Rectangle> boundsFunc, string text, Font font, Color color, string skinKey, Action? onClick, IResourceProvider? resourceProvider = null, bool ownsFont = true) {
         Id = id;
         _boundsFunc = boundsFunc;
         Text = text;
         Font = font;
         _ownsFont = ownsFont;
         Color = color;
-        ThemeKey = themeKey;
+        SkinKey = skinKey;
         OnClick = onClick;
         _resourceProvider = resourceProvider;
 
@@ -61,7 +60,7 @@ public class Button : IControl {
 
 
     private void InitResources() {
-        _resourceProvider.LoadControlStateResources(ThemeKey, Id, _stateImages, _stateBitmaps);
+        _resourceProvider.LoadControlStateResources(SkinKey, Id, _stateBitmaps);
 
         SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
         SKFontStyleSlant slant = Font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
@@ -125,8 +124,6 @@ public class Button : IControl {
             if (_ownsFont)
                 Font.Dispose();
 
-            foreach (var img in _stateImages.Values)
-                img.Dispose();
             foreach (var bmp in _stateBitmaps.Values)
                 bmp.Dispose();
 

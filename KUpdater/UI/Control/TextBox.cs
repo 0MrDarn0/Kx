@@ -12,7 +12,6 @@ public class TextBox : IControl {
     public string Id { get; }
     private readonly Func<Rectangle> _boundsFunc;
     public Rectangle Bounds => _boundsFunc();
-
     public string Text { get; set; }
     public Font Font { get; }
     public Color ForeColor { get; set; }

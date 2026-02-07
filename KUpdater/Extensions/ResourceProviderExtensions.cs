@@ -24,11 +24,10 @@ public static class ResourceProviderExtensions {
     /// Provider-first, dann Filesystem-Fallback (ResFolder). IDs im Format "theme:group:file.png" werden
     /// für den Filesystem-Fallback in Pfadsegmente aufgeteilt.
     /// </summary>
-    public static void LoadControlStateResources(this IResourceProvider? provider, string themeKey, string id,
-        Dictionary<string, Image> stateImages, Dictionary<string, SKBitmap> stateBitmaps) {
+    public static void LoadControlStateResources(this IResourceProvider? provider, string skinKey, string id, Dictionary<string, SKBitmap> stateBitmaps) {
 
         foreach (var state in States) {
-            var resourceId = MakeControlStateId(themeKey, id, state);
+            var resourceId = MakeControlStateId(skinKey, id, state);
 
             // Provider versuchen (wenn vorhanden)
             if (provider != null) {
@@ -36,17 +35,6 @@ public static class ResourceProviderExtensions {
                     var sk = provider.TryGetSkiaBitmap(resourceId);
                     if (sk != null && !stateBitmaps.ContainsKey(state))
                         stateBitmaps[state] = sk;
-
-                    using var stream = provider.OpenStream(resourceId);
-                    if (stream != null && !stateImages.ContainsKey(state)) {
-                        try {
-                            using var img = Image.FromStream(stream);
-                            stateImages[state] = new Bitmap(img); // klonen
-                        }
-                        catch {
-                            // ignore image load failures from provider stream
-                        }
-                    }
                 }
                 catch {
                     // provider errors ignored -> fallback folgt
@@ -54,7 +42,7 @@ public static class ResourceProviderExtensions {
             }
 
             // Filesystem-Fallback: konvertiere "skin:group:..." zu relativen Pfadsegmenten
-            if (!stateBitmaps.ContainsKey(state) || !stateImages.ContainsKey(state)) {
+            if (!stateBitmaps.ContainsKey(state)) {
                 var rel = resourceId
                     .Replace(':', Path.DirectorySeparatorChar)
                     .Replace('/', Path.DirectorySeparatorChar)
@@ -62,16 +50,6 @@ public static class ResourceProviderExtensions {
                 var path = Path.Combine(Paths.ResFolder, rel);
 
                 if (File.Exists(path)) {
-                    if (!stateImages.ContainsKey(state)) {
-                        try {
-                            using var img = Image.FromFile(path);
-                            stateImages[state] = new Bitmap(img);
-                        }
-                        catch {
-                            // ignore
-                        }
-                    }
-
                     if (!stateBitmaps.ContainsKey(state)) {
                         try {
                             var sk = SKBitmap.Decode(path);
