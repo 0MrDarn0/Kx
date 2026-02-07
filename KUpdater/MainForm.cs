@@ -41,14 +41,15 @@ public partial class MainForm : Form {
         };
 
         _config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
-
-        _eventManager = new EventManager();
-        _runner = new UpdaterPipelineRunner(_eventManager, new HttpUpdateSource(), _config.Url, AppDomain.CurrentDomain.BaseDirectory);
-
         _resourceProvider = new FileResourceProvider(Paths.ResFolder);
         _controlManager = new();
         _theme = new(this, _controlManager, _uiState, _config.Language, _resourceProvider);
+        _eventManager = new EventManager(_theme);
         _renderer = new(this, _controlManager, _theme);
+        _runner = new UpdaterPipelineRunner(_eventManager, new HttpUpdateSource(), _config.Url, AppDomain.CurrentDomain.BaseDirectory);
+
+        _theme.ExposeToLua("Renderer", _renderer);
+        _theme.ExposeToLua("EventManager", _eventManager);
 
         InitializeComponent();
         FormBorderStyle = FormBorderStyle.None;

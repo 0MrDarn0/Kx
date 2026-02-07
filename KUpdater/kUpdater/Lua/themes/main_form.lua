@@ -96,6 +96,18 @@ end
 local engine = require("actions.engine")
 local http = require("actions.http")
 
+  -- Progressbar (27px vom linken Rand, 30px vom unteren Rand,
+  -- rechts -27px Abstand, Höhe 5px)
+progressBar = ProgressBar("pb_update_progress", anchor(27, 30, -27, 5, "bottom_left"), Font("Segoe UI", 11, "Regular"), Color.Orange)
+startBtn = Button("btn_start",
+      bounds(-150, -70, 97, 22),
+      T("button.start"),
+      Font("Segoe UI", 11, "Regular"),
+      Color.Orange,
+      "Default",
+      function()
+        engine.start_game()
+      end)
 
 -- Rückgabe der gesamten Fensterdefinition
 return {
@@ -137,17 +149,7 @@ return {
       end)
     )
 
-    Controls.Add(
-      Button("btn_start",
-      bounds(-150, -70, 97, 22),
-      T("button.start"),
-      Font("Segoe UI", 11, "Regular"),
-      Color.Orange,
-      "Default",
-      function()
-        engine.start_game()
-      end)
-    )
+    Controls.Add(startBtn)
 
     Controls.Add(
       Button("btn_settings",
@@ -174,14 +176,8 @@ return {
     )
 
 
-  -- Progressbar (27px vom linken Rand, 30px vom unteren Rand,
-  -- rechts -27px Abstand, Höhe 5px)
-    Controls.Add(
-      ProgressBar("pb_update_progress",
-      anchor(27, 30, -27, 5, "bottom_left"),
-      Font("Segoe UI", 11, "Regular"),
-      Color.Orange)
-    )
+
+    Controls.Add(progressBar)
 
 
     local changelogBox = TextBox("tb_changelog", 

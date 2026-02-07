@@ -1,6 +1,8 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Collections.Concurrent;
+using KUpdater.Scripting.Theme;
+using MoonSharp.Interpreter;
 
 namespace KUpdater.Core.Event;
 
@@ -15,6 +17,23 @@ public class EventManager : IEventManager {
     // Lock-Objekt für thread-sichere Zugriffe auf die Listener-Listen
     private readonly object _lock = new();
 
+    private readonly ITheme? _theme;
+    private readonly Dictionary<string, Type> _eventTypes = [];
+
+    // Felder für dynamische Bindung
+    private DynValue? _currentLuaFunc;
+
+    public EventManager(ITheme? theme = null) {
+        _theme = theme;
+
+        // Mapping EventName -> Typ
+        _eventTypes["StatusEvent"] = typeof(StatusEvent);
+        _eventTypes["ProgressEvent"] = typeof(ProgressEvent);
+        _eventTypes["UpdateRequired"] = typeof(UpdateRequired);
+        _eventTypes["UpdatePipelineCompleted"] = typeof(UpdatePipelineCompleted);
+        _eventTypes["ChangelogEvent"] = typeof(ChangelogEvent);
+    }
+
     /// <summary>
     /// Registriert einen synchronen Listener für Nachrichten vom Typ T.
     /// </summary>
@@ -23,6 +42,42 @@ public class EventManager : IEventManager {
             var list = _listeners.GetOrAdd(typeof(T), _ => []);
             list.Add(listener);
         }
+    }
+
+    public void Register(string eventName, DynValue luaFunc) {
+        if (_theme == null)
+            throw new InvalidOperationException("Lua runtime not set");
+
+        if (!_eventTypes.TryGetValue(eventName, out var type))
+            throw new ArgumentException($"Unknown event type {eventName}");
+
+        // Delegate bauen: Action<T>
+        var actionType = typeof(Action<>).MakeGenericType(type);
+
+        // Lambda, das Lua aufruft
+        var del = Delegate.CreateDelegate(
+            actionType,
+            typeof(EventManager).GetMethod(nameof(InvokeLuaForEvent), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+        );
+
+        // Delegate dynamisch mit luaFunc und _lua binden
+        var boundDel = Delegate.CreateDelegate(
+            actionType,
+            this,
+            typeof(EventManager).GetMethod(nameof(InvokeLuaForEvent), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+        );
+
+        // Aufruf
+        var method = typeof(EventManager).GetMethod(nameof(Register), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        var genericMethod = method!.MakeGenericMethod(type);
+        genericMethod.Invoke(this, new object[] { boundDel });
+    }
+
+    // Hilfsmethode für dynamischen Lua-Callback
+    private void InvokeLuaForEvent(object ev) {
+        if (_theme == null || _currentLuaFunc == null)
+            throw new InvalidOperationException("Lua runtime or function not set");
+        (_theme as MainTheme)?.SafeInvokeDyn(_currentLuaFunc, ev);
     }
 
     /// <summary>

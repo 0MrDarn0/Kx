@@ -29,6 +29,7 @@ public class MainTheme(Form form, ControlManager controlManager, UIState state, 
         SetGlobal(LuaKeys.Actions.ApplicationExit, (Action)(() => Application.Exit()));
 
         ExposeToLua("Controls", _controlManager);
+        ExposeToLua("UIState", _state);
         ExposeToLua<Font>();
         ExposeToLua<Color>();
         ExposeMarkedTypes();
