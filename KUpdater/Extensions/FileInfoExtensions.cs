@@ -12,7 +12,7 @@ public static class FileInfoExtensions {
         using var sha = SHA256.Create();
         using var stream = file.OpenRead();
         var hash = sha.ComputeHash(stream);
-        return BitConverter.ToString(hash).Replace("-", "").ToUpperInvariant();
+        return Convert.ToHexString(hash).ToUpperInvariant();
     }
 
     /// <summary>

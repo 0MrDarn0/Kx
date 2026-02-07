@@ -81,7 +81,7 @@ public class EventManager : IEventManager {
     private void InvokeLuaForEvent(object ev) {
         if (_skin == null || _currentLuaFunc == null)
             throw new InvalidOperationException("Lua runtime or function not set");
-        (_skin as MainWindowSkin)?.SafeInvokeDyn(_currentLuaFunc, ev);
+        (_skin as SkinBase)?.SafeInvokeDyn(_currentLuaFunc, ev);
     }
 
     /// <summary>

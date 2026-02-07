@@ -6,17 +6,17 @@ using SkiaSharp;
 namespace KUpdater.Extensions;
 
 public static class ResourceProviderExtensions {
-    private static readonly string[] States = new[] { "normal", "hover", "click" };
+    private static readonly string[] States = ["normal", "hover", "click"];
 
     /// <summary>
     /// Erzeugt eine standardisierte Resource-ID für Control-States:
     /// Beispiel: MakeControlStateId("Default:Buttons", "btn_exit", "normal") -> "Default:Buttons:btn_exit_normal.png"
-    /// (Konvention: theme:group:...:control_state.png)
+    /// (Konvention: skin:group:...:control_state.png)
     /// </summary>
-    public static string MakeControlStateId(string themeKey, string controlId, string state, string ext = ".png") {
-        if (string.IsNullOrWhiteSpace(themeKey))
+    public static string MakeControlStateId(string skinId, string controlId, string state, string ext = ".png") {
+        if (string.IsNullOrWhiteSpace(skinId))
             return $"{controlId}_{state}{ext}";
-        return $"{themeKey}:{controlId}_{state}{ext}";
+        return $"{skinId}:{controlId}_{state}{ext}";
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public static class ResourceProviderExtensions {
                 }
             }
 
-            // Filesystem-Fallback: konvertiere "theme:group:..." zu relativen Pfadsegmenten
+            // Filesystem-Fallback: konvertiere "skin:group:..." zu relativen Pfadsegmenten
             if (!stateBitmaps.ContainsKey(state) || !stateImages.ContainsKey(state)) {
                 var rel = resourceId
                     .Replace(':', Path.DirectorySeparatorChar)
