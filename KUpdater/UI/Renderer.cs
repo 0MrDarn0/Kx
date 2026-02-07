@@ -296,7 +296,7 @@ public class Renderer : IDisposable {
 
     // Zeichnet ein rotes X über schwarzem Hintergrund in das gegebene Rect
     // Zusätzlich zentriert das Wort "MISSING" entlang der längeren Kante (horizontal zur längeren Kante)
-    private void DrawMissingImageError(SKCanvas canvas, SKRect rect) {
+    private static void DrawMissingImageError(SKCanvas canvas, SKRect rect) {
         using var bgPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = SKColors.Black, IsAntialias = true };
         using var borderPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Magenta, StrokeWidth = 2, IsAntialias = true };
         using var xPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Black, IsAntialias = true, StrokeCap = SKStrokeCap.Square };

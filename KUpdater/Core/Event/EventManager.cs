@@ -15,7 +15,7 @@ public class EventManager : IEventManager {
     private readonly ConcurrentDictionary<Type, List<Delegate>> _listeners = new();
 
     // Lock-Objekt für thread-sichere Zugriffe auf die Listener-Listen
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
 
     private readonly ITheme? _theme;
     private readonly Dictionary<string, Type> _eventTypes = [];
@@ -45,32 +45,36 @@ public class EventManager : IEventManager {
     }
 
     public void Register(string eventName, DynValue luaFunc) {
-        if (_theme == null)
-            throw new InvalidOperationException("Lua runtime not set");
+        lock (_lock) {
+            if (_theme == null)
+                throw new InvalidOperationException("Lua runtime not set");
 
-        if (!_eventTypes.TryGetValue(eventName, out var type))
-            throw new ArgumentException($"Unknown event type {eventName}");
+            if (!_eventTypes.TryGetValue(eventName, out var type))
+                throw new ArgumentException($"Unknown event type {eventName}");
 
-        // Delegate bauen: Action<T>
-        var actionType = typeof(Action<>).MakeGenericType(type);
+            _currentLuaFunc = luaFunc;
 
-        // Lambda, das Lua aufruft
-        var del = Delegate.CreateDelegate(
+            // Delegate bauen: Action<T>
+            var actionType = typeof(Action<>).MakeGenericType(type);
+
+            // Lambda, das Lua aufruft
+            var del = Delegate.CreateDelegate(
             actionType,
             typeof(EventManager).GetMethod(nameof(InvokeLuaForEvent), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
         );
 
-        // Delegate dynamisch mit luaFunc und _lua binden
-        var boundDel = Delegate.CreateDelegate(
+            // Delegate dynamisch mit luaFunc und _lua binden
+            var boundDel = Delegate.CreateDelegate(
             actionType,
             this,
             typeof(EventManager).GetMethod(nameof(InvokeLuaForEvent), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
         );
 
-        // Aufruf
-        var method = typeof(EventManager).GetMethod(nameof(Register), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-        var genericMethod = method!.MakeGenericMethod(type);
-        genericMethod.Invoke(this, new object[] { boundDel });
+            // Aufruf
+            var method = typeof(EventManager).GetMethod(nameof(Register), System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var genericMethod = method!.MakeGenericMethod(type);
+            genericMethod.Invoke(this, [boundDel]);
+        }
     }
 
     // Hilfsmethode für dynamischen Lua-Callback
