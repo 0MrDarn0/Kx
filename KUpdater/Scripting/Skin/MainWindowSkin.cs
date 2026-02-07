@@ -9,10 +9,10 @@ using MoonSharp.Interpreter;
 
 namespace KUpdater.Scripting.Skin;
 
-public class MainWindowSkin(Window window, ControlManager controlManager, UIState state, string lang, IResourceProvider resourceProvider)
-    : SkinBase("skin_loader.lua", window, controlManager, state, lang, resourceProvider) {
+public class MainWindowSkin(Window window, ControlManager controlManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
+    : SkinBase("skin_loader.lua", window, controlManager, state, lang, skinName, resourceProvider) {
 
-    protected override string GetName() => "main_window";
+    protected override string GetName() => "main_window_skin";
 
     protected override void RegisterGlobals() {
         base.RegisterGlobals();

@@ -18,7 +18,7 @@ public abstract class SkinBase : Lua, ISkin {
     private SkinBackground? _cachedBackground;
     private SkinLayout? _cachedLayout;
 
-    protected SkinBase(string skinScript, Window targetwindow, ControlManager controlManager, UIState state, string lang, IResourceProvider resourceProvider)
+    protected SkinBase(string skinScript, Window targetwindow, ControlManager controlManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
         : base(skinScript) {
         _targetWindow = targetwindow;
         _controlManager = controlManager;
@@ -26,7 +26,7 @@ public abstract class SkinBase : Lua, ISkin {
         _resourceProvider = resourceProvider;
         RegisterGlobals();
         LoadLanguage(lang);
-        LoadSkin(GetName());
+        LoadSkin(skinName);
     }
 
     protected SKBitmap? GetSkiaBitmapFromProvider(string? id) {

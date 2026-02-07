@@ -15,7 +15,7 @@ namespace KUpdater;
 public partial class MainWindow : Window {
     public static MainWindow? Instance { get; private set; }
 
-    private readonly MainWindowSkin _theme;
+    private readonly MainWindowSkin _mainWindowSkin;
     private readonly Renderer _renderer;
     private readonly IEventManager _eventManager;
     private readonly UpdaterPipelineRunner _runner;
@@ -35,13 +35,13 @@ public partial class MainWindow : Window {
         _config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
         _resourceProvider = new FileResourceProvider(Paths.ResFolder);
         _controlManager = new();
-        _theme = new(this, _controlManager, _uiState, _config.Language, _resourceProvider);
-        _eventManager = new EventManager(_theme);
-        _renderer = new(this, _controlManager, _theme);
+        _mainWindowSkin = new(this, _controlManager, _uiState, _config.Language, _config.MainWindowSkin, _resourceProvider);
+        _eventManager = new EventManager(_mainWindowSkin);
+        _renderer = new(this, _controlManager, _mainWindowSkin);
         _runner = new UpdaterPipelineRunner(_eventManager, new HttpUpdateSource(), _config.Url, AppDomain.CurrentDomain.BaseDirectory);
 
-        _theme.ExposeToLua("Renderer", _renderer);
-        _theme.ExposeToLua("EventManager", _eventManager);
+        _mainWindowSkin.ExposeToLua("Renderer", _renderer);
+        _mainWindowSkin.ExposeToLua("EventManager", _eventManager);
 
         InitializeComponent();
 
@@ -68,7 +68,7 @@ public partial class MainWindow : Window {
     protected override void OnFormClosed(FormClosedEventArgs e) {
         _trayIcon?.Dispose();
         _renderer.Dispose();
-        _theme.Dispose();
+        _mainWindowSkin.Dispose();
         _controlManager.Dispose();
         _resourceProvider?.Dispose();
         Instance = null;

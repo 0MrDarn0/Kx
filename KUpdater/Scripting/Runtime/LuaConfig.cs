@@ -9,6 +9,7 @@ namespace KUpdater.Scripting.Runtime;
 public class BaseConfig {
     public string Url { get; set; } = string.Empty;
     public string Language { get; set; } = "en";
+    public string MainWindowSkin { get; set; } = "kalonline";
     //public NetworkConfig Network { get; set; } = new();
 }
 
