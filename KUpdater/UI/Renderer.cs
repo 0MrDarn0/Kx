@@ -23,6 +23,9 @@ public class Renderer : IDisposable {
     private bool _disposed;
     private readonly SKPaint _fillPaint = new() { IsAntialias = true };
 
+    // Sammlung der fehlenden Bereiche, die als Overlay (topmost) gezeichnet werden sollen
+    private readonly List<SKRect> _missingRects = [];
+
     public bool IsRendering { get; private set; }
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
@@ -113,6 +116,14 @@ public class Renderer : IDisposable {
         var canvas = _renderSurface!.Canvas;
         DrawBackground(canvas, new Size(width, height));
         _controlManager.Draw(canvas);
+
+        // Fehlende Platzhalter zuletzt zeichnen -> topmost
+        if (_missingRects.Count > 0) {
+            foreach (var rect in _missingRects) {
+                DrawMissingImageError(canvas, rect);
+            }
+            _missingRects.Clear();
+        }
 
         var bmpData = _backBuffer!.LockBits(
             new Rectangle(0, 0, width, height),
@@ -283,57 +294,159 @@ public class Renderer : IDisposable {
         }
     }
 
+    // Zeichnet ein rotes X über schwarzem Hintergrund in das gegebene Rect
+    // Zusätzlich zentriert das Wort "MISSING" entlang der längeren Kante (horizontal zur längeren Kante)
+    private void DrawMissingImageError(SKCanvas canvas, SKRect rect) {
+        using var bgPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = SKColors.Black, IsAntialias = true };
+        using var borderPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Magenta, StrokeWidth = 2, IsAntialias = true };
+        using var xPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Black, IsAntialias = true, StrokeCap = SKStrokeCap.Square };
+        using var textPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = SKColors.Magenta, IsAntialias = true };
+
+        float stroke = Math.Max(4f, Math.Min(rect.Width, rect.Height) / 8f);
+        xPaint.StrokeWidth = stroke;
+
+        canvas.DrawRect(rect, bgPaint);
+        canvas.DrawRect(rect, borderPaint);
+
+        //float inset = stroke / 2f + 1f;
+
+        //var p1 = new SKPoint(rect.Left + inset, rect.Top + inset);
+        //var p2 = new SKPoint(rect.Right - inset, rect.Bottom - inset);
+        //var p3 = new SKPoint(rect.Left + inset, rect.Bottom - inset);
+        //var p4 = new SKPoint(rect.Right - inset, rect.Top + inset);
+
+        //canvas.DrawLine(p1, p2, xPaint);
+        //canvas.DrawLine(p3, p4, xPaint);
+
+        // Text "MISSING" entlang der längeren Kante (immer horizontal zur längeren Kante)
+        float longSide = Math.Max(rect.Width, rect.Height);
+        float fontSize = Math.Max(10f, longSide / 20f);
+        using var font = new SKFont(SKTypeface.Default, fontSize);
+        var metrics = font.Metrics;
+
+        // Zeichnen zentriert; bei Bedarf rotieren, damit Text horizontal zur längeren Kante liegt
+        float cx = rect.MidX;
+        float cy = rect.MidY;
+        bool rotate = rect.Height > rect.Width; // wenn Hochformat, rotiere -90deg damit Text "horizontal" zur längeren Kante erscheint
+
+        canvas.Save();
+        canvas.Translate(cx, cy);
+        if (rotate) {
+            canvas.RotateDegrees(-90);
+        }
+
+        // Nach Translate ist Zentrum (0,0). Berechne baseline y so dass Text vertikal zentriert bleibt.
+        float baselineY = -(metrics.Descent + metrics.Ascent) / 2f;
+
+        canvas.DrawText("MISSING IMAGE", 0, baselineY, SKTextAlign.Center, font, textPaint);
+        canvas.Restore();
+    }
+
     public void DrawBackground(SKCanvas canvas, Size size) {
         var bg = _theme.GetBackground();
         var layout = _theme.GetLayout();
+
+        if (bg == null || layout == null)
+            return;
+
         int width = size.Width;
         int height = size.Height;
 
+        _missingRects.Clear();
+
         canvas.Clear(SKColors.Transparent);
 
+        // Ecken
         if (bg.TopLeft != null)
             canvas.DrawBitmap(bg.TopLeft, new SKPoint(0, 0));
+        else
+            _missingRects.Add(new SKRect(0, 0, Math.Min(64, width / 6f), Math.Min(64, height / 6f)));
+
         if (bg.TopRight != null)
             canvas.DrawBitmap(bg.TopRight, new SKPoint(width - bg.TopRight.Width, 0));
+        else
+            _missingRects.Add(new SKRect(width - Math.Min(64, width / 6f), 0, width, Math.Min(64, height / 6f)));
+
         if (bg.BottomLeft != null)
             canvas.DrawBitmap(bg.BottomLeft, new SKPoint(0, height - bg.BottomLeft.Height));
+        else
+            _missingRects.Add(new SKRect(0, height - Math.Min(64, height / 6f), Math.Min(64, width / 6f), height));
+
         if (bg.BottomRight != null)
             canvas.DrawBitmap(bg.BottomRight, new SKPoint(width - bg.BottomRight.Width, height - bg.BottomRight.Height));
+        else
+            _missingRects.Add(new SKRect(width - Math.Min(64, width / 6f), height - Math.Min(64, height / 6f), width, height));
 
-        if (bg.TopCenter != null && bg.TopLeft != null && bg.TopRight != null) {
-            float left = bg.TopLeft.Width;
-            float right = left + (width - bg.TopLeft.Width - bg.TopRight.Width + layout.TopWidthOffset);
+        // Top Center
+        if (bg.TopCenter != null) {
+            float left = (bg.TopLeft?.Width) ?? 0f;
+            float right = left + (width - ((bg.TopLeft?.Width) ?? 0f) - ((bg.TopRight?.Width) ?? 0f) + layout.TopWidthOffset);
             float bottom = bg.TopCenter.Height;
-            canvas.DrawBitmap(bg.TopCenter, new SKRect(left, 0, right, bottom));
+            if (right > left)
+                canvas.DrawBitmap(bg.TopCenter, new SKRect(left, 0, right, bottom));
+        } else {
+            float left = (bg.TopLeft?.Width) ?? 0f;
+            float right = left + (width - ((bg.TopLeft?.Width) ?? 0f) - ((bg.TopRight?.Width) ?? 0f) + layout.TopWidthOffset);
+            if (right > left)
+                _missingRects.Add(new SKRect(left, 0, right, Math.Min(64, height / 6f)));
         }
 
-        if (bg.BottomCenter != null && bg.BottomLeft != null && bg.BottomRight != null) {
-            float left = bg.BottomLeft.Width;
+        // Bottom Center
+        if (bg.BottomCenter != null) {
+            float left = (bg.BottomLeft?.Width) ?? 0f;
             float top = height - bg.BottomCenter.Height;
-            float right = left + (width - bg.BottomLeft.Width - bg.BottomRight.Width + layout.BottomWidthOffset);
+            float right = left + (width - ((bg.BottomLeft?.Width) ?? 0f) - ((bg.BottomRight?.Width) ?? 0f) + layout.BottomWidthOffset);
             float bottom = top + bg.BottomCenter.Height;
-            canvas.DrawBitmap(bg.BottomCenter, new SKRect(left, top, right, bottom));
+            if (right > left)
+                canvas.DrawBitmap(bg.BottomCenter, new SKRect(left, top, right, bottom));
+        } else {
+            float left = (bg.BottomLeft?.Width) ?? 0f;
+            float top = Math.Max(0, height - Math.Min(64, height / 6f));
+            float right = left + (width - ((bg.BottomLeft?.Width) ?? 0f) - ((bg.BottomRight?.Width) ?? 0f) + layout.BottomWidthOffset);
+            if (right > left)
+                _missingRects.Add(new SKRect(left, top, right, height));
         }
 
-        if (bg.LeftCenter != null && bg.TopLeft != null && bg.BottomLeft != null) {
-            float top = bg.TopLeft.Height;
-            float bottom = top + (height - bg.TopLeft.Height - bg.BottomLeft.Height + layout.LeftHeightOffset);
-            canvas.DrawBitmap(bg.LeftCenter, new SKRect(0, top, bg.LeftCenter.Width, bottom));
+        // Left Center
+        if (bg.LeftCenter != null) {
+            float top = (bg.TopLeft?.Height) ?? 0f;
+            float bottom = top + (height - ((bg.TopLeft?.Height) ?? 0f) - ((bg.BottomLeft?.Height) ?? 0f) + layout.LeftHeightOffset);
+            if (bottom > top)
+                canvas.DrawBitmap(bg.LeftCenter, new SKRect(0, top, bg.LeftCenter.Width, bottom));
+        } else {
+            float top = (bg.TopLeft?.Height) ?? 0f;
+            float bottom = top + (height - ((bg.TopLeft?.Height) ?? 0f) - ((bg.BottomLeft?.Height) ?? 0f) + layout.LeftHeightOffset);
+            if (bottom > top)
+                _missingRects.Add(new SKRect(0, top, Math.Min(64, width / 6f), bottom));
         }
 
-        if (bg.RightCenter != null && bg.TopRight != null && bg.BottomRight != null) {
+        // Right Center
+        if (bg.RightCenter != null) {
             float left = width - bg.RightCenter.Width;
-            float top = bg.TopRight.Height;
-            float bottom = top + (height - bg.TopRight.Height - bg.BottomRight.Height + layout.RightHeightOffset);
-            canvas.DrawBitmap(bg.RightCenter, new SKRect(left, top, left + bg.RightCenter.Width, bottom));
+            float top = (bg.TopRight?.Height) ?? 0f;
+            float bottom = top + (height - ((bg.TopRight?.Height) ?? 0f) - ((bg.BottomRight?.Height) ?? 0f) + layout.RightHeightOffset);
+            if (bottom > top)
+                canvas.DrawBitmap(bg.RightCenter, new SKRect(left, top, left + bg.RightCenter.Width, bottom));
+        } else {
+            float left = width - Math.Min(64, width / 6f);
+            float top = (bg.TopRight?.Height) ?? 0f;
+            float bottom = top + (height - ((bg.TopRight?.Height) ?? 0f) - ((bg.BottomRight?.Height) ?? 0f) + layout.RightHeightOffset);
+            if (bottom > top)
+                _missingRects.Add(new SKRect(left, top, width, bottom));
         }
 
+        // Fill-Bereich: sichere Berechnung mit Fallbacks und Validierung
         _fillPaint.Color = bg.FillColor.ToSKColor();
-        float fillLeft = bg.LeftCenter!.Width - layout.FillPosOffset;
-        float fillTop = bg.TopCenter!.Height - layout.FillPosOffset;
-        float fillRight = fillLeft + (width - bg.LeftCenter.Width * 2 + layout.FillWidthOffset);
-        float fillBottom = fillTop + (height - bg.TopCenter.Height - bg.BottomCenter!.Height + layout.FillHeightOffset);
-        canvas.DrawRect(new SKRect(fillLeft, fillTop, fillRight, fillBottom), _fillPaint);
+        float leftWidth = (bg.LeftCenter?.Width) ?? 0f;
+        float topHeight = (bg.TopCenter?.Height) ?? 0f;
+        float bottomHeight = (bg.BottomCenter?.Height) ?? 0f;
+        float fillLeft = Math.Max(0f, leftWidth - layout.FillPosOffset);
+        float fillTop = Math.Max(0f, topHeight - layout.FillPosOffset);
+        float fillRight = fillLeft + Math.Max(0f, width - leftWidth * 2 + layout.FillWidthOffset);
+        float fillBottom = fillTop + Math.Max(0f, height - topHeight - bottomHeight + layout.FillHeightOffset);
+        if (fillRight > fillLeft && fillBottom > fillTop) {
+            canvas.DrawRect(new SKRect(fillLeft, fillTop, fillRight, fillBottom), _fillPaint);
+        }
     }
 
     public void Dispose() {

@@ -24,6 +24,8 @@ public class Button : IControl {
     private readonly bool _ownsFont;
     private bool _disposed;
 
+    private readonly IResourceProvider? _resourceProvider;
+
     // 🧩 Cache für Bilder
     private readonly Dictionary<string, SKBitmap> _stateBitmaps = [];
     private readonly Dictionary<string, Image> _stateImages = [];
@@ -33,7 +35,7 @@ public class Button : IControl {
     private SKFont? _skFont;
     private SKPaint? _skPaint;
 
-    public Button(string id, Func<Rectangle> boundsFunc, string text, Font font, Color color, string themeKey, Action? onClick, bool ownsFont = true) {
+    public Button(string id, Func<Rectangle> boundsFunc, string text, Font font, Color color, string themeKey, Action? onClick, IResourceProvider? resourceProvider = null, bool ownsFont = true) {
         Id = id;
         _boundsFunc = boundsFunc;
         Text = text;
@@ -42,29 +44,24 @@ public class Button : IControl {
         Color = color;
         ThemeKey = themeKey;
         OnClick = onClick;
+        _resourceProvider = resourceProvider;
 
         InitResources();
     }
 
     public Button(string id, Table bounds, string text, Font font, Color color,
-                    string themeKey, Action? onClick, bool ownsFont = true)
+                    string themeKey, Action? onClick, IResourceProvider? resourceProvider = null, bool ownsFont = true)
         : this(id, () => new Rectangle(
             (int)(bounds.Get("x").CastToNumber() ?? 0),
             (int)(bounds.Get("y").CastToNumber() ?? 0),
             (int)(bounds.Get("width").CastToNumber() ?? 0),
             (int)(bounds.Get("height").CastToNumber() ?? 0)
-        ), text, font, color, themeKey, onClick, ownsFont) {
+        ), text, font, color, themeKey, onClick, resourceProvider, ownsFont) {
     }
 
 
     private void InitResources() {
-        foreach (var state in new[] { "normal", "hover", "click" }) {
-            string path = Paths.Resource($"{ThemeKey}/{Id}_{state}.png");
-            if (File.Exists(path)) {
-                _stateImages[state] = Image.FromFile(path);
-                _stateBitmaps[state] = SKBitmap.Decode(path);
-            }
-        }
+        _resourceProvider.LoadControlStateResources(ThemeKey, Id, _stateImages, _stateBitmaps);
 
         SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
         SKFontStyleSlant slant = Font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;

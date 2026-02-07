@@ -12,16 +12,8 @@ using KUpdater.Utility;
 
 namespace KUpdater;
 
-public partial class MainForm : Form {
-    public static MainForm? Instance { get; private set; }
-
-    private bool _isDragging = false;
-    private Point _dragStart;
-
-    private bool _isResizing = false;
-    private Point _resizeStartCursor;
-    private Size _resizeStartSize;
-    private readonly int _resizeHitSize = 40;
+public partial class MainWindow : Window {
+    public static MainWindow? Instance { get; private set; }
 
     private readonly MainTheme _theme;
     private readonly Renderer _renderer;
@@ -33,7 +25,7 @@ public partial class MainForm : Form {
     private readonly UIState _uiState = new();
     private readonly IResourceProvider _resourceProvider;
 
-    public MainForm() {
+    public MainWindow() {
         Instance = this;
 
         LuaHost.OnNotify += (level, message) => {
@@ -52,9 +44,6 @@ public partial class MainForm : Form {
         _theme.ExposeToLua("EventManager", _eventManager);
 
         InitializeComponent();
-        FormBorderStyle = FormBorderStyle.None;
-        StartPosition = FormStartPosition.CenterScreen;
-        DoubleBuffered = true;
 
         _trayIcon = new TrayIcon()
             .Name("kUpdater")
@@ -122,94 +111,12 @@ public partial class MainForm : Form {
         await _runner.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
     }
 
+    protected override void RequestRender() => _renderer.RequestRender();
 
-    protected override void OnResize(EventArgs e) {
-        base.OnResize(e);
-        _renderer.RequestRender();
-    }
-
-    protected override void OnMouseMove(MouseEventArgs e) {
-        if (_isResizing) {
-            Point delta = new(
-           Cursor.Position.X - _resizeStartCursor.X,
-           Cursor.Position.Y - _resizeStartCursor.Y);
-
-            // Bildschirm-Arbeitsbereich holen (ohne Taskleiste)
-            Rectangle workArea = Screen.FromPoint(Cursor.Position).WorkingArea;
-
-            // Dynamische Maximalwerte
-            int maxWidth = workArea.Width;
-            int maxHeight = workArea.Height;
-
-            // Neue Größe berechnen
-            int newWidth = _resizeStartSize.Width + delta.X;
-            int newHeight = _resizeStartSize.Height + delta.Y;
-
-            // Mindest- und Höchstwerte anwenden
-            newWidth = Math.Max(450, Math.Min(newWidth, maxWidth));
-            newHeight = Math.Max(300, Math.Min(newHeight, maxHeight));
-
-            // Nur Größe setzen – Rest macht OnResize
-            this.Size = new Size(newWidth, newHeight);
-            return;
-        }
-
-        if (_isDragging) {
-            Point newLocation = new(this.Left + e.X - _dragStart.X, this.Top + e.Y - _dragStart.Y);
-            this.Location = newLocation;
-            return;
-        }
-
-        this.Cursor = new Rectangle(
-            this.Width - _resizeHitSize,
-            this.Height - _resizeHitSize,
-            _resizeHitSize,
-            _resizeHitSize
-        ).Contains(e.Location) ? Cursors.SizeNWSE : Cursors.Default;
-
-        // Let ControlManager handle hover state for all controls
-        if (_controlManager.MouseMove(e.Location))
-            _renderer.RequestRender();
-    }
-
-    protected override void OnMouseDown(MouseEventArgs e) {
-        if (e.Button != MouseButtons.Left)
-            return;
-
-        // Erst an ControlManager weitergeben
-        bool handled = _controlManager.MouseDown(e.Location);
-        if (handled) {
-            _renderer.RequestRender();
-            return; // Wenn ein Element reagiert, nicht weiterziehen!
-        }
-
-        // Resize hotspot
-        Rectangle resizeRect = new(this.Width - _resizeHitSize, this.Height - _resizeHitSize, _resizeHitSize, _resizeHitSize);
-        if (resizeRect.Contains(e.Location)) {
-            _isResizing = true;
-            _resizeStartCursor = Cursor.Position;
-            _resizeStartSize = this.Size;
-            return;
-        }
-
-        // Fensterbewegung starten
-        _isDragging = true;
-        _dragStart = e.Location;
-    }
-
-    protected override void OnMouseUp(MouseEventArgs e) {
-        _isDragging = false;
-        _isResizing = false;
-
-        // Pass to ControlManager so controls can handle clicks
-        if (_controlManager.MouseUp(e.Location))
-            _renderer.RequestRender();
-    }
-
-    protected override void OnMouseWheel(MouseEventArgs e) {
-        bool handled = _controlManager.MouseWheel(e.Delta, e.Location);
-        if (handled)
-            _renderer.RequestRender();
-    }
+    // Weiterleitung der Input-Hooks an ControlManager
+    protected override bool OnChildMouseMove(MouseEventArgs e) => _controlManager.MouseMove(e.Location);
+    protected override bool OnChildMouseDown(MouseEventArgs e) => _controlManager.MouseDown(e.Location);
+    protected override bool OnChildMouseUp(MouseEventArgs e) => _controlManager.MouseUp(e.Location);
+    protected override bool OnChildMouseWheel(MouseEventArgs e) => _controlManager.MouseWheel(e.Delta, e.Location);
 
 }

@@ -1,13 +1,13 @@
 -- Hintergrund-Konfiguration
 local background_config = {
-  top_left      = "Default:top_left.png",
-  top_center    = "Default:top_center.png",
-  top_right     = "Default:top_right.png",
-  right_center  = "Default:right_center.png",
-  bottom_right  = "Default:bottom_right.png",
-  bottom_center = "Default:bottom_center.png",
-  bottom_left   = "Default:bottom_left.png",
-  left_center   = "Default:left_center.png",
+  top_left      = "Default:Frame:top_left.png",
+  top_center    = "Default:Frame:top_center.png",
+  top_right     = "Default:Frame:top_right.png",
+  right_center  = "Default:Frame:right_center.png",
+  bottom_right  = "Default:Frame:bottom_right.png",
+  bottom_center = "Default:Frame:bottom_center.png",
+  bottom_left   = "Default:Frame:bottom_left.png",
+  left_center   = "Default:Frame:left_center.png",
   fill_color    = "#101010"
 }
 
@@ -104,7 +104,7 @@ startBtn = Button("btn_start",
       T("button.start"),
       Font("Segoe UI", 11, "Regular"),
       Color.Orange,
-      "Default",
+      "Default:Buttons",
       function()
         engine.start_game()
       end)
@@ -143,7 +143,7 @@ return {
       T("button.exit"),
       Font("Segoe UI", 10, "Regular"),
       Color.Orange,
-      "Default",
+      "Default:Buttons",
       function()
         application_exit()
       end)
@@ -157,7 +157,7 @@ return {
       T("button.settings"),
       Font("Segoe UI", 11, "Regular"),
       Color.Orange,
-      "Default",
+      "Default:Buttons",
       function()
         engine.open_settings()
         end)
@@ -169,7 +169,7 @@ return {
       T("button.website"),
       Font("Segoe UI", 11, "Regular"),
       Color.Orange,
-      "Default",
+      "Default:Buttons",
       function()
         http.open("https://google.com")
         end)

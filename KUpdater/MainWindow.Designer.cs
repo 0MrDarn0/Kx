@@ -1,7 +1,7 @@
 
 namespace KUpdater
 {
-    partial class MainForm
+    partial class MainWindow
     {
         /// <summary>
         ///  Required designer variable.
@@ -30,14 +30,14 @@ namespace KUpdater
       private void InitializeComponent() {
          SuspendLayout();
          // 
-         // MainForm
+         // MainWindow
          // 
          AutoScaleDimensions = new SizeF(7F, 15F);
          AutoScaleMode = AutoScaleMode.Font;
          BackColor = SystemColors.WindowFrame;
          ClientSize = new Size(938, 565);
          FormBorderStyle = FormBorderStyle.None;
-         Name = "MainForm";
+         Name = "MainWindow";
          StartPosition = FormStartPosition.CenterScreen;
          ResumeLayout(false);
       }

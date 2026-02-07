@@ -24,14 +24,20 @@ public class FileResourceProvider : IResourceProvider {
         // Ids können absolut, relativ oder namespaced sein.
         if (Path.IsPathRooted(id))
             return id;
-        // einfache namespace-konvention: "theme:foo.png" -> baseDir/theme/foo.png
+
+        // einfache namespace-konvention: "theme:foo.png" oder "theme:sub:foo.png"
         if (id.Contains(':')) {
             var parts = id.Split([':'], 2);
             var ns = parts[0];
-            var tail = parts[1].Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+            // Ersetze zusätzlich ':' im Tail durch DirectorySeparatorChar, plus normale Slashes
+            var tail = parts[1]
+            .Replace(':', Path.DirectorySeparatorChar)
+            .Replace('/', Path.DirectorySeparatorChar)
+            .Replace('\\', Path.DirectorySeparatorChar);
             return Path.Combine(_baseDirectory, ns, tail);
         }
-        return Path.Combine(_baseDirectory, id.Replace('/', Path.DirectorySeparatorChar));
+
+        return Path.Combine(_baseDirectory, id.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar));
     }
 
     public Stream? OpenStream(string id) {

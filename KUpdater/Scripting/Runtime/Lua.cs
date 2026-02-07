@@ -305,7 +305,7 @@ public abstract class Lua : IDisposable {
                         int h = (int)(t.Get("height").AsNumber() ?? 0);
 
                         // Optional anchoring for negatives (keeps Lua simple)
-                        var form = MainForm.Instance;
+                        var form = MainWindow.Instance;
                         if (form != null) {
                             if (x < 0)
                                 x = form.Width + x;
@@ -365,7 +365,7 @@ public abstract class Lua : IDisposable {
                 int w = (int)(tbl.Get("width").AsNumber() ?? 0);
                 int h = (int)(tbl.Get("height").AsNumber() ?? 0);
 
-                var form = MainForm.Instance;
+                var form = MainWindow.Instance;
                 if (form != null) {
                     if (x < 0)
                         x = form.Width + x;
