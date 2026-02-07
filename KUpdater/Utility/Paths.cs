@@ -12,7 +12,7 @@ public static class Paths {
     public static readonly string ResFolder   = Path.Combine(AppFolder, "Resources");
 
     // Unterordner von Lua
-    public static readonly string LuaThemes   = Path.Combine(LuaFolder, "themes");
+    public static readonly string LuaSkins   = Path.Combine(LuaFolder, "skins");
     public static readonly string LuaLang     = Path.Combine(LuaFolder, "languages");
 
     // Hilfsmethoden für Dateien
@@ -20,7 +20,7 @@ public static class Paths {
         => Path.Combine(LuaFolder, fileName);
 
     public static string LuaTheme(string fileName)
-        => Path.Combine(LuaThemes, fileName);
+        => Path.Combine(LuaSkins, fileName);
 
     public static string LuaLanguage(string langCode)
         => Path.Combine(LuaLang, $"lang_{langCode}.lua");

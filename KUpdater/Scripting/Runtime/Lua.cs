@@ -74,7 +74,7 @@ public abstract class Lua : IDisposable {
             return DynValue.Nil;
 
         try {
-            var dynArgs = (args ?? Array.Empty<object>()).Select(a => DynValue.FromObject(_script, a)).ToArray();
+            var dynArgs = (args ?? []).Select(a => DynValue.FromObject(_script, a)).ToArray();
             return _script.Call(func, dynArgs);
         }
         catch (ScriptRuntimeException srx) {

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Collections.Concurrent;
-using KUpdater.Scripting.Theme;
+using KUpdater.Scripting.Skin;
 using MoonSharp.Interpreter;
 
 namespace KUpdater.Core.Event;
@@ -17,13 +17,13 @@ public class EventManager : IEventManager {
     // Lock-Objekt für thread-sichere Zugriffe auf die Listener-Listen
     private readonly Lock _lock = new();
 
-    private readonly ITheme? _theme;
+    private readonly ISkin? _theme;
     private readonly Dictionary<string, Type> _eventTypes = [];
 
     // Felder für dynamische Bindung
     private DynValue? _currentLuaFunc;
 
-    public EventManager(ITheme? theme = null) {
+    public EventManager(ISkin? theme = null) {
         _theme = theme;
 
         // Mapping EventName -> Typ
@@ -81,7 +81,7 @@ public class EventManager : IEventManager {
     private void InvokeLuaForEvent(object ev) {
         if (_theme == null || _currentLuaFunc == null)
             throw new InvalidOperationException("Lua runtime or function not set");
-        (_theme as MainTheme)?.SafeInvokeDyn(_currentLuaFunc, ev);
+        (_theme as MainWindowSkin)?.SafeInvokeDyn(_currentLuaFunc, ev);
     }
 
     /// <summary>

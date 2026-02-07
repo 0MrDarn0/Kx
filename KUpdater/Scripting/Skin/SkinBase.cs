@@ -8,25 +8,25 @@ using KUpdater.Utility;
 using MoonSharp.Interpreter;
 using SkiaSharp;
 
-namespace KUpdater.Scripting.Theme;
+namespace KUpdater.Scripting.Skin;
 
-public abstract class ThemeBase : Lua, ITheme {
-    protected readonly Form _form;
+public abstract class SkinBase : Lua, ISkin {
+    protected readonly Window _targetWindow;
     protected readonly ControlManager _controlManager;
     protected readonly UIState _state;
     protected readonly IResourceProvider _resourceProvider;
-    private ThemeBackground? _cachedBackground;
-    private ThemeLayout? _cachedLayout;
+    private SkinBackground? _cachedBackground;
+    private SkinLayout? _cachedLayout;
 
-    protected ThemeBase(string themeScript, Form form, ControlManager controlManager, UIState state, string lang, IResourceProvider resourceProvider)
-        : base(themeScript) {
-        _form = form;
+    protected SkinBase(string skinScript, Window targetwindow, ControlManager controlManager, UIState state, string lang, IResourceProvider resourceProvider)
+        : base(skinScript) {
+        _targetWindow = targetwindow;
         _controlManager = controlManager;
         _state = state;
         _resourceProvider = resourceProvider;
         RegisterGlobals();
         LoadLanguage(lang);
-        LoadTheme(GetThemeName());
+        LoadSkin(GetName());
     }
 
     protected SKBitmap? GetSkiaBitmapFromProvider(string? id) {
@@ -42,7 +42,7 @@ public abstract class ThemeBase : Lua, ITheme {
         }
     }
 
-    protected abstract string GetThemeName();
+    protected abstract string GetName();
 
     protected override void RegisterGlobals() {
         base.RegisterGlobals();
@@ -70,24 +70,24 @@ public abstract class ThemeBase : Lua, ITheme {
         Localization.Initialize(Script);
     }
 
-    protected void LoadTheme(string themeName) {
-        Invoke(LuaKeys.Theme.LoadTheme, themeName);
-        var initFunc = new LuaValue<Closure>(Invoke(LuaKeys.Theme.GetTheme).Table.Get("init"));
+    protected void LoadSkin(string skinName) {
+        Invoke(LuaKeys.Skin.Load, skinName);
+        var initFunc = new LuaValue<Closure>(Invoke(LuaKeys.Skin.Get).Table.Get("init"));
         if (initFunc.IsValid)
             Invoke(initFunc.Raw);
     }
 
-    protected Table GetThemeTable(string key) {
-        var theme = Invoke(LuaKeys.Theme.GetTheme).Table;
-        var table = new LuaValue<Table>(theme.Get(key));
+    protected Table GetSkinTable(string key) {
+        var skin = Invoke(LuaKeys.Skin.Get).Table;
+        var table = new LuaValue<Table>(skin.Get(key));
         return table.Value ?? new Table(Script);
     }
 
     public void ApplyLastState() => UpdateLastState();
-    public ThemeBackground GetBackground() => _cachedBackground ??= BuildBackground();
-    public ThemeLayout GetLayout() => _cachedLayout ??= BuildLayout();
+    public SkinBackground GetBackground() => _cachedBackground ??= BuildBackground();
+    public SkinLayout GetLayout() => _cachedLayout ??= BuildLayout();
 
     protected abstract void UpdateLastState();
-    protected abstract ThemeBackground BuildBackground();
-    protected abstract ThemeLayout BuildLayout();
+    protected abstract SkinBackground BuildBackground();
+    protected abstract SkinLayout BuildLayout();
 }

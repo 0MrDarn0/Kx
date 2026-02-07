@@ -8,8 +8,8 @@ public static class LuaKeys {
     // Hilfsfunktion: wandelt CamelCase in snake_case um
     private static string Key(string name) {
 
-        if (name == nameof(Theme.ThemeDir))
-            return "THEME_DIR";
+        if (name == nameof(Skin.Dir))
+            return "SKIN_DIR";
 
         // Insert underscore before capitals, then lowercase
         var snake = Regex.Replace(name, "([a-z0-9])([A-Z])", "$1_$2");
@@ -24,10 +24,10 @@ public static class LuaKeys {
         public static readonly string GetWindowSize = Key(nameof(GetWindowSize));
     }
 
-    public static class Theme {
-        public static readonly string LoadTheme = Key(nameof(LoadTheme));
-        public static readonly string GetTheme  = Key(nameof(GetTheme));
-        public static readonly string ThemeDir  = Key(nameof(ThemeDir));
+    public static class Skin {
+        public static readonly string Load = Key(nameof(Load));
+        public static readonly string Get  = Key(nameof(Get));
+        public static readonly string Dir  = Key(nameof(Dir));
     }
 
     public static class Actions {

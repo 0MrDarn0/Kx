@@ -1,19 +1,19 @@
-﻿local current_theme = {}
+local current_skin = {}
 
-function load_theme(name)
+function load(name)
     assert(type(name) == "string", "Theme name must be a string")
 
-    local path = THEME_DIR .. "/" .. name .. ".lua"
+    local path = SKIN_DIR .. "/" .. name .. ".lua"
     local ok, result = pcall(dofile, path)
 
     if ok and type(result) == "table" then
-        current_theme = result
+        current_skin = result
     else
         print("Failed to load theme:", result)
-        current_theme = {}
+        current_skin = {}
     end
 end
 
-function get_theme()
-    return current_theme
+function get()
+    return current_skin
 end

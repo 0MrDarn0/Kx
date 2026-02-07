@@ -6,14 +6,14 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using KUpdater.Extensions;
 using KUpdater.Interop;
-using KUpdater.Scripting.Theme;
+using KUpdater.Scripting.Skin;
 using SkiaSharp;
 
 namespace KUpdater.UI;
 
 public class Renderer : IDisposable {
     private readonly Window _renderTarget;
-    private readonly ITheme _theme;
+    private readonly ISkin _theme;
     private readonly ControlManager _controlManager;
     private readonly System.Windows.Forms.Timer _renderTimer;
     private int _needsRender;
@@ -30,7 +30,7 @@ public class Renderer : IDisposable {
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
-    public Renderer(Window window, ControlManager controlManager, ITheme theme) {
+    public Renderer(Window window, ControlManager controlManager, ISkin theme) {
         _renderTarget = window ?? throw new ArgumentNullException(nameof(window));
         _controlManager = controlManager ?? throw new ArgumentNullException(nameof(controlManager));
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
@@ -69,7 +69,7 @@ public class Renderer : IDisposable {
         IsRendering = true;
         var sw = Stopwatch.StartNew();
         try {
-            (_theme as ThemeBase)?.ApplyLastState();
+            (_theme as SkinBase)?.ApplyLastState();
             Render();
         }
         finally {

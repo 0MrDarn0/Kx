@@ -6,7 +6,7 @@ using KUpdater.Core.Pipeline;
 using KUpdater.Core.UI;
 using KUpdater.Interop;
 using KUpdater.Scripting.Runtime;
-using KUpdater.Scripting.Theme;
+using KUpdater.Scripting.Skin;
 using KUpdater.UI;
 using KUpdater.Utility;
 
@@ -15,7 +15,7 @@ namespace KUpdater;
 public partial class MainWindow : Window {
     public static MainWindow? Instance { get; private set; }
 
-    private readonly MainTheme _theme;
+    private readonly MainWindowSkin _theme;
     private readonly Renderer _renderer;
     private readonly IEventManager _eventManager;
     private readonly UpdaterPipelineRunner _runner;

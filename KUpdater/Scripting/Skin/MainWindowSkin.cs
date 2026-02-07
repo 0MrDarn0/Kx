@@ -7,12 +7,12 @@ using KUpdater.UI;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 
-namespace KUpdater.Scripting.Theme;
+namespace KUpdater.Scripting.Skin;
 
-public class MainTheme(Form form, ControlManager controlManager, UIState state, string lang, IResourceProvider resourceProvider)
-    : ThemeBase("theme_loader.lua", form, controlManager, state, lang, resourceProvider) {
+public class MainWindowSkin(Window window, ControlManager controlManager, UIState state, string lang, IResourceProvider resourceProvider)
+    : SkinBase("skin_loader.lua", window, controlManager, state, lang, resourceProvider) {
 
-    protected override string GetThemeName() => "main_form";
+    protected override string GetName() => "main_window";
 
     protected override void RegisterGlobals() {
         base.RegisterGlobals();
@@ -21,10 +21,10 @@ public class MainTheme(Form form, ControlManager controlManager, UIState state, 
         LuaPolicy.Grant("Website.Open");
         LuaPathGuard.SetAllowedRoots(AppDomain.CurrentDomain.BaseDirectory);
 
-        SetGlobal(LuaKeys.Theme.ThemeDir, Paths.LuaThemes.Replace("\\", "/"));
+        SetGlobal(LuaKeys.Skin.Dir, Paths.LuaSkins.Replace("\\", "/"));
         SetGlobal(LuaKeys.UI.GetWindowSize, () => DynValue.NewTuple(
-            DynValue.NewNumber(_form.Width),
-            DynValue.NewNumber(_form.Height)
+            DynValue.NewNumber(_targetWindow.Width),
+            DynValue.NewNumber(_targetWindow.Height)
         ));
         SetGlobal(LuaKeys.Actions.ApplicationExit, (Action)(() => Application.Exit()));
 
@@ -48,9 +48,9 @@ public class MainTheme(Form form, ControlManager controlManager, UIState state, 
     }
 
 
-    protected override ThemeBackground BuildBackground() {
-        var bg = new ThemeTable(GetThemeTable("background"), Script);
-        return new ThemeBackground {
+    protected override SkinBackground BuildBackground() {
+        var bg = new SkinTable(GetSkinTable("background"), Script);
+        return new SkinBackground {
             TopLeft = GetSkiaBitmapFromProvider(bg.GetString("top_left")),
             TopCenter = GetSkiaBitmapFromProvider(bg.GetString("top_center")),
             TopRight = GetSkiaBitmapFromProvider(bg.GetString("top_right")),
@@ -63,9 +63,9 @@ public class MainTheme(Form form, ControlManager controlManager, UIState state, 
         };
     }
 
-    protected override ThemeLayout BuildLayout() {
-        var layout = new ThemeTable(GetThemeTable("layout"), Script);
-        return new ThemeLayout {
+    protected override SkinLayout BuildLayout() {
+        var layout = new SkinTable(GetSkinTable("layout"), Script);
+        return new SkinLayout {
             TopWidthOffset = layout.GetInt("top_width_offset"),
             BottomWidthOffset = layout.GetInt("bottom_width_offset"),
             LeftHeightOffset = layout.GetInt("left_height_offset"),

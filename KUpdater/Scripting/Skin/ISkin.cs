@@ -2,14 +2,14 @@
 
 using SkiaSharp;
 
-namespace KUpdater.Scripting.Theme;
+namespace KUpdater.Scripting.Skin;
 
-public interface ITheme {
-    ThemeBackground GetBackground();
-    ThemeLayout GetLayout();
+public interface ISkin {
+    SkinBackground GetBackground();
+    SkinLayout GetLayout();
 }
 
-public class ThemeBackground {
+public class SkinBackground {
     public SKBitmap? TopLeft { get; init; }
     public SKBitmap? TopCenter { get; init; }
     public SKBitmap? TopRight { get; init; }
@@ -21,7 +21,7 @@ public class ThemeBackground {
     public Color FillColor { get; set; } = Color.Black;
 }
 
-public class ThemeLayout {
+public class SkinLayout {
     public int TopWidthOffset { get; set; }
     public int BottomWidthOffset { get; set; }
     public int LeftHeightOffset { get; set; }
@@ -32,7 +32,7 @@ public class ThemeLayout {
 }
 
 /* als record, villeicht in der zukunft
-public readonly record struct ThemeLayout(
+public readonly record struct SkinLayout(
 int TopWidthOffset,
 int BottomWidthOffset,
 int LeftHeightOffset,
