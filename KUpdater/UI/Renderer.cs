@@ -12,7 +12,7 @@ using SkiaSharp;
 namespace KUpdater.UI;
 
 public class Renderer : IDisposable {
-    private readonly Form _form;
+    private readonly Window _renderTarget;
     private readonly ITheme _theme;
     private readonly ControlManager _controlManager;
     private readonly System.Windows.Forms.Timer _renderTimer;
@@ -30,12 +30,12 @@ public class Renderer : IDisposable {
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
-    public Renderer(Form form, ControlManager controlManager, ITheme theme) {
-        _form = form ?? throw new ArgumentNullException(nameof(form));
+    public Renderer(Window window, ControlManager controlManager, ITheme theme) {
+        _renderTarget = window ?? throw new ArgumentNullException(nameof(window));
         _controlManager = controlManager ?? throw new ArgumentNullException(nameof(controlManager));
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
 
-        _renderTimer = new System.Windows.Forms.Timer { Interval = 33 };
+        _renderTimer = new System.Windows.Forms.Timer { Interval = 8 };
         _renderTimer.Tick += RenderTimer_Tick;
         _renderTimer.Start();
     }
@@ -49,15 +49,15 @@ public class Renderer : IDisposable {
     private void RenderTick() {
         if (Interlocked.Exchange(ref _needsRender, 0) == 0)
             return;
-        if (_disposed || _form.IsDisposed)
+        if (_disposed || _renderTarget.IsDisposed)
             return;
 
-        if (_form.InvokeRequired) {
-            if (_disposed || _form.IsDisposed)
+        if (_renderTarget.InvokeRequired) {
+            if (_disposed || _renderTarget.IsDisposed)
                 return;
             try {
-                _form.BeginInvoke(new Action(() => {
-                    if (_disposed || _form.IsDisposed)
+                _renderTarget.BeginInvoke(new Action(() => {
+                    if (_disposed || _renderTarget.IsDisposed)
                         return;
                     Render();
                 }));
@@ -80,9 +80,9 @@ public class Renderer : IDisposable {
     }
 
     private void GetDeviceSize(out int deviceWidth, out int deviceHeight) {
-        float scale = Math.Max(1f, _form.DeviceDpi / 96f);
-        deviceWidth = (int)Math.Ceiling(_form.Width * scale);
-        deviceHeight = (int)Math.Ceiling(_form.Height * scale);
+        float scale = Math.Max(1f, _renderTarget.DeviceDpi / 96f);
+        deviceWidth = (int)Math.Ceiling(_renderTarget.Width * scale);
+        deviceHeight = (int)Math.Ceiling(_renderTarget.Height * scale);
         if (deviceWidth <= 0)
             deviceWidth = 1;
         if (deviceHeight <= 0)
@@ -107,7 +107,7 @@ public class Renderer : IDisposable {
     }
 
     public void Render() {
-        if (_form.IsDisposed || !_form.IsHandleCreated || _disposed)
+        if (_renderTarget.IsDisposed || !_renderTarget.IsHandleCreated || _disposed)
             return;
 
         GetDeviceSize(out int width, out int height);
@@ -190,10 +190,10 @@ public class Renderer : IDisposable {
     public void Present(Bitmap bitmap, byte opacity = 255) {
         if (_disposed || bitmap == null)
             return;
-        if (_form.IsDisposed || !_form.IsHandleCreated)
+        if (_renderTarget.IsDisposed || !_renderTarget.IsHandleCreated)
             return;
 
-        IntPtr hwnd = _form.Handle;
+        IntPtr hwnd = _renderTarget.Handle;
         if (hwnd == IntPtr.Zero)
             return;
 
@@ -264,7 +264,7 @@ public class Renderer : IDisposable {
 
             Size size = new(width, height);
             Point source = new(0, 0);
-            Point topPos = new(_form.Left, _form.Top);
+            Point topPos = new(_renderTarget.Left, _renderTarget.Top);
 
             var blend = new NativeMethods.BLENDFUNCTION
             {
@@ -450,17 +450,45 @@ public class Renderer : IDisposable {
     }
 
     public void Dispose() {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing) {
         if (_disposed)
             return;
+
+        // Reset Render-Anforderung unabhängig vom disposing-Zustand
         _needsRender = 0;
-        _renderTimer.Tick -= RenderTimer_Tick;
-        try { _renderTimer.Stop(); }
-        catch { }
-        _renderTimer.Dispose();
-        _renderSurface?.Dispose();
-        _renderBuffer?.Dispose();
-        _backBuffer?.Dispose();
-        _fillPaint.Dispose();
+
+        if (disposing) {
+            try {
+                // Event abmelden bevor der Timer disposed wird
+                _renderTimer.Tick -= RenderTimer_Tick;
+            }
+            catch { }
+
+            try { _renderTimer.Stop(); }
+            catch { }
+
+            try { _renderTimer.Dispose(); }
+            catch { }
+
+            try { _renderSurface?.Dispose(); }
+            catch { }
+
+            try { _renderBuffer?.Dispose(); }
+            catch { }
+
+            try { _backBuffer?.Dispose(); }
+            catch { }
+
+            try { _fillPaint.Dispose(); }
+            catch { }
+        }
+
+        // Hier könnten unverwaltete Ressourcen freigegeben werden, falls später hinzugefügt.
+        // Felder auf "leeren" Zustand setzen (readonly Felder bleiben unverändert)
         _renderSurface = null;
         _renderBuffer = null;
         _backBuffer = null;
