@@ -13,7 +13,7 @@ namespace KUpdater.UI;
 
 public class Renderer : IDisposable {
     private readonly Window _renderTarget;
-    private readonly ISkin _theme;
+    private readonly ISkin _skin;
     private readonly ControlManager _controlManager;
     private readonly System.Windows.Forms.Timer _renderTimer;
     private int _needsRender;
@@ -30,10 +30,10 @@ public class Renderer : IDisposable {
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
-    public Renderer(Window window, ControlManager controlManager, ISkin theme) {
+    public Renderer(Window window, ControlManager controlManager, ISkin skin) {
         _renderTarget = window ?? throw new ArgumentNullException(nameof(window));
         _controlManager = controlManager ?? throw new ArgumentNullException(nameof(controlManager));
-        _theme = theme ?? throw new ArgumentNullException(nameof(theme));
+        _skin = skin ?? throw new ArgumentNullException(nameof(skin));
 
         _renderTimer = new System.Windows.Forms.Timer { Interval = 8 };
         _renderTimer.Tick += RenderTimer_Tick;
@@ -69,7 +69,7 @@ public class Renderer : IDisposable {
         IsRendering = true;
         var sw = Stopwatch.StartNew();
         try {
-            (_theme as SkinBase)?.ApplyLastState();
+            (_skin as SkinBase)?.ApplyLastState();
             Render();
         }
         finally {
@@ -343,8 +343,8 @@ public class Renderer : IDisposable {
     }
 
     public void DrawBackground(SKCanvas canvas, Size size) {
-        var bg = _theme.GetBackground();
-        var layout = _theme.GetLayout();
+        var bg = _skin.GetBackground();
+        var layout = _skin.GetLayout();
 
         if (bg == null || layout == null)
             return;

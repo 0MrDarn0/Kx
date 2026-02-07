@@ -84,15 +84,6 @@ public class ProgressBar : IControl {
         _skFont = new SKFont(_typeface, Font.Size * 1.33f);
         _skTextPaint = new SKPaint { Color = TextColor.ToSKColor(), IsAntialias = true };
     }
-    public void Draw(Graphics g) {
-        if (!Visible)
-            return;
-        var rect = Bounds;
-
-        using var brush = new SolidBrush(Color.FromArgb(FillColor.Alpha, FillColor.Red, FillColor.Green, FillColor.Blue));
-        g.FillRectangle(brush, rect.X, rect.Y, rect.Width * Progress, rect.Height);
-        g.DrawRectangle(Pens.White, rect);
-    }
 
     public void Draw(SKCanvas canvas) {
         if (!Visible)

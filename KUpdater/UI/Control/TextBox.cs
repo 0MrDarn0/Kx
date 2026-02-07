@@ -83,16 +83,6 @@ public class TextBox : IControl {
         _bgPaint = new SKPaint { Color = BackColor.ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Fill };
     }
 
-    public void Draw(Graphics g) {
-        if (!Visible)
-            return;
-
-        // Optional: Fallback GDI+ Rendering
-        g.FillRectangle(new SolidBrush(BackColor), Bounds);
-        TextRenderer.DrawText(g, Text, Font, Bounds, ForeColor,
-            TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak);
-    }
-
     public void Draw(SKCanvas canvas) {
         if (!Visible || _skFont == null || _textPaint == null || _bgPaint == null)
             return;

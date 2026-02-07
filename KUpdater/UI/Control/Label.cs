@@ -60,12 +60,6 @@ public class Label : IControl {
         };
     }
 
-    public void Draw(Graphics g) {
-        if (!Visible)
-            return;
-        TextRenderer.DrawText(g, Text, Font, Bounds.Location, Color, Flags);
-    }
-
     public void Draw(SKCanvas canvas) {
         if (!Visible || _skFont == null || _skPaint == null)
             return;

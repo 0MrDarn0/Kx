@@ -70,19 +70,6 @@ public class Button : IControl {
         _skPaint = new SKPaint { Color = Color.ToSKColor(), IsAntialias = true };
     }
 
-    public void Draw(Graphics g) {
-        if (!Visible)
-            return;
-
-        string state = IsPressed ? "click" : IsHovered ? "hover" : "normal";
-        if (_stateImages.TryGetValue(state, out var img)) {
-            g.DrawImage(img, Bounds);
-        }
-
-        TextRenderer.DrawText(g, Text, Font, Bounds, Color,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-    }
-
     public void Draw(SKCanvas canvas) {
         if (!Visible)
             return;

@@ -42,12 +42,6 @@ public class ControlManager : IDisposable {
         return true;
     }
 
-    public void Draw(Graphics graphics) {
-        foreach (var control in _controls)
-            if (control.Visible)
-                control.Draw(graphics);
-    }
-
     public void Draw(SKCanvas canvas) {
         foreach (var control in _controls)
             if (control.Visible)

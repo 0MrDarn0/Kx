@@ -17,14 +17,14 @@ public class EventManager : IEventManager {
     // Lock-Objekt für thread-sichere Zugriffe auf die Listener-Listen
     private readonly Lock _lock = new();
 
-    private readonly ISkin? _theme;
+    private readonly ISkin? _skin;
     private readonly Dictionary<string, Type> _eventTypes = [];
 
     // Felder für dynamische Bindung
     private DynValue? _currentLuaFunc;
 
-    public EventManager(ISkin? theme = null) {
-        _theme = theme;
+    public EventManager(ISkin? skin = null) {
+        _skin = skin;
 
         // Mapping EventName -> Typ
         _eventTypes["StatusEvent"] = typeof(StatusEvent);
@@ -46,7 +46,7 @@ public class EventManager : IEventManager {
 
     public void Register(string eventName, DynValue luaFunc) {
         lock (_lock) {
-            if (_theme == null)
+            if (_skin == null)
                 throw new InvalidOperationException("Lua runtime not set");
 
             if (!_eventTypes.TryGetValue(eventName, out var type))
@@ -79,9 +79,9 @@ public class EventManager : IEventManager {
 
     // Hilfsmethode für dynamischen Lua-Callback
     private void InvokeLuaForEvent(object ev) {
-        if (_theme == null || _currentLuaFunc == null)
+        if (_skin == null || _currentLuaFunc == null)
             throw new InvalidOperationException("Lua runtime or function not set");
-        (_theme as MainWindowSkin)?.SafeInvokeDyn(_currentLuaFunc, ev);
+        (_skin as MainWindowSkin)?.SafeInvokeDyn(_currentLuaFunc, ev);
     }
 
     /// <summary>
