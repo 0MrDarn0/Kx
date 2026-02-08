@@ -77,20 +77,17 @@ namespace KUpdater.Core.Event {
             if (_skin == null)
                 throw new InvalidOperationException("Lua runtime not set");
 
-            Action<T> action = ev =>
-            {
-                try
-                {
+            void action(T ev) {
+                try {
                     // SafeInvokeDyn ist Teil SkinBase; falls _skin nicht SkinBase ist, cast prüfen
                     (_skin as SkinBase)?.SafeInvokeDyn(luaFunc, ev);
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     Console.Error.WriteLine($"Lua listener for {typeof(T).Name} threw: {ex}");
                 }
-            };
+            }
 
-            Register(action);
+            Register((Action<T>)action);
         }
 
         #endregion
