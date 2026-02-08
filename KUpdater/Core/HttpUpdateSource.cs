@@ -1,7 +1,5 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Net.Http.Headers;
-
 namespace KUpdater.Core;
 
 public class HttpUpdateSource : IUpdateSource {
@@ -9,17 +7,17 @@ public class HttpUpdateSource : IUpdateSource {
 
     static HttpUpdateSource() {
         var handler = new SocketsHttpHandler {
-            PooledConnectionLifetime = TimeSpan.FromMinutes(5),
-            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
-            MaxConnectionsPerServer = int.MaxValue
+            PooledConnectionLifetime = TimeSpan.FromMinutes(UpdaterConstants.PooledConnectionLifetimeMinutes),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(UpdaterConstants.PooledConnectionIdleTimeoutMinutes),
+            MaxConnectionsPerServer = UpdaterConstants.DefaultMaxConnectionsPerServer
         };
 
         SharedHttp = new HttpClient(handler) {
-            Timeout = TimeSpan.FromSeconds(60)
+            Timeout = TimeSpan.FromSeconds(UpdaterConstants.HttpTimeoutSeconds)
         };
 
         SharedHttp.DefaultRequestHeaders.UserAgent.Clear();
-        SharedHttp.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("kUpdater", "1.0"));
+        SharedHttp.DefaultRequestHeaders.UserAgent.ParseAdd(UpdaterConstants.DefaultUserAgent);
     }
 
     private readonly HttpClient _http;

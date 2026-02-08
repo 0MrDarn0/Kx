@@ -19,7 +19,7 @@ public class DownloadAndExtractStep : IUpdateStep {
     public string Name => "DownloadAndExtract";
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
-        string tempZip = Path.Combine(Path.GetTempPath(), $"kupdater_{Guid.NewGuid():N}.zip");
+        string tempZip = Path.Combine(Path.GetTempPath(), $"{UpdaterConstants.TempZipPrefix}{Guid.NewGuid():N}.zip");
         string rootFullPath = Path.GetFullPath(ctx.RootDirectory);
 
         try {
@@ -27,7 +27,7 @@ public class DownloadAndExtractStep : IUpdateStep {
             eventManager.NotifyAll(new StatusEvent(Localization.Translate("status.downloading_pkg")));
             await using (var stream = await _source.GetPackageStreamAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false))
             await using (var fs = new FileStream(tempZip, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
-                byte[] buffer = new byte[8192];
+                byte[] buffer = new byte[UpdaterConstants.BufferSize];
                 long totalRead = 0;
                 long totalLength = await _source.GetPackageSizeAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false) ?? -1;
                 int read;
@@ -68,7 +68,7 @@ public class DownloadAndExtractStep : IUpdateStep {
                     if (!string.IsNullOrEmpty(destDir))
                         Directory.CreateDirectory(destDir);
 
-                    var tempDest = destinationPath + $".tmp_{Guid.NewGuid():N}";
+                    var tempDest = destinationPath + $"{UpdaterConstants.TempFileSuffixFormat}{Guid.NewGuid():N}";
                     entry.ExtractToFile(tempDest, overwrite: true);
 
                     var metaFile = Array.Find(ctx.Metadata.Files, f =>
