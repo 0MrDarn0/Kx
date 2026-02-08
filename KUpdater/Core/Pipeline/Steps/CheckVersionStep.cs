@@ -13,7 +13,7 @@ public class CheckVersionStep(string rootDirectory) : IUpdateStep {
 
     public string Name => "CheckVersion";
 
-    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager) {
+    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         // Lokale Version laden
         ctx.CurrentVersion = File.Exists(_localVersionFile)
             ? File.ReadAllText(_localVersionFile).Trim()

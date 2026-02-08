@@ -12,7 +12,7 @@ public class SaveVersionStep(string rootDirectory) : IUpdateStep {
 
     public string Name => "SaveVersion";
 
-    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager) {
+    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         File.WriteAllText(_localVersionFile, ctx.Metadata.Version);
 
         eventManager.NotifyAll(new StatusEvent(

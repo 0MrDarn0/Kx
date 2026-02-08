@@ -3,8 +3,8 @@
 namespace KUpdater.Core;
 
 public interface IUpdateSource {
-    Task<string> GetMetadataJsonAsync(string metadataUrl);
-    Task<Stream> GetPackageStreamAsync(string packageUrl);
-    Task<long?> GetPackageSizeAsync(string packageUrl);
-    Task<string> GetChangelogAsync(string changelogUrl);
+    Task<string> GetMetadataJsonAsync(string metadataUrl, CancellationToken ct = default);
+    Task<Stream> GetPackageStreamAsync(string packageUrl, CancellationToken ct = default);
+    Task<long?> GetPackageSizeAsync(string packageUrl, CancellationToken ct = default);
+    Task<string> GetChangelogAsync(string changelogUrl, CancellationToken ct = default);
 }

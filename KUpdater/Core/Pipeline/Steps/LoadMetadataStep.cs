@@ -15,7 +15,7 @@ public class LoadMetadataStep(IUpdateSource source, string baseUrl) : IUpdateSte
 
     public string Name => "LoadMetadata";
 
-    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager) {
+    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         // Status-Event
         eventManager.NotifyAll(new StatusEvent(Localization.Translate("status.waiting")));
 

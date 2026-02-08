@@ -12,7 +12,7 @@ public class SelfUpdateStep(string rootDirectory) : IUpdateStep {
     private readonly string _rootDir = rootDirectory;
     public string Name => "SelfUpdate";
 
-    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager) {
+    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         string newExe = Path.Combine(_rootDir, "KUpdater_new.exe");
         string bootstrapper = Path.Combine(_rootDir, "Bootstrapper.exe");
 

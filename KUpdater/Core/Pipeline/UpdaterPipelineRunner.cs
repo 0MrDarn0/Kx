@@ -35,7 +35,7 @@ public class UpdaterPipelineRunner {
                     return (object)baseUrl;
                 if (p.ParameterType == typeof(string) && p.Name!.Contains("root", StringComparison.OrdinalIgnoreCase))
                     return (object)rootDir;
-                throw new InvalidOperationException($"Unbekanntes ctor-Argument {p.Name} in {stepInfo.Type.Name}");
+                throw new InvalidOperationException($"Unknown ctor argument {p.Name} in {stepInfo.Type.Name}");
             }).ToArray();
 
             var step = (IUpdateStep)Activator.CreateInstance(stepInfo.Type, args)!;
@@ -43,14 +43,14 @@ public class UpdaterPipelineRunner {
         }
     }
 
-    public async Task RunAsync(string rootDir) {
+    public async Task RunAsync(string rootDir, CancellationToken ct = default) {
         var ctx = new UpdateContext(rootDir);
 
         try {
-            await _pipeline.RunAsync(ctx, _eventManager);
+            await _pipeline.RunAsync(ctx, _eventManager, ct);
         }
         catch (OperationCanceledException) {
-            // Kein Update nötig → still ok
+            // Cancelled: treat as no update / user cancelled
         }
         catch (Exception ex) {
             _eventManager.NotifyAll(new StatusEvent(

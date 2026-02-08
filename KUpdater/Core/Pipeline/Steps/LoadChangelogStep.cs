@@ -13,7 +13,7 @@ public class LoadChangelogStep(IUpdateSource source, string baseUrl) : IUpdateSt
 
     public string Name => "LoadChangelog";
 
-    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager) {
+    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         try {
             string changelogUrl = _baseUrl + "changelog.txt";
             string changelog = await _source.GetChangelogAsync(changelogUrl);
