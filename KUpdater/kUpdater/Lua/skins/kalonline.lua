@@ -155,12 +155,11 @@ return {
       )
 
       --EventManager.TryRegisterLua("StatusEvent", function(ev)
-      --  print("ev:", ev)
-      --  print("ev.Text:", ev.Text)
+        --print("ev:", ev)
+        --print("ev.Text:", ev.Text)
       --end)
 
-
-     -- EventManager.PrintAllEvents()
+     --EventManager.PrintAllEvents()
 
   end,
 }

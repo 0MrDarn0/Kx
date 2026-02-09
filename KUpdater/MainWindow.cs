@@ -2,10 +2,7 @@
 
 using KUpdater.Core;
 using KUpdater.Core.Event;
-using KUpdater.Core.Pipeline;
-using KUpdater.Core.UI;
 using KUpdater.Scripting.Runtime;
-using KUpdater.Scripting.Skin;
 using KUpdater.UI;
 using KUpdater.Utility;
 
@@ -13,33 +10,16 @@ namespace KUpdater;
 
 public partial class MainWindow : Window {
     public static MainWindow? Instance { get; private set; }
-
-    private readonly MainWindowSkin _mainWindowSkin;
-    private readonly Renderer _renderer;
-    private readonly IEventManager _eventManager;
-    private readonly UpdaterPipelineRunner _runner;
-    private readonly ControlManager _controlManager;
-    private readonly BaseConfig _config;
+    private readonly WindowContext _ctx;
     private readonly TrayIcon? _trayIcon;
-    private readonly UIState _uiState = new();
-    private readonly IResourceProvider _resourceProvider;
 
     public MainWindow() {
         Instance = this;
+        _ctx = new WindowContext(this);
 
         LuaHost.OnNotify += (level, message) => {
             BeginInvoke(() => MessageBox.Show(this, message, level, MessageBoxButtons.OK, MessageBoxIcon.Information));
         };
-
-        _config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
-        _resourceProvider = new FileResourceProvider(Paths.ResFolder);
-        _controlManager = new();
-        _eventManager = new EventManager(null);
-        _mainWindowSkin = new(this, _controlManager, _eventManager, _uiState, _config.Language, _config.MainWindowSkin, _resourceProvider);
-        _eventManager.SetSkin(_mainWindowSkin);
-
-        _renderer = new(this, _controlManager, _mainWindowSkin, _config);
-        _runner = new UpdaterPipelineRunner(_eventManager, new HttpUpdateSource(), _config.Url, AppDomain.CurrentDomain.BaseDirectory);
 
         InitializeComponent();
 
@@ -57,56 +37,53 @@ public partial class MainWindow : Window {
 
     protected override void OnFormClosed(FormClosedEventArgs e) {
         _trayIcon?.Dispose();
-        _renderer.Dispose();
-        _mainWindowSkin.Dispose();
-        _controlManager.Dispose();
-        _resourceProvider?.Dispose();
+        _ctx.Dispose();
         Instance = null;
         base.OnFormClosed(e);
     }
 
     protected override async void OnShown(EventArgs e) {
         base.OnShown(e);
-        _renderer.RequestRender();
+        _ctx.Renderer.RequestRender();
 
         // Events abonnieren
-        _eventManager.Register<StatusEvent>(ev => {
-            _uiState.SetStatus(ev.Text);
-            _renderer.RequestRender();
+        _ctx.Events.Register<StatusEvent>(ev => {
+            _ctx.State.SetStatus(ev.Text);
+            _ctx.Renderer.RequestRender();
         });
 
-        _eventManager.Register<ProgressEvent>(ev => {
-            _uiState.SetProgress(ev.Percent);
-            _renderer.RequestRender();
+        _ctx.Events.Register<ProgressEvent>(ev => {
+            _ctx.State.SetProgress(ev.Percent);
+            _ctx.Renderer.RequestRender();
         });
 
-        _eventManager.Register<UpdateRequired>(_ => {
-            _uiState.SetStartButtonVisible(false);
-            _uiState.SetProgressVisible(true);
-            _renderer.RequestRender();
+        _ctx.Events.Register<UpdateRequired>(_ => {
+            _ctx.State.SetStartButtonVisible(false);
+            _ctx.State.SetProgressVisible(true);
+            _ctx.Renderer.RequestRender();
         });
 
-        _eventManager.Register<UpdatePipelineCompleted>(_ => {
-            _uiState.SetProgressVisible(false);
-            _uiState.SetStartButtonVisible(true);
-            _renderer.RequestRender();
+        _ctx.Events.Register<UpdatePipelineCompleted>(_ => {
+            _ctx.State.SetProgressVisible(false);
+            _ctx.State.SetStartButtonVisible(true);
+            _ctx.Renderer.RequestRender();
         });
 
-        _eventManager.Register<ChangelogEvent>(ev => {
-            _uiState.SetChangelog(ev.Text);
-            _renderer.RequestRender();
+        _ctx.Events.Register<ChangelogEvent>(ev => {
+            _ctx.State.SetChangelog(ev.Text);
+            _ctx.Renderer.RequestRender();
         });
 
         // Pipeline starten
-        await _runner.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
+        await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
     }
 
-    protected override void RequestRender() => _renderer.RequestRender();
+    protected override void RequestRender() => _ctx.Renderer.RequestRender();
 
     // Weiterleitung der Input-Hooks an ControlManager
-    protected override bool OnChildMouseMove(MouseEventArgs e) => _controlManager.MouseMove(e.Location);
-    protected override bool OnChildMouseDown(MouseEventArgs e) => _controlManager.MouseDown(e.Location);
-    protected override bool OnChildMouseUp(MouseEventArgs e) => _controlManager.MouseUp(e.Location);
-    protected override bool OnChildMouseWheel(MouseEventArgs e) => _controlManager.MouseWheel(e.Delta, e.Location);
+    protected override bool OnChildMouseMove(MouseEventArgs e) => _ctx.Controls.MouseMove(e.Location);
+    protected override bool OnChildMouseDown(MouseEventArgs e) => _ctx.Controls.MouseDown(e.Location);
+    protected override bool OnChildMouseUp(MouseEventArgs e) => _ctx.Controls.MouseUp(e.Location);
+    protected override bool OnChildMouseWheel(MouseEventArgs e) => _ctx.Controls.MouseWheel(e.Delta, e.Location);
 
 }

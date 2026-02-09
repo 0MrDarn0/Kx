@@ -1,17 +1,15 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Core.Event;
-using KUpdater.Core.UI;
+using KUpdater.Core;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Security;
-using KUpdater.UI;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 
 namespace KUpdater.Scripting.Skin;
 
-public class MainWindowSkin(Window window, ControlManager controlManager, IEventManager eventManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
-    : SkinBase("skin_loader.lua", window, controlManager, eventManager, state, lang, skinName, resourceProvider) {
+public class MainWindowSkin(WindowContext ctx)
+    : SkinBase("skin_loader.lua", ctx.Config.Language, ctx.Config.MainWindowSkin, ctx.Resources) {
 
     protected override string GetName() => "main_window_skin";
 
@@ -24,30 +22,27 @@ public class MainWindowSkin(Window window, ControlManager controlManager, IEvent
 
         SetGlobal(LuaKeys.Skin.Dir, Paths.LuaSkins.Replace("\\", "/"));
         SetGlobal(LuaKeys.UI.GetWindowSize, () => DynValue.NewTuple(
-            DynValue.NewNumber(_targetWindow.Width),
-            DynValue.NewNumber(_targetWindow.Height)
+            DynValue.NewNumber(ctx.Window.Width),
+            DynValue.NewNumber(ctx.Window.Height)
         ));
         SetGlobal(LuaKeys.Actions.ApplicationExit, (Action)(() => Application.Exit()));
 
-        ExposeToLua("Controls", _controlManager);
-        ExposeToLua("EventManager", _eventManager);
-        ExposeToLua("UIState", _state);
+        ctx.Events.SetSkin(this);
+
+        ExposeToLua("Controls", ctx.Controls);
+        ExposeToLua("EventManager", ctx.Events);
+        ExposeToLua("UIState", ctx.State);
         ExposeToLua<Font>();
         ExposeToLua<Color>();
         ExposeMarkedTypes();
-
-        //SetGlobal("update_status", (Action<string>)(text => _controlManager.Update<UI.Control.Label>("lb_update_status", l => l.Text = text)));
-        //SetGlobal("update_download_progress", (Action<double>)(percent => _controlManager.Update<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)Math.Clamp(percent, 0.0, 1.0))));
-        //SetGlobal("update_label", UIBindings.UpdateLabel(_controlManager));
-        //SetGlobal("update_progress", UIBindings.UpdateProgress(_controlManager));
     }
 
     protected override void UpdateLastState() {
-        _controlManager.TryUpdate<UI.Control.Label>("lb_update_status", l => l.Text = _state.Status);
-        _controlManager.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)_state.Progress);
-        _controlManager.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Visible = _state.ProgressVisible);
-        _controlManager.TryUpdate<UI.Control.TextBox>("tb_changelog", tb => tb.Text = _state.Changelog);
-        _controlManager.TryUpdate<UI.Control.Button>("btn_start", btn => btn.Visible = _state.StartButtonVisible);
+        ctx.Controls.TryUpdate<UI.Control.Label>("lb_update_status", l => l.Text = ctx.State.Status);
+        ctx.Controls.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)ctx.State.Progress);
+        ctx.Controls.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Visible = ctx.State.ProgressVisible);
+        ctx.Controls.TryUpdate<UI.Control.TextBox>("tb_changelog", tb => tb.Text = ctx.State.Changelog);
+        ctx.Controls.TryUpdate<UI.Control.Button>("btn_start", btn => btn.Visible = ctx.State.StartButtonVisible);
     }
 
 
