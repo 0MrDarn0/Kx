@@ -21,7 +21,8 @@ public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
         _ctx = new WindowContext(
             this,
             this,
-            ctx => new MainWindowSkin(ctx));
+            ctx => new MainWindowSkin(ctx),
+            ctx => new Renderer(ctx));
 
         LuaHost.OnNotify += (level, message) => {
             BeginInvoke(() => MessageBox.Show(this, message, level, MessageBoxButtons.OK, MessageBoxIcon.Information));
@@ -52,7 +53,7 @@ public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
         base.OnShown(e);
         _ctx.Renderer.RequestRender();
 
-        // Events abonnieren
+        //Events abonnieren
         _ctx.Events.Register<StatusEvent>(ev => {
             _ctx.State.SetStatus(ev.Text);
             _ctx.Renderer.RequestRender();

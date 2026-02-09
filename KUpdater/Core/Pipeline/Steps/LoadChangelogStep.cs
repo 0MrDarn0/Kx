@@ -16,7 +16,7 @@ public class LoadChangelogStep(IUpdateSource source, string baseUrl) : IUpdateSt
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         try {
             string changelogUrl = _baseUrl + "changelog.txt";
-            string changelog = await _source.GetChangelogAsync(changelogUrl);
+            string changelog = await _source.GetChangelogAsync(changelogUrl, ct);
 
             // Event feuern → landet in UIState
             eventManager.NotifyAll(new ChangelogEvent(changelog));

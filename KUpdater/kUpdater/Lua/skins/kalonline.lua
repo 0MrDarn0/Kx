@@ -1,8 +1,9 @@
+-- Module / Helpers
 local engine = require("actions.engine")
-local http = require("actions.http")
-local util = require("util.helper")
+local http   = require("actions.http")
+local util   = require("util.helper")
 
--- Hintergrund-Konfiguration
+-- Konfigurationen
 local background_config = {
   top_left      = "KalOnline:Frame:top_left.png",
   top_center    = "KalOnline:Frame:top_center.png",
@@ -25,141 +26,170 @@ local layout_config = {
   fill_height_offset  = 10
 }
 
-
+-- Serverstatus-Funktion
 local function ServerStatus()
   if ServerApi and ServerApi.StatusOf then
     local ok = ServerApi.StatusOf("127.0.0.1", 30001)
     local text = ok and "ServerStatus:[Online]" or "ServerStatus:[Offline]"
     local color = ok and Color.Green or Color.Red
 
-    Controls.Add(Label("lb_server_status", util.make_bounds(-150, 40, 150, 20), text, Font("Segoe UI", 9, "Bold"), color))
+    local serverStatusLabel = Label(
+      "lb_server_status",
+      util.make_bounds(-150, 40, 150, 20),
+      text,
+      Font("Segoe UI", 9, "Bold"),
+      color
+    )
 
+    Controls.Add(serverStatusLabel)
     print(ok and "✅ Online" or "❌ Offline")
+
+    return serverStatusLabel
   else
     print("⚠️ ServerApi-Modul nicht verfügbar")
+    return nil
   end
 end
 
 
+-- Rückgabe der Fensterdefinition
+return {
+  background = background_config,
+  layout     = layout_config,
 
-  -- Progressbar (27px vom linken Rand, 30px vom unteren Rand,
-  -- rechts -27px Abstand, Höhe 5px)
-progressBar = ProgressBar("pb_update_progress",
-      util.make_anchor(27, 30, -27, 5, "bottom_left"),
-      Font("Segoe UI", 11, "Regular"),
-      Color.Orange)
+  init = function()
+    -- Serverstatus prüfen und Label (Variable) erhalten
+    local serverStatusLabel = ServerStatus()
 
-startBtn = Button("btn_start",
+    -- Title
+    local titleLabel = Label(
+      "lb_title",
+      util.make_bounds(35, 0, 200, 40),
+      T("app.title"),
+      Font("Chiller", 40, "Italic"),
+      Color.Orange
+    )
+    Controls.Add(titleLabel)
+
+    -- Subtitle
+    local subtitleLabel = Label(
+      "lb_subtitle",
+      util.make_bounds(-115, 12, 200, 27),
+      T("app.subtitle"),
+      Font("Malgun Gothic", 13, "Bold"),
+      Color.Gold
+    )
+    Controls.Add(subtitleLabel)
+
+    -- Start Button
+    local startBtn = Button(
+      "btn_start",
       util.make_bounds(-150, -70, 97, 22),
       T("button.start"),
       Font("Segoe UI", 11, "Regular"),
       Color.Orange,
       "KalOnline:Buttons",
-      function()
-        engine.start_game()
-      end)
-
-
-
--- Rückgabe der gesamten Fensterdefinition
-return {
-  background = background_config,
-  layout     = layout_config,
-  init = function()
-
-  ServerStatus()
-
-    -- Title
-    Controls.Add(
-      Label("lb_title",
-      util.make_bounds(35, 0, 200, 40),
-      T("app.title"),
-      Font("Chiller", 40, "Italic"),
-      Color.Orange)
+      function() engine.start_game() end
     )
-
-    -- Subtitle
-    Controls.Add(
-      Label("lb_subtitle",
-      util.make_bounds(-115, 12, 200, 27),
-      T("app.subtitle"),
-      Font("Malgun Gothic", 13, "Bold"),
-      Color.Gold)
-    )
-
-
-    -- Buttons
     Controls.Add(startBtn)
 
-    Controls.Add(Button("btn_exit",
+    -- Exit Button
+    local exitBtn = Button(
+      "btn_exit",
       util.make_bounds(-35, 16, 18, 18),
       T("button.exit"),
       Font("Segoe UI", 10, "Regular"),
       Color.Orange,
       "KalOnline:Buttons",
-      function()
-        application_exit()
-      end)
+      function() application_exit() end
     )
+    Controls.Add(exitBtn)
 
-    Controls.Add(Button("btn_settings",
+    -- Settings Button
+    local settingsBtn = Button(
+      "btn_settings",
       util.make_bounds(-255, -70, 97, 22),
       T("button.settings"),
       Font("Segoe UI", 11, "Regular"),
       Color.Orange,
       "KalOnline:Buttons",
-      function()
-        engine.open_settings()
-        end)
+      function() engine.open_settings() end
     )
+    Controls.Add(settingsBtn)
 
-    Controls.Add(Button("btn_website",
+    -- Website Button
+    local websiteBtn = Button(
+      "btn_website",
       util.make_bounds(-360, -70, 97, 22),
       T("button.website"),
       Font("Segoe UI", 11, "Regular"),
       Color.Orange,
       "KalOnline:Buttons",
-      function()
-        http.open("https://google.com")
-        end)
+      function() http.open("https://google.com") end
     )
+    Controls.Add(websiteBtn)
 
-
+    -- ProgressBar
+    local progressBar = ProgressBar(
+      "pb_update_progress",
+      util.make_anchor(27, 30, -27, 5, "bottom_left"),
+      Font("Segoe UI", 11, "Regular"),
+      Color.Orange
+    )
     Controls.Add(progressBar)
 
-
-    local changelogBox = TextBox("tb_changelog", 
-        util.make_anchor(36, 55, -400, 200, "bottom_left"),
-        "Changelog ...",
-        Font("Segoe UI", 10, "Regular"),
-        Color.White, MakeColor.FromHex("#101010"),
-        true, true, MakeColor.FromHex("#7C6E4B"))
-
-        -- Rahmen + Glow konfigurieren
-        changelogBox.BorderColor = MakeColor.FromHex("#7C6E4B")
-        changelogBox.BorderThickness = 3
-        changelogBox.GlowEnabled = true
-        changelogBox.GlowColor = Color.White
-        changelogBox.GlowRadius = 6
-
+    -- Changelog TextBox
+    local changelogBox = TextBox(
+      "tb_changelog",
+      util.make_anchor(36, 55, -400, 200, "bottom_left"),
+      "Changelog ...",
+      Font("Segoe UI", 10, "Regular"),
+      Color.White,
+      MakeColor.FromHex("#101010"),
+      true, true, MakeColor.FromHex("#7C6E4B")
+    )
+    changelogBox.BorderColor     = MakeColor.FromHex("#7C6E4B")
+    changelogBox.BorderThickness = 3
+    changelogBox.GlowEnabled     = true
+    changelogBox.GlowColor       = Color.White
+    changelogBox.GlowRadius      = 6
     Controls.Add(changelogBox)
 
+    -- Status-Label
+    local statusLabel = Label(
+      "lb_update_status",
+      util.make_anchor(27, 20, 200, 20, "bottom_left"),
+      T("status.waiting"),
+      Font("Segoe UI", 8, "Italic"),
+      Color.White
+    )
+    Controls.Add(statusLabel)
 
-    -- Status-Label (27px vom linken Rand, 50px vom unteren Rand)
-      Controls.Add(
-        Label("lb_update_status",
-        util.make_anchor(27, 20, 200, 20, "bottom_left"),
-        T("status.waiting"),
-        Font("Segoe UI", 8, "Italic"),
-        Color.White)
-      )
+    -- Event-Registrierungen (auskommentiert; bei Bedarf aktivieren)
+    --[[
+    EventManager.TryRegisterLua("StatusEvent", function(ev)
+      statusLabel.Text = ev.Text
+    end)
 
-      --EventManager.TryRegisterLua("StatusEvent", function(ev)
-        --print("ev:", ev)
-        --print("ev.Text:", ev.Text)
-      --end)
+    EventManager.TryRegisterLua("ProgressEvent", function(ev)
+      progressBar.Progress = clamp(ev.Percent / 100, 0, 1)
+    end)
 
-     --EventManager.PrintAllEvents()
+    EventManager.TryRegisterLua("UpdateRequired", function(ev)
+      progressBar.Visible = true
+      startBtn.Visible = false
+    end)
 
-  end,
+    EventManager.TryRegisterLua("UpdatePipelineCompleted", function(ev)
+      progressBar.Visible = false
+      startBtn.Visible = true
+    end)
+
+    EventManager.TryRegisterLua("ChangelogEvent", function(ev)
+      changelogBox.Text = ev.Text
+    end)
+
+    EventManager.PrintAllEvents()
+    ]]
+  end
 }
