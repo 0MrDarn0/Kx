@@ -3,6 +3,7 @@
 using KUpdater.Core;
 using KUpdater.Core.Event;
 using KUpdater.Scripting.Runtime;
+using KUpdater.Scripting.Skin;
 using KUpdater.UI;
 using KUpdater.Utility;
 
@@ -15,7 +16,10 @@ public partial class MainWindow : Window {
 
     public MainWindow() {
         Instance = this;
-        _ctx = new WindowContext(this);
+
+        _ctx = new WindowContext(
+            this,
+            ctx => new MainWindowSkin(ctx));
 
         LuaHost.OnNotify += (level, message) => {
             BeginInvoke(() => MessageBox.Show(this, message, level, MessageBoxButtons.OK, MessageBoxIcon.Information));

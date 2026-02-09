@@ -4,19 +4,15 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using KUpdater.Core;
 using KUpdater.Extensions;
 using KUpdater.Interop;
-using KUpdater.Scripting.Runtime;
-using KUpdater.Scripting.Skin;
 using SkiaSharp;
 
 namespace KUpdater.UI;
 
 public class Renderer : IDisposable {
-    private readonly Window _renderTarget;
-    private readonly ISkin _skin;
-    private readonly ControlManager _controlManager;
-    private readonly BaseConfig _config;
+    private readonly WindowContext _ctx;
     private readonly System.Windows.Forms.Timer _renderTimer;
     private int _needsRender;
     private SKBitmap? _renderBuffer;
@@ -32,13 +28,9 @@ public class Renderer : IDisposable {
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
-    public Renderer(Window window, ControlManager controlManager, ISkin skin, BaseConfig config) {
-        _renderTarget = window ?? throw new ArgumentNullException(nameof(window));
-        _controlManager = controlManager ?? throw new ArgumentNullException(nameof(controlManager));
-        _skin = skin ?? throw new ArgumentNullException(nameof(skin));
-        _config = config;
-
-        _renderTimer = new System.Windows.Forms.Timer { Interval = _config.RenderTimerInterval };
+    public Renderer(WindowContext ctx) {
+        _ctx = ctx;
+        _renderTimer = new System.Windows.Forms.Timer { Interval = _ctx.Config.RenderTimerInterval };
         _renderTimer.Tick += RenderTimer_Tick;
         _renderTimer.Start();
     }
@@ -52,15 +44,15 @@ public class Renderer : IDisposable {
     private void RenderTick() {
         if (Interlocked.Exchange(ref _needsRender, 0) == 0)
             return;
-        if (_disposed || _renderTarget.IsDisposed)
+        if (_disposed || _ctx.Window.IsDisposed)
             return;
 
-        if (_renderTarget.InvokeRequired) {
-            if (_disposed || _renderTarget.IsDisposed)
+        if (_ctx.Window.InvokeRequired) {
+            if (_disposed || _ctx.Window.IsDisposed)
                 return;
             try {
-                _renderTarget.BeginInvoke(new Action(() => {
-                    if (_disposed || _renderTarget.IsDisposed)
+                _ctx.Window.BeginInvoke(new Action(() => {
+                    if (_disposed || _ctx.Window.IsDisposed)
                         return;
                     Render();
                 }));
@@ -72,7 +64,7 @@ public class Renderer : IDisposable {
         IsRendering = true;
         var sw = Stopwatch.StartNew();
         try {
-            (_skin as SkinBase)?.ApplyLastState();
+            _ctx.Skin.ApplyLastState();
             Render();
         }
         finally {
@@ -83,9 +75,9 @@ public class Renderer : IDisposable {
     }
 
     private void GetDeviceSize(out int deviceWidth, out int deviceHeight) {
-        float scale = Math.Max(1f, _renderTarget.DeviceDpi / 96f);
-        deviceWidth = (int)Math.Ceiling(_renderTarget.Width * scale);
-        deviceHeight = (int)Math.Ceiling(_renderTarget.Height * scale);
+        float scale = Math.Max(1f, _ctx.Window.DeviceDpi / 96f);
+        deviceWidth = (int)Math.Ceiling(_ctx.Window.Width * scale);
+        deviceHeight = (int)Math.Ceiling(_ctx.Window.Height * scale);
         if (deviceWidth <= 0)
             deviceWidth = 1;
         if (deviceHeight <= 0)
@@ -110,7 +102,7 @@ public class Renderer : IDisposable {
     }
 
     public void Render() {
-        if (_renderTarget.IsDisposed || !_renderTarget.IsHandleCreated || _disposed)
+        if (_ctx.Window.IsDisposed || !_ctx.Window.IsHandleCreated || _disposed)
             return;
 
         GetDeviceSize(out int width, out int height);
@@ -118,7 +110,7 @@ public class Renderer : IDisposable {
 
         var canvas = _renderSurface!.Canvas;
         DrawWindowFrame(canvas, new Size(width, height));
-        _controlManager.Draw(canvas);
+        _ctx.Controls.Draw(canvas);
 
         // Fehlende Platzhalter zuletzt zeichnen -> topmost
         if (_missingRects.Count > 0) {
@@ -193,10 +185,10 @@ public class Renderer : IDisposable {
     public void Present(Bitmap bitmap, byte opacity = 255) {
         if (_disposed || bitmap == null)
             return;
-        if (_renderTarget.IsDisposed || !_renderTarget.IsHandleCreated)
+        if (_ctx.Window.IsDisposed || !_ctx.Window.IsHandleCreated)
             return;
 
-        IntPtr hwnd = _renderTarget.Handle;
+        IntPtr hwnd = _ctx.Window.Handle;
         if (hwnd == IntPtr.Zero)
             return;
 
@@ -267,7 +259,7 @@ public class Renderer : IDisposable {
 
             Size size = new(width, height);
             Point source = new(0, 0);
-            Point topPos = new(_renderTarget.Left, _renderTarget.Top);
+            Point topPos = new(_ctx.Window.Left, _ctx.Window.Top);
 
             var blend = new NativeMethods.BLENDFUNCTION
             {
@@ -346,8 +338,8 @@ public class Renderer : IDisposable {
     }
 
     public void DrawWindowFrame(SKCanvas canvas, Size size) {
-        var bg = _skin.GetBackground();
-        var layout = _skin.GetLayout();
+        var bg = _ctx.Skin.GetBackground();
+        var layout = _ctx.Skin.GetLayout();
 
         if (bg == null || layout == null)
             return;
