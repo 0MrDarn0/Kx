@@ -4,7 +4,6 @@ using KUpdater.Core;
 using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
 using KUpdater.Core.UI;
-using KUpdater.Interop;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
@@ -35,13 +34,12 @@ public partial class MainWindow : Window {
         _config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
         _resourceProvider = new FileResourceProvider(Paths.ResFolder);
         _controlManager = new();
-        _mainWindowSkin = new(this, _controlManager, _uiState, _config.Language, _config.MainWindowSkin, _resourceProvider);
-        _eventManager = new EventManager(_mainWindowSkin);
+        _eventManager = new EventManager(null);
+        _mainWindowSkin = new(this, _controlManager, _eventManager, _uiState, _config.Language, _config.MainWindowSkin, _resourceProvider);
+        _eventManager.SetSkin(_mainWindowSkin);
+
         _renderer = new(this, _controlManager, _mainWindowSkin, _config);
         _runner = new UpdaterPipelineRunner(_eventManager, new HttpUpdateSource(), _config.Url, AppDomain.CurrentDomain.BaseDirectory);
-
-        _mainWindowSkin.ExposeToLua("Renderer", _renderer);
-        _mainWindowSkin.ExposeToLua("EventManager", _eventManager);
 
         InitializeComponent();
 
@@ -55,14 +53,6 @@ public partial class MainWindow : Window {
                 .Item("Settings", (s, e) => { })
                 .Separator()
                 .Exit((s, e) => Application.Exit()));
-    }
-
-    protected override CreateParams CreateParams {
-        get {
-            var cp = base.CreateParams;
-            cp.ExStyle |= (int)WindowStylesEx.WS_EX_LAYERED;
-            return cp;
-        }
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e) {

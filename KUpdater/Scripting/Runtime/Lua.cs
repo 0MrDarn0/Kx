@@ -26,10 +26,22 @@ public abstract class Lua : IDisposable {
         _script.Options.DebugPrint = s => Debug.WriteLine($"[{DateTime.Now:HH:mm:ss}] [Lua] >>> [{s}]");
 
         ConfigureModulePaths(Paths.LuaFolder);
+        RegisterEventTypes();
         RegisterGlobals();
 
         _script.DoString(File.ReadAllText(scriptPath));
 
+    }
+
+    private void RegisterEventTypes() {
+        UserData.RegisterType<KUpdater.Core.Event.StatusEvent>();
+        UserData.RegisterType<KUpdater.Core.Event.ProgressEvent>();
+        UserData.RegisterType<KUpdater.Core.Event.ChangelogEvent>();
+        UserData.RegisterType<KUpdater.Core.Event.UpdateStepStarted>();
+        UserData.RegisterType<KUpdater.Core.Event.UpdateStepCompleted>();
+        UserData.RegisterType<KUpdater.Core.Event.UpdatePipelineStarted>();
+        UserData.RegisterType<KUpdater.Core.Event.UpdatePipelineCompleted>();
+        UserData.RegisterType<KUpdater.Core.Event.UpdateRequired>();
     }
 
     protected virtual void RegisterGlobals() {

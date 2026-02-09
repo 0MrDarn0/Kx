@@ -1,5 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Core.Event;
 using KUpdater.Core.UI;
 using KUpdater.Extensions;
 using KUpdater.Scripting.Runtime;
@@ -13,15 +14,17 @@ namespace KUpdater.Scripting.Skin;
 public abstract class SkinBase : Lua, ISkin {
     protected readonly Window _targetWindow;
     protected readonly ControlManager _controlManager;
+    protected readonly IEventManager _eventManager;
     protected readonly UIState _state;
     protected readonly IResourceProvider _resourceProvider;
     private SkinBackground? _cachedBackground;
     private SkinLayout? _cachedLayout;
 
-    protected SkinBase(string skinScript, Window targetwindow, ControlManager controlManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
+    protected SkinBase(string skinScript, Window targetwindow, ControlManager controlManager, IEventManager eventManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
         : base(skinScript) {
         _targetWindow = targetwindow;
         _controlManager = controlManager;
+        _eventManager = eventManager;
         _state = state;
         _resourceProvider = resourceProvider;
         RegisterGlobals();

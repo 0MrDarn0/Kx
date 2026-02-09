@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Reflection;
 using KUpdater.Scripting.Skin;
 using MoonSharp.Interpreter;
@@ -13,25 +14,24 @@ namespace KUpdater.Core.Event {
     /// Bietet außerdem Registrierung von Lua‑Funktionen per DynValue.
     /// </summary>
     public class EventManager : IEventManager {
-        // Mapping: EventType -> unveränderliche Liste von Delegates
-        private readonly ConcurrentDictionary<Type, ImmutableArray<Delegate>> _listeners
-            = new();
 
-        private readonly ISkin? _skin;
-
-        // Mapping EventName -> Type für Lua-Registrierung
-        private readonly Dictionary<string, Type> _eventTypes = new(StringComparer.Ordinal);
+        private ISkin? _skin;
+        private readonly ConcurrentDictionary<Type, ImmutableArray<Delegate>> _listeners = new();
+        private volatile ImmutableDictionary<string, Type> _eventTypes = ImmutableDictionary.Create<string, Type>(StringComparer.Ordinal);
 
         public EventManager(ISkin? skin = null) {
             _skin = skin;
 
-            // Vorbelegte Eventtypen (wie im Original)
-            _eventTypes["StatusEvent"] = typeof(StatusEvent);
-            _eventTypes["ProgressEvent"] = typeof(ProgressEvent);
-            _eventTypes["UpdateRequired"] = typeof(UpdateRequired);
-            _eventTypes["UpdatePipelineCompleted"] = typeof(UpdatePipelineCompleted);
-            _eventTypes["ChangelogEvent"] = typeof(ChangelogEvent);
+            var builder = _eventTypes.ToBuilder();
+            builder[nameof(StatusEvent)] = typeof(StatusEvent);
+            builder[nameof(ProgressEvent)] = typeof(ProgressEvent);
+            builder[nameof(UpdateRequired)] = typeof(UpdateRequired);
+            builder[nameof(UpdatePipelineCompleted)] = typeof(UpdatePipelineCompleted);
+            builder[nameof(ChangelogEvent)] = typeof(ChangelogEvent);
+            _eventTypes = builder.ToImmutable();
         }
+
+        public void SetSkin(ISkin skin) => _skin = skin;
 
         #region Registrierung Sync / Async
 
@@ -60,16 +60,37 @@ namespace KUpdater.Core.Event {
         /// Jede Registrierung erzeugt eine eigene Closure, damit mehrere Lua-Handler koexistieren.
         /// </summary>
         public void Register(string eventName, DynValue luaFunc) {
-            if (luaFunc == null)
-                throw new ArgumentNullException(nameof(luaFunc));
-            if (!_eventTypes.TryGetValue(eventName, out var type))
+            ArgumentNullException.ThrowIfNull(luaFunc);
+
+            if (!TryGetEventType(eventName, out var type))
                 throw new ArgumentException($"Unknown event type {eventName}", nameof(eventName));
 
-            // Invoke generic helper RegisterLuaGeneric<T>(DynValue)
-            var method = typeof(EventManager).GetMethod(nameof(RegisterLuaGeneric),
-                BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var generic = method.MakeGenericMethod(type);
-            generic.Invoke(this, new object[] { luaFunc });
+            var method = typeof(EventManager).GetMethod(nameof(RegisterLuaGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!;
+            var generic = method.MakeGenericMethod(type!);
+            generic.Invoke(this, [luaFunc]);
+        }
+
+        public bool TryRegisterLua(string eventName, DynValue luaFunc) {
+            if (luaFunc == null)
+                return false;
+
+            if (!TryGetEventType(eventName, out var type) || type == null)
+                return false;
+
+            try {
+                var method = typeof(EventManager).GetMethod(nameof(RegisterLuaGeneric), BindingFlags.NonPublic | BindingFlags.Instance);
+                if (method == null)
+                    return false;
+
+                var generic = method.MakeGenericMethod(type);
+                generic.Invoke(this, [luaFunc]);
+
+                return true;
+            }
+            catch {
+                // Fehler in Lua oder Reflection → false zurückgeben
+                return false;
+            }
         }
 
         // Generic helper, erzeugt eine Closure die die DynValue referenziert
@@ -79,8 +100,7 @@ namespace KUpdater.Core.Event {
 
             void action(T ev) {
                 try {
-                    // SafeInvokeDyn ist Teil SkinBase; falls _skin nicht SkinBase ist, cast prüfen
-                    (_skin as SkinBase)?.SafeInvokeDyn(luaFunc, ev);
+                    (_skin as SkinBase)?.SafeInvokeDyn(luaFunc, ev!);
                 }
                 catch (Exception ex) {
                     Console.Error.WriteLine($"Lua listener for {typeof(T).Name} threw: {ex}");
@@ -89,6 +109,76 @@ namespace KUpdater.Core.Event {
 
             Register((Action<T>)action);
         }
+
+        #endregion
+
+        #region EventType Regestrierung
+
+        private static void ValidateEventType(string name, Type type) {
+            ArgumentNullException.ThrowIfNull(type);
+
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Event name must not be empty.", nameof(name));
+
+            if (!type.IsClass)
+                throw new ArgumentException("Event type must be a class.", nameof(type));
+
+            if (type.IsAbstract)
+                throw new ArgumentException("Event type must not be abstract.", nameof(type));
+
+            if (!typeof(IEvent).IsAssignableFrom(type))
+                throw new ArgumentException("Event type must implement IEvent.", nameof(type));
+        }
+
+        // Atomare Registrierung: gibt true zurück wenn hinzugefügt oder überschrieben
+        public bool RegisterEventType(string name, Type type) {
+            ValidateEventType(name, type);
+            while (true) {
+                var snapshot = _eventTypes;
+
+                var builder = snapshot.ToBuilder();
+                builder[name] = type;
+
+                var updated = builder.ToImmutable();
+                var original = Interlocked.CompareExchange(ref _eventTypes, updated, snapshot);
+                if (ReferenceEquals(original, snapshot)) {
+                    return true;
+                }
+                // sonst: jemand hat zwischenzeitlich geschrieben -> retry
+            }
+        }
+
+        // Entfernen: true wenn Key existierte und entfernt wurde
+        public bool UnregisterEventType(string name) {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Event name must not be empty.", nameof(name));
+
+            while (true) {
+                var snapshot = _eventTypes;
+
+                if (!snapshot.ContainsKey(name))
+                    return false;
+
+                var builder = snapshot.ToBuilder();
+                builder.Remove(name);
+                var updated = builder.ToImmutable();
+                var original = Interlocked.CompareExchange(ref _eventTypes, updated, snapshot);
+
+                if (ReferenceEquals(original, snapshot)) {
+                    return true;
+                }
+                // retry
+            }
+        }
+
+        public bool TryGetEventType(string name, out Type? type) {
+            if (string.IsNullOrWhiteSpace(name)) {
+                type = null;
+                return false;
+            }
+            return _eventTypes.TryGetValue(name, out type);
+        }
+
 
         #endregion
 
@@ -163,12 +253,18 @@ namespace KUpdater.Core.Event {
 
         #endregion
 
+        #region Hilfsmethoden für Event Management
+
+        public IReadOnlyCollection<string> GetRegisteredEventNames() => [.. _eventTypes.Keys];
+
+        #endregion
+
         #region Hilfsmethoden für Listener Management
 
         private void AddListener(Type eventType, Delegate listener) {
             _listeners.AddOrUpdate(
                 eventType,
-                ImmutableArray.Create(listener),
+                [listener],
                 (_, old) => old.Add(listener)
             );
         }
@@ -177,7 +273,7 @@ namespace KUpdater.Core.Event {
             // Versuche in einer Schleife, da TryUpdate fehlschlagen kann wenn zwischenzeitlich ein anderer Thread schreibt
             _listeners.AddOrUpdate(
                 eventType,
-                ImmutableArray<Delegate>.Empty,
+                [],
                 (type, old) => {
                     var updated = old.Remove(listener);
                     return updated;
@@ -190,5 +286,24 @@ namespace KUpdater.Core.Event {
         }
 
         #endregion
+
+        public void PrintAllEvents() {
+            Debug.WriteLine("=== Registered Event Types ===");
+
+            foreach (var kv in _eventTypes) {
+                var name = kv.Key;
+                var type = kv.Value;
+
+                // Listener count ermitteln
+                int listenerCount = 0;
+                if (_listeners.TryGetValue(type, out var arr) && !arr.IsDefaultOrEmpty)
+                    listenerCount = arr.Length;
+
+                Debug.WriteLine($"- {name}  →  {type.FullName}  (Listeners: {listenerCount})");
+            }
+
+            Debug.WriteLine("=== End of Event List ===");
+        }
+
     }
 }

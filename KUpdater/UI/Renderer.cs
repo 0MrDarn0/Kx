@@ -117,7 +117,7 @@ public class Renderer : IDisposable {
         EnsureBuffers(width, height);
 
         var canvas = _renderSurface!.Canvas;
-        DrawBackground(canvas, new Size(width, height));
+        DrawWindowFrame(canvas, new Size(width, height));
         _controlManager.Draw(canvas);
 
         // Fehlende Platzhalter zuletzt zeichnen -> topmost
@@ -345,7 +345,7 @@ public class Renderer : IDisposable {
         canvas.Restore();
     }
 
-    public void DrawBackground(SKCanvas canvas, Size size) {
+    public void DrawWindowFrame(SKCanvas canvas, Size size) {
         var bg = _skin.GetBackground();
         var layout = _skin.GetLayout();
 

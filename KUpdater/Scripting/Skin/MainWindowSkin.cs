@@ -1,5 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Core.Event;
 using KUpdater.Core.UI;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Security;
@@ -9,8 +10,8 @@ using MoonSharp.Interpreter;
 
 namespace KUpdater.Scripting.Skin;
 
-public class MainWindowSkin(Window window, ControlManager controlManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
-    : SkinBase("skin_loader.lua", window, controlManager, state, lang, skinName, resourceProvider) {
+public class MainWindowSkin(Window window, ControlManager controlManager, IEventManager eventManager, UIState state, string lang, string skinName, IResourceProvider resourceProvider)
+    : SkinBase("skin_loader.lua", window, controlManager, eventManager, state, lang, skinName, resourceProvider) {
 
     protected override string GetName() => "main_window_skin";
 
@@ -29,10 +30,12 @@ public class MainWindowSkin(Window window, ControlManager controlManager, UIStat
         SetGlobal(LuaKeys.Actions.ApplicationExit, (Action)(() => Application.Exit()));
 
         ExposeToLua("Controls", _controlManager);
+        ExposeToLua("EventManager", _eventManager);
         ExposeToLua("UIState", _state);
         ExposeToLua<Font>();
         ExposeToLua<Color>();
         ExposeMarkedTypes();
+
         //SetGlobal("update_status", (Action<string>)(text => _controlManager.Update<UI.Control.Label>("lb_update_status", l => l.Text = text)));
         //SetGlobal("update_download_progress", (Action<double>)(percent => _controlManager.Update<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)Math.Clamp(percent, 0.0, 1.0))));
         //SetGlobal("update_label", UIBindings.UpdateLabel(_controlManager));
