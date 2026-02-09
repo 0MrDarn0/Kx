@@ -18,13 +18,13 @@ public sealed class WindowContext : IDisposable {
     public UIState State { get; }
     public BaseConfig Config { get; }
     public IResourceProvider Resources { get; }
-    public Renderer Renderer { get; }
+    public IRenderer Renderer { get; }
     public UpdaterPipelineRunner Pipeline { get; }
 
     public WindowContext(
         Window window,
         Func<WindowContext, SkinBase> skinFactory,
-        Func<WindowContext, Renderer>? rendererFactory = null) {
+        Func<WindowContext, IRenderer>? rendererFactory = null) {
 
         Window = window;
         Config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();

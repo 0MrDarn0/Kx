@@ -11,7 +11,7 @@ using SkiaSharp;
 
 namespace KUpdater.UI;
 
-public class Renderer : IDisposable {
+public class Renderer : IRenderer {
     private readonly WindowContext _ctx;
     private readonly System.Windows.Forms.Timer _renderTimer;
     private int _needsRender;
@@ -40,6 +40,9 @@ public class Renderer : IDisposable {
 
     private void RenderTimer_Tick(object? sender, EventArgs e)
         => RenderTick();
+
+    public void Resize(int width, int height)
+        => EnsureBuffers(width, height);
 
     private void RenderTick() {
         if (Interlocked.Exchange(ref _needsRender, 0) == 0)
@@ -106,7 +109,7 @@ public class Renderer : IDisposable {
             return;
 
         GetDeviceSize(out int width, out int height);
-        EnsureBuffers(width, height);
+        Resize(width, height);
 
         var canvas = _renderSurface!.Canvas;
         DrawWindowFrame(canvas, new Size(width, height));
