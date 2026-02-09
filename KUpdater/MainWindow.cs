@@ -5,11 +5,12 @@ using KUpdater.Core.Event;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
+using KUpdater.UI.Interface;
 using KUpdater.Utility;
 
 namespace KUpdater;
 
-public partial class MainWindow : Window {
+public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
     public static MainWindow? Instance { get; private set; }
     private readonly WindowContext _ctx;
     private readonly TrayIcon? _trayIcon;
@@ -18,6 +19,7 @@ public partial class MainWindow : Window {
         Instance = this;
 
         _ctx = new WindowContext(
+            this,
             this,
             ctx => new MainWindowSkin(ctx));
 

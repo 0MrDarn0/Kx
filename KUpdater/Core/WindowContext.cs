@@ -6,12 +6,14 @@ using KUpdater.Core.UI;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
+using KUpdater.UI.Interface;
 using KUpdater.Utility;
 
 namespace KUpdater.Core;
 
 public sealed class WindowContext : IDisposable {
-    public Window Window { get; }
+    public IRenderTarget Target { get; }
+    public IUiThreadInvoker UiThread { get; }
     public SkinBase Skin { get; }
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
@@ -22,11 +24,13 @@ public sealed class WindowContext : IDisposable {
     public UpdaterPipelineRunner Pipeline { get; }
 
     public WindowContext(
-        Window window,
+        IRenderTarget target,
+        IUiThreadInvoker uiThread,
         Func<WindowContext, SkinBase> skinFactory,
         Func<WindowContext, IRenderer>? rendererFactory = null) {
 
-        Window = window;
+        Target = target;
+        UiThread = uiThread;
         Config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
         Resources = new FileResourceProvider(Paths.ResFolder);
         Controls = new ControlManager();

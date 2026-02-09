@@ -22,8 +22,8 @@ public class MainWindowSkin(WindowContext ctx)
 
         SetGlobal(LuaKeys.Skin.Dir, Paths.LuaSkins.Replace("\\", "/"));
         SetGlobal(LuaKeys.UI.GetWindowSize, () => DynValue.NewTuple(
-            DynValue.NewNumber(ctx.Window.Width),
-            DynValue.NewNumber(ctx.Window.Height)
+            DynValue.NewNumber(ctx.Target.Width),
+            DynValue.NewNumber(ctx.Target.Height)
         ));
         SetGlobal(LuaKeys.Actions.ApplicationExit, (Action)(() => Application.Exit()));
 

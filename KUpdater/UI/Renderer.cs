@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using KUpdater.Core;
 using KUpdater.Extensions;
 using KUpdater.Interop;
+using KUpdater.UI.Interface;
 using SkiaSharp;
 
 namespace KUpdater.UI;
@@ -47,15 +48,15 @@ public class Renderer : IRenderer {
     private void RenderTick() {
         if (Interlocked.Exchange(ref _needsRender, 0) == 0)
             return;
-        if (_disposed || _ctx.Window.IsDisposed)
+        if (_disposed || _ctx.Target.IsDisposed)
             return;
 
-        if (_ctx.Window.InvokeRequired) {
-            if (_disposed || _ctx.Window.IsDisposed)
+        if (_ctx.UiThread.InvokeRequired) {
+            if (_disposed || _ctx.Target.IsDisposed)
                 return;
             try {
-                _ctx.Window.BeginInvoke(new Action(() => {
-                    if (_disposed || _ctx.Window.IsDisposed)
+                _ctx.UiThread.BeginInvoke(new Action(() => {
+                    if (_disposed || _ctx.Target.IsDisposed)
                         return;
                     Render();
                 }));
@@ -78,9 +79,9 @@ public class Renderer : IRenderer {
     }
 
     private void GetDeviceSize(out int deviceWidth, out int deviceHeight) {
-        float scale = Math.Max(1f, _ctx.Window.DeviceDpi / 96f);
-        deviceWidth = (int)Math.Ceiling(_ctx.Window.Width * scale);
-        deviceHeight = (int)Math.Ceiling(_ctx.Window.Height * scale);
+        float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
+        deviceWidth = (int)Math.Ceiling(_ctx.Target.Width * scale);
+        deviceHeight = (int)Math.Ceiling(_ctx.Target.Height * scale);
         if (deviceWidth <= 0)
             deviceWidth = 1;
         if (deviceHeight <= 0)
@@ -105,93 +106,98 @@ public class Renderer : IRenderer {
     }
 
     public void Render() {
-        if (_ctx.Window.IsDisposed || !_ctx.Window.IsHandleCreated || _disposed)
-            return;
+        try {
+            if (_ctx.Target.IsDisposed || !_ctx.Target.IsHandleCreated || _disposed)
+                return;
 
-        GetDeviceSize(out int width, out int height);
-        Resize(width, height);
+            GetDeviceSize(out int width, out int height);
+            Resize(width, height);
 
-        var canvas = _renderSurface!.Canvas;
-        DrawWindowFrame(canvas, new Size(width, height));
-        _ctx.Controls.Draw(canvas);
+            var canvas = _renderSurface!.Canvas;
+            DrawWindowFrame(canvas, new Size(width, height));
+            _ctx.Controls.Draw(canvas);
 
-        // Fehlende Platzhalter zuletzt zeichnen -> topmost
-        if (_missingRects.Count > 0) {
-            foreach (var rect in _missingRects) {
-                DrawMissingImageError(canvas, rect);
+            // Fehlende Platzhalter zuletzt zeichnen -> topmost
+            if (_missingRects.Count > 0) {
+                foreach (var rect in _missingRects) {
+                    DrawMissingImageError(canvas, rect);
+                }
+                _missingRects.Clear();
             }
-            _missingRects.Clear();
-        }
 
-        var bmpData = _backBuffer!.LockBits(
+            var bmpData = _backBuffer!.LockBits(
             new Rectangle(0, 0, width, height),
             ImageLockMode.WriteOnly,
             PixelFormat.Format32bppPArgb);
 
-        try {
-            unsafe {
-                byte* src = (byte*)_renderBuffer!.GetPixels();
-                if (src == null)
-                    return;
+            try {
+                unsafe {
+                    byte* src = (byte*)_renderBuffer!.GetPixels();
+                    if (src == null)
+                        return;
 
-                int srcRowBytes = _renderBuffer.RowBytes;
-                long srcExpectedBytes = (long)srcRowBytes * height;
-                long skByteCount = _renderBuffer.ByteCount;
-                if (skByteCount < srcExpectedBytes)
-                    return;
+                    int srcRowBytes = _renderBuffer.RowBytes;
+                    long srcExpectedBytes = (long)srcRowBytes * height;
+                    long skByteCount = _renderBuffer.ByteCount;
+                    if (skByteCount < srcExpectedBytes)
+                        return;
 
-                byte* dst = (byte*)bmpData.Scan0;
-                if (dst == null)
-                    return;
+                    byte* dst = (byte*)bmpData.Scan0;
+                    if (dst == null)
+                        return;
 
-                int dstRowBytes = bmpData.Stride;
-                if (dstRowBytes > srcRowBytes) {
-                    var pool = ArrayPool<byte>.Shared;
-                    byte[] zeros = pool.Rent(dstRowBytes);
-                    try {
-                        Array.Clear(zeros, 0, dstRowBytes);
-                        for (int y = 0; y < height; y++) {
-                            IntPtr rowPtr = new((byte*)dst + (long)y * dstRowBytes);
-                            Marshal.Copy(zeros, 0, rowPtr, dstRowBytes);
+                    int dstRowBytes = bmpData.Stride;
+                    if (dstRowBytes > srcRowBytes) {
+                        var pool = ArrayPool<byte>.Shared;
+                        byte[] zeros = pool.Rent(dstRowBytes);
+                        try {
+                            Array.Clear(zeros, 0, dstRowBytes);
+                            for (int y = 0; y < height; y++) {
+                                IntPtr rowPtr = new((byte*)dst + (long)y * dstRowBytes);
+                                Marshal.Copy(zeros, 0, rowPtr, dstRowBytes);
+                            }
                         }
+                        finally { pool.Return(zeros); }
                     }
-                    finally { pool.Return(zeros); }
-                }
 
-                long dstExpectedBytes = (long)dstRowBytes * height;
-                if (srcRowBytes <= 0 || dstRowBytes <= 0 || height <= 0)
-                    return;
-                if (srcExpectedBytes > Int64.MaxValue / 2 || dstExpectedBytes > Int64.MaxValue / 2)
-                    return;
+                    long dstExpectedBytes = (long)dstRowBytes * height;
+                    if (srcRowBytes <= 0 || dstRowBytes <= 0 || height <= 0)
+                        return;
+                    if (srcExpectedBytes > Int64.MaxValue / 2 || dstExpectedBytes > Int64.MaxValue / 2)
+                        return;
 
-                if (srcRowBytes == dstRowBytes && skByteCount >= srcExpectedBytes && dstExpectedBytes <= skByteCount) {
-                    Buffer.MemoryCopy(src, dst, dstExpectedBytes, srcExpectedBytes);
-                } else {
-                    int bytesPerRowToCopy = Math.Min(srcRowBytes, dstRowBytes);
-                    for (int y = 0; y < height; y++) {
-                        byte* sRow = src + (long)y * srcRowBytes;
-                        byte* dRow = dst + (long)y * dstRowBytes;
-                        long sOffset = (long)y * srcRowBytes + bytesPerRowToCopy;
-                        long dOffset = (long)y * dstRowBytes + bytesPerRowToCopy;
-                        if (sOffset > skByteCount || dOffset > dstExpectedBytes)
-                            break;
-                        Buffer.MemoryCopy(sRow, dRow, dstRowBytes, bytesPerRowToCopy);
+                    if (srcRowBytes == dstRowBytes && skByteCount >= srcExpectedBytes && dstExpectedBytes <= skByteCount) {
+                        Buffer.MemoryCopy(src, dst, dstExpectedBytes, srcExpectedBytes);
+                    } else {
+                        int bytesPerRowToCopy = Math.Min(srcRowBytes, dstRowBytes);
+                        for (int y = 0; y < height; y++) {
+                            byte* sRow = src + (long)y * srcRowBytes;
+                            byte* dRow = dst + (long)y * dstRowBytes;
+                            long sOffset = (long)y * srcRowBytes + bytesPerRowToCopy;
+                            long dOffset = (long)y * dstRowBytes + bytesPerRowToCopy;
+                            if (sOffset > skByteCount || dOffset > dstExpectedBytes)
+                                break;
+                            Buffer.MemoryCopy(sRow, dRow, dstRowBytes, bytesPerRowToCopy);
+                        }
                     }
                 }
             }
-        }
-        finally { _backBuffer.UnlockBits(bmpData); }
+            finally { _backBuffer.UnlockBits(bmpData); }
 
-        Present(_backBuffer);
+            Present(_backBuffer);
+        }
+        catch (Exception ex) {
+            Debug.WriteLine($"Render error: {ex}");
+        }
     }
 
     public void Present(Bitmap bitmap, byte opacity = 255) {
         if (_disposed || bitmap == null)
             return;
-        if (_ctx.Window.IsDisposed || !_ctx.Window.IsHandleCreated)
+        if (_ctx.Target.IsDisposed || !_ctx.Target.IsHandleCreated)
             return;
 
-        IntPtr hwnd = _ctx.Window.Handle;
+        IntPtr hwnd = _ctx.Target.Handle;
         if (hwnd == IntPtr.Zero)
             return;
 
@@ -262,7 +268,7 @@ public class Renderer : IRenderer {
 
             Size size = new(width, height);
             Point source = new(0, 0);
-            Point topPos = new(_ctx.Window.Left, _ctx.Window.Top);
+            Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
 
             var blend = new NativeMethods.BLENDFUNCTION
             {
@@ -278,6 +284,7 @@ public class Renderer : IRenderer {
             if (!success) {
                 var err = Marshal.GetLastWin32Error();
                 LastPresentError = err;
+                Debug.WriteLine($"UpdateLayeredWindow failed: {err}");
             }
         }
         finally {
