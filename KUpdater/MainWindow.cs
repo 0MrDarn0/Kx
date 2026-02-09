@@ -37,7 +37,7 @@ public partial class MainWindow : Window {
         _controlManager = new();
         _mainWindowSkin = new(this, _controlManager, _uiState, _config.Language, _config.MainWindowSkin, _resourceProvider);
         _eventManager = new EventManager(_mainWindowSkin);
-        _renderer = new(this, _controlManager, _mainWindowSkin);
+        _renderer = new(this, _controlManager, _mainWindowSkin, _config);
         _runner = new UpdaterPipelineRunner(_eventManager, new HttpUpdateSource(), _config.Url, AppDomain.CurrentDomain.BaseDirectory);
 
         _mainWindowSkin.ExposeToLua("Renderer", _renderer);

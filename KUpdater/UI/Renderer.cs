@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using KUpdater.Extensions;
 using KUpdater.Interop;
+using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using SkiaSharp;
 
@@ -15,6 +16,7 @@ public class Renderer : IDisposable {
     private readonly Window _renderTarget;
     private readonly ISkin _skin;
     private readonly ControlManager _controlManager;
+    private readonly BaseConfig _config;
     private readonly System.Windows.Forms.Timer _renderTimer;
     private int _needsRender;
     private SKBitmap? _renderBuffer;
@@ -30,12 +32,13 @@ public class Renderer : IDisposable {
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
-    public Renderer(Window window, ControlManager controlManager, ISkin skin) {
+    public Renderer(Window window, ControlManager controlManager, ISkin skin, BaseConfig config) {
         _renderTarget = window ?? throw new ArgumentNullException(nameof(window));
         _controlManager = controlManager ?? throw new ArgumentNullException(nameof(controlManager));
         _skin = skin ?? throw new ArgumentNullException(nameof(skin));
+        _config = config;
 
-        _renderTimer = new System.Windows.Forms.Timer { Interval = 8 };
+        _renderTimer = new System.Windows.Forms.Timer { Interval = _config.RenderTimerInterval };
         _renderTimer.Tick += RenderTimer_Tick;
         _renderTimer.Start();
     }
