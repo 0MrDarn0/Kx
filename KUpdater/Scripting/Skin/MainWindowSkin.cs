@@ -29,7 +29,7 @@ public class MainWindowSkin(WindowContext ctx)
         ctx.Events.SetSkin(this);
 
         ExposeToLua("Controls", ctx.Controls);
-        ExposeToLua("EventManager", ctx.Events);
+        ExposeToLua("Events", ctx.Events);
         ExposeToLua<Font>();
         ExposeToLua<Color>();
         ExposeMarkedTypes();
@@ -55,7 +55,8 @@ public class MainWindowSkin(WindowContext ctx)
             BottomCenter = GetSkiaBitmapFromProvider(bg.GetString("bottom_center")),
             BottomLeft = GetSkiaBitmapFromProvider(bg.GetString("bottom_left")),
             LeftCenter = GetSkiaBitmapFromProvider(bg.GetString("left_center")),
-            FillColor = bg.GetColor("fill_color", Color.Black)
+            FillBitmap = GetSkiaBitmapFromProvider(bg.GetString("fill_bitmap")),
+            FillColor = bg.GetColor("fill_color", Color.Black),
         };
     }
 

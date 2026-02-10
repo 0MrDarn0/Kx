@@ -2,6 +2,7 @@
 
 using KUpdater.Core.Attributes;
 using KUpdater.Extensions;
+using KUpdater.Utility;
 using MoonSharp.Interpreter;
 using SkiaSharp;
 
@@ -69,20 +70,25 @@ public class ProgressBar : ControlBase {
         Func<Rectangle> boundsFunc,
         Font font,
         Color textColor,
+        Color fillColor,
+        Color borderColor,
+        Color backgroundColor,
         bool ownsFont = true)
         : base(UIContextProvider.Current ?? throw new InvalidOperationException("UI context not initialized"), id, boundsFunc) {
         _ownsFont = ownsFont;
 
-        // Initialize paints with defaults
-        _fillPaint = new SKPaint { Color = SKColors.Goldenrod, IsAntialias = true };
-        _borderPaint = new SKPaint { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 2, IsAntialias = true };
-        _bgPaint = new SKPaint { Color = SKColors.Transparent, IsAntialias = true };
+        // Initialize paints with constructor colors
+        _fillPaint = new SKPaint { Color = fillColor.ToSKColor(), IsAntialias = true };
+        _borderPaint = new SKPaint { Color = borderColor.ToSKColor(), Style = SKPaintStyle.Stroke, StrokeWidth = 1, IsAntialias = true };
+        _bgPaint = new SKPaint { Color = backgroundColor.ToSKColor(), IsAntialias = true };
 
         // Property fields: onChanged callbacks update paints/text resources and request render
         _progress = new Property<float>(_ui, 0f, () => Invalidate());
-        _fillColor = new Property<SKColor>(_ui, _fillPaint.Color, () => { _fillPaint.Color = _fillColor!.Value; Invalidate(); });
-        _borderColor = new Property<SKColor>(_ui, _borderPaint.Color, () => { _borderPaint.Color = _borderColor!.Value; Invalidate(); });
-        _backgroundColor = new Property<SKColor>(_ui, _bgPaint.Color, () => { _bgPaint.Color = _backgroundColor!.Value; Invalidate(); });
+
+        // Use the constructor colors as the initial values for the properties
+        _fillColor = new Property<SKColor>(_ui, fillColor.ToSKColor(), () => { _fillPaint.Color = _fillColor!.Value; Invalidate(); });
+        _borderColor = new Property<SKColor>(_ui, borderColor.ToSKColor(), () => { _borderPaint.Color = _borderColor!.Value; Invalidate(); });
+        _backgroundColor = new Property<SKColor>(_ui, backgroundColor.ToSKColor(), () => { _bgPaint.Color = _backgroundColor!.Value; Invalidate(); });
 
         _font = new Property<Font>(_ui, font, () => { InitTextResources(); Invalidate(); });
         _textColor = new Property<Color>(_ui, textColor, () => { UpdateTextPaintColor(); Invalidate(); });
@@ -96,8 +102,11 @@ public class ProgressBar : ControlBase {
         Table bounds,
         Font font,
         Color textColor,
+        Color fillColor,
+        Color borderColor,
+        Color backgroundColor,
         bool ownsFont = true)
-        : this(id, bounds.ToBoundsFunc(), font, textColor, ownsFont) {
+        : this(id, bounds.ToBoundsFunc(), font, textColor, fillColor, borderColor, backgroundColor, ownsFont) {
     }
 
     private void InitTextResources() {
@@ -124,6 +133,7 @@ public class ProgressBar : ControlBase {
         _skTextPaint.Color = TextColor.ToSKColor();
     }
 
+
     public override void Draw(SKCanvas canvas) {
         if (!Visible)
             return;
@@ -143,13 +153,16 @@ public class ProgressBar : ControlBase {
         // Border
         canvas.DrawRect(rect.X, rect.Y, rect.Width, rect.Height, _borderPaint);
 
-        // Percent text centered
+        // Percent text centered with Glow
         if (_skFont != null && _skTextPaint != null) {
             string percentText = $"{(int)(clamped * 100)}%";
             var metrics = _skFont.Metrics;
-            float x = rect.X + rect.Width / 2;
-            float y = rect.Y + rect.Height / 2 - (metrics.Ascent + metrics.Descent) / 2 - metrics.Descent * 0.3f;
-            canvas.DrawText(percentText, x, y, SKTextAlign.Center, _skFont, _skTextPaint);
+
+            float x = rect.X + rect.Width / 2f;
+            float y = rect.Y + rect.Height / 2f - (metrics.Ascent + metrics.Descent) / 2f;
+            var skRect = new SKRect(rect.X, rect.Y, rect.X + rect.Width, rect.Y + rect.Height);
+            InkGasm.DrenchGlowOut(canvas, percentText, x, y - 18, _skFont, _skTextPaint);
+
         }
     }
 

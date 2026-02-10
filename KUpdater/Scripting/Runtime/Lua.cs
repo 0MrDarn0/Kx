@@ -306,6 +306,33 @@ public abstract class Lua : IDisposable {
                 return true;
             }
 
+            // Lua Closure → Action<T>
+            if (targetType.IsGenericType &&
+                targetType.GetGenericTypeDefinition() == typeof(Action<>)
+                && argVal is Closure cb2) {
+                var paramType = targetType.GetGenericArguments()[0];
+
+                // Wir erzeugen eine Methode, die T annimmt und cb.Call(T) aufruft
+                void Wrapper(object arg) {
+                    cb2.Call(DynValue.FromObject(null, arg));
+                }
+
+                // Jetzt Delegate erzeugen
+                result = Delegate.CreateDelegate(
+                    targetType,
+                    (Action<object>)Wrapper,
+                    "Invoke"
+                );
+
+                return true;
+            }
+
+            // Lua Closure → EventHandler
+            if (targetType == typeof(EventHandler) && argVal is Closure cb3) {
+                result = new EventHandler((s, e) => { cb3.Call(DynValue.FromObject(null, s), DynValue.FromObject(null, e)); });
+                return true;
+            }
+
             // Lua Closure → Func<Rectangle> (non-blocking, reentrancy-guard, cached fallback)
             if (targetType == typeof(Func<Rectangle>) && argVal is Closure boundsClosure) {
                 var script = boundsClosure.OwnerScript; // kann null sein

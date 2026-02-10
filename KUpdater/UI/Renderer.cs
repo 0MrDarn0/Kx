@@ -441,7 +441,6 @@ public class Renderer : IRenderer {
         }
 
         // Fill-Bereich: sichere Berechnung mit Fallbacks und Validierung
-        _fillPaint.Color = bg.FillColor.ToSKColor();
         float leftWidth = (bg.LeftCenter?.Width) ?? 0f;
         float topHeight = (bg.TopCenter?.Height) ?? 0f;
         float bottomHeight = (bg.BottomCenter?.Height) ?? 0f;
@@ -449,9 +448,35 @@ public class Renderer : IRenderer {
         float fillTop = Math.Max(0f, topHeight - layout.FillPosOffset);
         float fillRight = fillLeft + Math.Max(0f, width - leftWidth * 2 + layout.FillWidthOffset);
         float fillBottom = fillTop + Math.Max(0f, height - topHeight - bottomHeight + layout.FillHeightOffset);
+
         if (fillRight > fillLeft && fillBottom > fillTop) {
-            canvas.DrawRect(new SKRect(fillLeft, fillTop, fillRight, fillBottom), _fillPaint);
+            var fillRect = new SKRect(fillLeft, fillTop, fillRight, fillBottom);
+
+            // Wenn ein Fill-Bitmap vorhanden ist, benutze es; sonst Farbe
+            if (bg.FillBitmap != null) {
+                // Beispiel: zwei Modi — Tile (wiederholen) oder Stretch (skaliert)
+                // Du kannst den Modus aus layout oder bg konfigurieren; hier hardcoded als Tile.
+                bool useTileMode = false; // setze auf false für Stretch
+
+                if (useTileMode) {
+                    // Tile: Shader mit Repeat
+                    using (var shader = SKShader.CreateBitmap(bg.FillBitmap, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat)) {
+                        using (var paint = new SKPaint { Shader = shader, IsAntialias = true }) {
+                            canvas.DrawRect(fillRect, paint);
+                        }
+                    }
+                } else {
+                    // Stretch: Bitmap in das Fill-Rect skalieren
+                    // Achtung: DrawBitmap(SKBitmap, SKRect) skaliert automatisch
+                    canvas.DrawBitmap(bg.FillBitmap, fillRect);
+                }
+            } else {
+                // Fallback: Farbe wie bisher
+                _fillPaint.Color = bg.FillColor.ToSKColor();
+                canvas.DrawRect(fillRect, _fillPaint);
+            }
         }
+
     }
 
     public void Dispose() {

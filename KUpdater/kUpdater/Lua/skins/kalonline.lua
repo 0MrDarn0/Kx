@@ -13,6 +13,7 @@ local background_config = {
   bottom_center = "KalOnline:Frame:bottom_center.png",
   bottom_left   = "KalOnline:Frame:bottom_left.png",
   left_center   = "KalOnline:Frame:left_center.png",
+  fill_bitmap   = "KalOnline:Frame:fill_bitmap.bmp",
   fill_color    = "#101010"
 }
 
@@ -22,8 +23,8 @@ local layout_config = {
   left_height_offset  = 5,
   right_height_offset = 5,
   fill_pos_offset     = 5,
-  fill_width_offset   = 12,
-  fill_height_offset  = 10
+  fill_width_offset   = 12, --12,
+  fill_height_offset  = 9
 }
 
 -- Serverstatus-Funktion
@@ -129,14 +130,21 @@ return {
     )
     Controls.Add(websiteBtn)
 
+
+    local bgColor = MakeColor.FromHex("#00000000")
+    local fillColor = MakeColor.FromHex("#A49167")
+    local borderColor = MakeColor.FromHex("#564F3D")  --#564F3D  #7A623C
+    local textColor = MakeColor.FromHex("#7B6D4A")--#BC7900 #282828
+    
     -- ProgressBar
     local progressBar = ProgressBar(
       "pb_update_progress",
-      util.make_anchor(27, 30, -27, 5, "bottom_left"),
-      Font("Segoe UI", 11, "Regular"),
-      Color.Orange
-    )
-    
+      util.make_anchor(22, 19, -20, 4, "bottom_left"),
+      Font("Chiller", 19, "Bold"),
+      textColor,
+      fillColor,
+      borderColor,
+      bgColor)
     Controls.Add(progressBar)
 
     -- Changelog TextBox
@@ -160,7 +168,7 @@ return {
     -- Status-Label
     local statusLabel = Label(
       "lb_update_status",
-      util.make_anchor(27, 20, 200, 20, "bottom_left"),
+      util.make_anchor(30, 24, 200, 20, "bottom_left"),
       T("status.waiting"),
       Font("Segoe UI", 8, "Italic"),
       Color.White
@@ -169,18 +177,17 @@ return {
 
 
     -- Event-Registrierungen
-
-    EventManager.TryRegisterLua("StatusEvent", function(ev)
+    Events.TryRegisterLua("StatusEvent", function(ev)
       statusLabel.Text = ev.Text
     end)
 
 
-    EventManager.TryRegisterLua("ChangelogEvent", function(ev)
+    Events.TryRegisterLua("ChangelogEvent", function(ev)
       changelogBox.Text = ev.Text
     end)
 
 
-    EventManager.TryRegisterLua("ProgressEvent", function(ev)
+    Events.TryRegisterLua("ProgressEvent", function(ev)
       if not progressBar.Visible then
         progressBar.Visible = true
       end
@@ -188,33 +195,36 @@ return {
     end)
 
 
-    EventManager.TryRegisterLua("UpdateRequired", function(ev)
+    Events.TryRegisterLua("UpdateRequired", function(ev)
       startBtn.Visible = false
       settingsBtn.Visible = false
     end)
 
 
-    EventManager.TryRegisterLua("UpdatePipelineCompleted", function(ev)
+    Events.TryRegisterLua("UpdatePipelineCompleted", function(ev)
       progressBar.Visible = false
       startBtn.Visible = true
       settingsBtn.Visible = true
     end)
 
-    EventManager.TryRegisterLua("MainWindow_OnShown", function(ev)
+    Events.TryRegisterLua("MainWindow_OnShown", function(ev)
       print("MainWindow_OnShown")
-      if progressBar.Visible then
-        progressBar.Visible = false
-      end
+      progressBar.Progress = clamp(100 / 100, 0, 1)
+      progressBar.Visible = true
+
+      --if progressBar.Visible then
+        --progressBar.Visible = false
+      --end
     end)
 
-    EventManager.TryRegisterLua("MainWindow_OnFormClosed", function(ev)
+    Events.TryRegisterLua("MainWindow_OnFormClosed", function(ev)
       if ev.IsUserInitiated then
         print("User closed the window")
       end
     end)
 
     --[[
-        EventManager.PrintAllEvents()
+        Events.PrintAllEvents()
     ]]
 
   end

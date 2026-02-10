@@ -18,6 +18,7 @@ public class SkinBackground {
     public SKBitmap? BottomCenter { get; init; }
     public SKBitmap? BottomLeft { get; init; }
     public SKBitmap? LeftCenter { get; init; }
+    public SKBitmap? FillBitmap { get; init; }
     public Color FillColor { get; set; } = Color.Black;
 }
 

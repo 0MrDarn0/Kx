@@ -37,8 +37,8 @@ public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
                 .Item("default", Paths.Resource("Default/app.ico"))
             )
             .Menu(menu => menu
-                .Item("Settings", (s, e) => { })
-                .Separator()
+                //.Item("Settings", (s, e) => { })
+                //.Separator()
                 .Exit((s, e) => Application.Exit()));
     }
 

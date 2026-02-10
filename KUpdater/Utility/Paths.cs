@@ -1,7 +1,10 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Core.Attributes;
+
 namespace KUpdater.Utility;
 
+[ExposeToLua]
 public static class Paths {
     // Basisverzeichnis der Anwendung (neben kUpdater.exe)
     public static readonly string Base = AppContext.BaseDirectory;
@@ -19,7 +22,7 @@ public static class Paths {
     public static string LuaScript(string fileName)
         => Path.Combine(LuaFolder, fileName);
 
-    public static string LuaTheme(string fileName)
+    public static string LuaSkin(string fileName)
         => Path.Combine(LuaSkins, fileName);
 
     public static string LuaLanguage(string langCode)
