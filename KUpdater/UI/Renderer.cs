@@ -68,7 +68,7 @@ public class Renderer : IRenderer {
         IsRendering = true;
         var sw = Stopwatch.StartNew();
         try {
-            _ctx.Skin.ApplyLastState();
+            //_ctx.Skin.ApplyLastState();
             Render();
         }
         finally {

@@ -81,17 +81,19 @@ public abstract class Lua : IDisposable {
     protected LuaValue<T> GetGlobal<T>(string name)
          => new(_script.Globals.Get(name));
 
-    protected DynValue InvokeClosure(DynValue func, params object[] args) {
+    protected internal DynValue InvokeClosure(DynValue func, params object[] args) {
         if (!func.IsFunction())
             return DynValue.Nil;
 
         try {
             var dynArgs = (args ?? []).Select(a => DynValue.FromObject(_script, a)).ToArray();
-            return _script.Call(func, dynArgs);
+            lock (_script) {
+                return _script.Call(func, dynArgs);
+            }
         }
         catch (ScriptRuntimeException srx) {
             Debug.WriteLine($"[Lua] runtime error invoking closure: {srx.DecoratedMessage ?? srx.Message}");
-            Debug.WriteLine($"[Lua] raw stacktrace: {srx.StackTrace}");
+            Debug.WriteLine(srx.StackTrace);
             return DynValue.Nil;
         }
         catch (Exception ex) {
@@ -99,6 +101,7 @@ public abstract class Lua : IDisposable {
             return DynValue.Nil;
         }
     }
+
 
 
     public DynValue Invoke(string functionName, params object[] args) {
@@ -301,14 +304,62 @@ public abstract class Lua : IDisposable {
                 return true;
             }
 
-            // Lua Closure → Func<Rectangle>
+            // Lua Closure → Func<Rectangle> (non-blocking, reentrancy-guard, cached fallback)
             if (targetType == typeof(Func<Rectangle>) && argVal is Closure boundsClosure) {
-                result = new Func<Rectangle>(() => {
-                    try {
+                var script = boundsClosure.OwnerScript; // kann null sein
+                Rectangle last = Rectangle.Empty;
+                int inCall = 0;
 
-                        var ret = boundsClosure.Call();
-                        if (!ret.IsTable())
-                            return Rectangle.Empty;
+                result = new Func<Rectangle>(() => {
+                    // Reentrancy guard: wenn wir bereits in einem Aufruf sind, gib das letzte Ergebnis zurück
+                    if (Interlocked.Exchange(ref inCall, 1) == 1)
+                        return last;
+
+                    try {
+                        DynValue ret = DynValue.Nil;
+
+                        // Wenn kein OwnerScript vorhanden ist, versuche closure.Call() sicher
+                        if (script == null) {
+                            try {
+                                ret = boundsClosure.Call();
+                            }
+                            catch (Exception ex) {
+                                Debug.WriteLine($"[Lua] boundsClosure.Call() failed (no OwnerScript): {ex}");
+                                return last;
+                            }
+                        } else {
+                            // Versuche non-blocking die Lua-VM zu bekommen. Wenn nicht möglich, fallback auf last.
+                            bool gotLock = false;
+                            try {
+                                gotLock = System.Threading.Monitor.TryEnter(script);
+                                if (!gotLock) {
+                                    // Script ist gerade in Benutzung — gib das letzte bekannte Rectangle zurück
+                                    Debug.WriteLine($"[Lua] boundsClosure: script busy, returning cached bounds (thread {Thread.CurrentThread.ManagedThreadId})");
+                                    return last;
+                                }
+
+                                // Sicherer Aufruf innerhalb der Sperre
+                                try {
+                                    ret = script.Call(boundsClosure);
+                                }
+                                catch (ScriptRuntimeException srx) {
+                                    Debug.WriteLine($"[Lua] runtime error in boundsClosure: {srx.DecoratedMessage ?? srx.Message}");
+                                    Debug.WriteLine(srx.StackTrace);
+                                    return last;
+                                }
+                                catch (Exception ex) {
+                                    Debug.WriteLine($"[Lua] error calling boundsClosure: {ex}");
+                                    return last;
+                                }
+                            }
+                            finally {
+                                if (gotLock)
+                                    System.Threading.Monitor.Exit(script);
+                            }
+                        }
+
+                        if (ret == null || !ret.IsTable())
+                            return last;
 
                         var t = ret.AsTable()!;
                         int x = (int)(t.Get("x").AsNumber() ?? 0);
@@ -316,7 +367,7 @@ public abstract class Lua : IDisposable {
                         int w = (int)(t.Get("width").AsNumber() ?? 0);
                         int h = (int)(t.Get("height").AsNumber() ?? 0);
 
-                        // Optional anchoring for negatives (keeps Lua simple)
+                        // Optional anchoring for negatives
                         var form = MainWindow.Instance;
                         if (form != null) {
                             if (x < 0)
@@ -325,17 +376,24 @@ public abstract class Lua : IDisposable {
                                 y = form.Height + y;
                             if (w < 0)
                                 w = form.Width + w;
-                            // h negative rarely used; add if needed
                         }
-                        return new Rectangle(x, y, w, h);
+
+                        last = new Rectangle(x, y, w, h);
+                        return last;
                     }
                     catch (Exception ex) {
-                        Debug.WriteLine($"[Lua] boundsClosure failed: {ex.Message}");
-                        return Rectangle.Empty;
+                        Debug.WriteLine($"[Lua] boundsClosure unexpected exception: {ex}");
+                        return last;
+                    }
+                    finally {
+                        Interlocked.Exchange(ref inCall, 0);
                     }
                 });
+
                 return true;
             }
+
+
 
             // Enum: string name
             if (targetType.IsEnum && argVal is string s &&

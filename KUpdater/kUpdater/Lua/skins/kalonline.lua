@@ -136,6 +136,7 @@ return {
       Font("Segoe UI", 11, "Regular"),
       Color.Orange
     )
+    
     Controls.Add(progressBar)
 
     -- Changelog TextBox
@@ -155,6 +156,7 @@ return {
     changelogBox.GlowRadius      = 6
     Controls.Add(changelogBox)
 
+
     -- Status-Label
     local statusLabel = Label(
       "lb_update_status",
@@ -165,31 +167,42 @@ return {
     )
     Controls.Add(statusLabel)
 
-    -- Event-Registrierungen (auskommentiert; bei Bedarf aktivieren)
-    --[[
+
+    -- Event-Registrierungen
+
     EventManager.TryRegisterLua("StatusEvent", function(ev)
       statusLabel.Text = ev.Text
     end)
 
+
+    EventManager.TryRegisterLua("ChangelogEvent", function(ev)
+      changelogBox.Text = ev.Text
+    end)
+
+
     EventManager.TryRegisterLua("ProgressEvent", function(ev)
+      if not progressBar.Visible then
+        progressBar.Visible = true
+      end
       progressBar.Progress = clamp(ev.Percent / 100, 0, 1)
     end)
+
 
     EventManager.TryRegisterLua("UpdateRequired", function(ev)
       progressBar.Visible = true
       startBtn.Visible = false
     end)
 
+
     EventManager.TryRegisterLua("UpdatePipelineCompleted", function(ev)
       progressBar.Visible = false
       startBtn.Visible = true
     end)
 
-    EventManager.TryRegisterLua("ChangelogEvent", function(ev)
-      changelogBox.Text = ev.Text
-    end)
 
-    EventManager.PrintAllEvents()
+    --[[
+        EventManager.PrintAllEvents()
     ]]
+
   end
 }

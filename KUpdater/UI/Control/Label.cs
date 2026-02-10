@@ -8,15 +8,26 @@ using SkiaSharp;
 namespace KUpdater.UI.Control;
 
 [ExposeToLua]
-public class Label : IControl {
-    public string Id { get; }
-    private readonly Func<Rectangle> _boundsFunc;
-    public Rectangle Bounds => _boundsFunc();
-    public string Text { get; set; }
-    public Font Font { get; private set; }
-    public Color Color { get; set; }
+public class Label : ControlBase {
+    private readonly Property<string> _text;
+    public string Text {
+        get => _text.Value;
+        set => _text.Value = value;
+    }
+
+    private readonly Property<Font> _font;
+    public Font Font {
+        get => _font.Value;
+        set => _font.Value = value;
+    }
+
+    private readonly Property<Color> _color;
+    public Color Color {
+        get => _color.Value;
+        set => _color.Value = value;
+    }
+
     public TextFormatFlags Flags { get; set; }
-    public bool Visible { get; set; } = true;
     private readonly bool _ownsFont;
     private bool _disposed;
 
@@ -25,42 +36,67 @@ public class Label : IControl {
     private SKFont? _skFont;
     private SKPaint? _skPaint;
 
-    public Label(string id, Func<Rectangle> boundsFunc, string text, Font font, Color color, bool ownsFont = true, TextFormatFlags flags = TextFormatFlags.Default) {
-        Id = id;
-        _boundsFunc = boundsFunc;
-        Text = text;
-        Font = font;
-        Color = color;
+    public Label(
+        string id,
+        Func<Rectangle> boundsFunc,
+        string text,
+        Font font,
+        Color color,
+        bool ownsFont = true,
+        TextFormatFlags flags = TextFormatFlags.Default)
+        : base(UIContextProvider.Current ?? throw new InvalidOperationException("UI context not initialized"), id, boundsFunc) {
         Flags = flags;
         _ownsFont = ownsFont;
+
+        // Properties marshal to UI thread and request render on change
+        _text = new Property<string>(_ui, text, () => Invalidate());
+        _font = new Property<Font>(_ui, font ?? throw new ArgumentNullException(nameof(font)), () => { InitResources(); Invalidate(); });
+        _color = new Property<Color>(_ui, color, () => { UpdatePaintColor(); Invalidate(); });
 
         InitResources();
     }
 
-    public Label(string id, Table bounds, string text, Font font, Color color,
-                   bool ownsFont = true, TextFormatFlags flags = TextFormatFlags.Default)
-        : this(id, () => new Rectangle(
-            (int)(bounds.Get("x").CastToNumber() ?? 0),
-            (int)(bounds.Get("y").CastToNumber() ?? 0),
-            (int)(bounds.Get("width").CastToNumber() ?? 0),
-            (int)(bounds.Get("height").CastToNumber() ?? 0)
-        ), text, font, color, ownsFont, flags) {
+    public Label(
+        string id,
+        Table bounds,
+        string text,
+        Font font,
+        Color color,
+        bool ownsFont = true,
+        TextFormatFlags flags = TextFormatFlags.Default)
+        : this(id, bounds.ToBoundsFunc(), text, font, color, ownsFont, flags) {
     }
 
-
     private void InitResources() {
-        SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
-        SKFontStyleSlant slant = Font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+        // Dispose any previous resources if reinitializing
+        try { _skPaint?.Dispose(); }
+        catch { }
+        try { _skFont?.Dispose(); }
+        catch { }
+        try { _typeface?.Dispose(); }
+        catch { }
 
-        _typeface = SKTypeface.FromFamilyName(Font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
-        _skFont = new SKFont(_typeface, Font.Size * 1.33f);
+        var font = Font;
+        var color = Color;
+
+        SKFontStyleWeight weight = font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+        SKFontStyleSlant slant = font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+
+        _typeface = SKTypeface.FromFamilyName(font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
+        _skFont = new SKFont(_typeface, font.Size * 1.33f);
         _skPaint = new SKPaint {
-            Color = Color.ToSKColor(),
+            Color = color.ToSKColor(),
             IsAntialias = true
         };
     }
 
-    public void Draw(SKCanvas canvas) {
+    private void UpdatePaintColor() {
+        if (_skPaint == null)
+            _skPaint = new SKPaint { IsAntialias = true };
+        _skPaint.Color = Color.ToSKColor();
+    }
+
+    public override void Draw(SKCanvas canvas) {
         if (!Visible || _skFont == null || _skPaint == null)
             return;
 
@@ -73,31 +109,31 @@ public class Label : IControl {
         canvas.DrawText(Text, x, y, SKTextAlign.Left, _skFont, _skPaint);
     }
 
-    public bool OnMouseMove(Point p) => false;
-    public bool OnMouseDown(Point p) => false;
-    public bool OnMouseUp(Point p) => false;
-    public bool OnMouseWheel(int delta, Point p) => false;
+    public override bool OnMouseMove(Point p) => false;
+    public override bool OnMouseDown(Point p) => false;
+    public override bool OnMouseUp(Point p) => false;
+    public override bool OnMouseWheel(int delta, Point p) => false;
 
-    public void Dispose() {
-        Dispose(true);
-        GC.SuppressFinalize(this); // verhindert unnötigen Finalizer
-    }
-
-    protected virtual void Dispose(bool disposing) {
+    protected override void Dispose(bool disposing) {
         if (_disposed)
             return;
 
         if (disposing) {
-            // Managed Ressourcen freigeben
-            if (_ownsFont)
-                Font.Dispose();
+            if (_ownsFont) {
+                try { Font.Dispose(); }
+                catch { }
+            }
 
-            _skPaint?.Dispose();
-            _skFont?.Dispose();
-            _typeface?.Dispose();
+            try { _skPaint?.Dispose(); }
+            catch { }
+            try { _skFont?.Dispose(); }
+            catch { }
+            try { _typeface?.Dispose(); }
+            catch { }
         }
 
-        // Unmanaged Ressourcen hier freigeben
         _disposed = true;
+
+        base.Dispose(disposing);
     }
 }

@@ -36,6 +36,9 @@ public sealed class WindowContext : IDisposable {
         Controls = new ControlManager();
         Events = new EventManager();
         State = new UIState();
+
+        UIContextProvider.Initialize(this);
+
         Skin = skinFactory(this);
         Renderer = (rendererFactory ?? (ctx => new Renderer(ctx)))(this);
         Pipeline = new UpdaterPipelineRunner(Events, new HttpUpdateSource(), Config.Url, AppDomain.CurrentDomain.BaseDirectory);
@@ -46,5 +49,6 @@ public sealed class WindowContext : IDisposable {
         Skin.Dispose();
         Controls.Dispose();
         Resources.Dispose();
+        UIContextProvider.Clear();
     }
 }

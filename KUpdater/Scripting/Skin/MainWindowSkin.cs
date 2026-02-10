@@ -38,11 +38,11 @@ public class MainWindowSkin(WindowContext ctx)
     }
 
     protected override void UpdateLastState() {
-        ctx.Controls.TryUpdate<UI.Control.Label>("lb_update_status", l => l.Text = ctx.State.Status);
-        ctx.Controls.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)ctx.State.Progress);
-        ctx.Controls.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Visible = ctx.State.ProgressVisible);
-        ctx.Controls.TryUpdate<UI.Control.TextBox>("tb_changelog", tb => tb.Text = ctx.State.Changelog);
-        ctx.Controls.TryUpdate<UI.Control.Button>("btn_start", btn => btn.Visible = ctx.State.StartButtonVisible);
+        //ctx.Controls.TryUpdate<UI.Control.Label>("lb_update_status", l => l.Text = ctx.State.Status);
+        //ctx.Controls.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Progress = (float)ctx.State.Progress);
+        //ctx.Controls.TryUpdate<UI.Control.ProgressBar>("pb_update_progress", b => b.Visible = ctx.State.ProgressVisible);
+        //ctx.Controls.TryUpdate<UI.Control.TextBox>("tb_changelog", tb => tb.Text = ctx.State.Changelog);
+        //ctx.Controls.TryUpdate<UI.Control.Button>("btn_start", btn => btn.Visible = ctx.State.StartButtonVisible);
     }
 
 

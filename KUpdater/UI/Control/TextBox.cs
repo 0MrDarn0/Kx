@@ -8,20 +8,37 @@ using SkiaSharp;
 namespace KUpdater.UI.Control;
 
 [ExposeToLua]
-public class TextBox : IControl {
-    public string Id { get; }
-    private readonly Func<Rectangle> _boundsFunc;
-    public Rectangle Bounds => _boundsFunc();
-    public string Text { get; set; }
-    public Font Font { get; }
-    public Color ForeColor { get; set; }
-    public Color BackColor { get; set; }
-    public bool Visible { get; set; } = true;
+public class TextBox : ControlBase {
+    private readonly Property<string> _text;
+    public string Text {
+        get => _text.Value;
+        set => _text.Value = value;
+    }
+
+    private readonly Property<Font> _font;
+    public Font Font {
+        get => _font.Value;
+        set => _font.Value = value;
+    }
+
+    private readonly Property<Color> _foreColor;
+    public Color ForeColor {
+        get => _foreColor.Value;
+        set => _foreColor.Value = value;
+    }
+
+    private readonly Property<Color> _backColor;
+    public Color BackColor {
+        get => _backColor.Value;
+        set => _backColor.Value = value;
+    }
+
     public bool ReadOnly { get; set; }
     public bool Multiline { get; set; }
     public Color ScrollBarColor { get; set; } = Color.FromArgb(80, 80, 80);
 
     private readonly bool _ownsFont;
+
     // Skia Ressourcen
     private SKTypeface? _typeface;
     private SKFont? _skFont;
@@ -43,46 +60,82 @@ public class TextBox : IControl {
     public Color GlowColor { get; set; } = Color.Gold;
     public float GlowRadius { get; set; } = 8f;
 
+    public TextBox(
+        string id,
+        Func<Rectangle> boundsFunc,
+        string text,
+        Font font,
+        Color foreColor,
+        Color backColor,
+        bool multiline = true,
+        bool readOnly = false,
+        Color? scrollBarColor = null,
+        bool ownsFont = true)
+        : base(UIContextProvider.Current ?? throw new InvalidOperationException("UI context not initialized"), id, boundsFunc) {
+        ArgumentNullException.ThrowIfNull(font);
 
-    public TextBox(string id, Func<Rectangle> boundsFunc, string text, Font font,
-                     Color foreColor, Color backColor,
-                     bool multiline = true, bool readOnly = false, Color? scrollBarColor = null, bool ownsFont = true) {
-        Id = id;
-        _boundsFunc = boundsFunc;
-        Text = text;
-        Font = font;
-        ForeColor = foreColor;
-        BackColor = backColor;
         Multiline = multiline;
         ReadOnly = readOnly;
         if (scrollBarColor.HasValue)
             ScrollBarColor = scrollBarColor.Value;
         _ownsFont = ownsFont;
+
+        // Properties marshal to UI thread and request render on change
+        _text = new Property<string>(_ui, text, () => Invalidate());
+        _font = new Property<Font>(_ui, font, () => { InitResources(); Invalidate(); });
+        _foreColor = new Property<Color>(_ui, foreColor, () => { UpdatePaintColors(); Invalidate(); });
+        _backColor = new Property<Color>(_ui, backColor, () => { UpdatePaintColors(); Invalidate(); });
+
         InitResources();
     }
 
-    public TextBox(string id, Table bounds, string text, Font font, Color foreColor, Color backColor,
-                     bool multiline = true, bool readOnly = false, Color? scrollBarColor = null, bool ownsFont = true)
-        : this(id, () => new Rectangle(
-            (int)(bounds.Get("x").CastToNumber() ?? 0),
-            (int)(bounds.Get("y").CastToNumber() ?? 0),
-            (int)(bounds.Get("width").CastToNumber() ?? 0),
-            (int)(bounds.Get("height").CastToNumber() ?? 0)
-        ), text, font, foreColor, backColor, multiline, readOnly, scrollBarColor, ownsFont) { }
-
-
-    private void InitResources() {
-        SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
-        SKFontStyleSlant slant = Font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
-
-        _typeface = SKTypeface.FromFamilyName(Font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
-
-        _skFont = new SKFont(_typeface, Font.Size * 1.33f);
-        _textPaint = new SKPaint { Color = ForeColor.ToSKColor(), IsAntialias = true };
-        _bgPaint = new SKPaint { Color = BackColor.ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Fill };
+    public TextBox(
+        string id,
+        Table bounds,
+        string text,
+        Font font,
+        Color foreColor,
+        Color backColor,
+        bool multiline = true,
+        bool readOnly = false,
+        Color? scrollBarColor = null,
+        bool ownsFont = true)
+        : this(id, bounds.ToBoundsFunc(), text, font, foreColor, backColor, multiline, readOnly, scrollBarColor, ownsFont) {
     }
 
-    public void Draw(SKCanvas canvas) {
+    private void InitResources() {
+        // Dispose previous resources if any
+        try { _textPaint?.Dispose(); }
+        catch { }
+        try { _bgPaint?.Dispose(); }
+        catch { }
+        try { _skFont?.Dispose(); }
+        catch { }
+        try { _typeface?.Dispose(); }
+        catch { }
+
+        var font = Font;
+        var fore = ForeColor;
+        var back = BackColor;
+
+        SKFontStyleWeight weight = font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+        SKFontStyleSlant slant = font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+
+        _typeface = SKTypeface.FromFamilyName(font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
+        _skFont = new SKFont(_typeface, font.Size * 1.33f);
+        _textPaint = new SKPaint { Color = fore.ToSKColor(), IsAntialias = true };
+        _bgPaint = new SKPaint { Color = back.ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Fill };
+    }
+
+    private void UpdatePaintColors() {
+        _textPaint ??= new SKPaint { IsAntialias = true };
+        _bgPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+
+        _textPaint.Color = ForeColor.ToSKColor();
+        _bgPaint.Color = BackColor.ToSKColor();
+    }
+
+    public override void Draw(SKCanvas canvas) {
         if (!Visible || _skFont == null || _textPaint == null || _bgPaint == null)
             return;
 
@@ -93,7 +146,8 @@ public class TextBox : IControl {
 
         // --- Rahmen & Glow ---
         if (BorderThickness > 0) {
-            using var borderPaint = new SKPaint {
+            using var borderPaint = new SKPaint
+            {
                 Color = BorderColor.ToSKColor(),
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
@@ -102,7 +156,8 @@ public class TextBox : IControl {
 
             // Glow zuerst (unter dem Rahmen)
             if (GlowEnabled) {
-                using var glowPaint = new SKPaint {
+                using var glowPaint = new SKPaint
+                {
                     Color = GlowColor.ToSKColor().WithAlpha(180),
                     IsAntialias = true,
                     Style = SKPaintStyle.Stroke,
@@ -116,7 +171,6 @@ public class TextBox : IControl {
             canvas.DrawRect(rect.X, rect.Y, rect.Width, rect.Height, borderPaint);
         }
 
-
         // Clipping aktivieren
         canvas.Save();
         canvas.ClipRect(new SKRect(rect.X, rect.Y, rect.Right, rect.Bottom));
@@ -129,8 +183,10 @@ public class TextBox : IControl {
         // Start-Y: obere Kante + Abstand bis zur Baseline
         float y = rect.Y - metrics.Ascent - _scrollOffset;
 
+        string text = Text ?? string.Empty;
+
         if (Multiline) {
-            foreach (var paragraph in Text.Split(["\r\n", "\n"], StringSplitOptions.None)) {
+            foreach (var paragraph in text.Split(["\r\n", "\n"], StringSplitOptions.None)) {
                 var words = paragraph.Split(' ');
                 var lineBuilder = new StringBuilder();
 
@@ -155,15 +211,13 @@ public class TextBox : IControl {
                 }
             }
         } else {
-            canvas.DrawText(Text, x, y, SKTextAlign.Left, _skFont, _textPaint);
+            canvas.DrawText(text, x, y, SKTextAlign.Left, _skFont, _textPaint);
         }
-
 
         // Clipping wiederherstellen
         canvas.Restore();
 
         // --- Scrollbar / Marker ---
-        // Nur zeichnen, wenn der Text höher ist als der sichtbare Bereich
         float totalHeight = GetTotalTextHeight();
         if (totalHeight > Bounds.Height) {
             float visibleHeight = Bounds.Height;
@@ -174,7 +228,6 @@ public class TextBox : IControl {
             // ScrollOffset begrenzen
             ClampScrollOffset(maxScroll);
 
-            // maxScroll könnte 0 sein (kein Scrollen möglich) -> Marker nicht zeichnen in dem Fall (division by zero)
             if (maxScroll > 0) {
                 using var markerPaint = new SKPaint { Color = ScrollBarColor.ToSKColor().WithAlpha(160), IsAntialias = true };
 
@@ -187,14 +240,15 @@ public class TextBox : IControl {
         }
     }
 
-    public bool OnMouseDown(Point p) {
+    public override bool OnMouseDown(Point p) {
         if (_markerRect.Contains(p.X, p.Y)) {
             _isDraggingMarker = true;
             _dragStartY = p.Y;
             _scrollStartOffset = _scrollOffset;
             return true;
         }
-        // --- Jump to clicked scrollbar position ---
+
+        // Jump to clicked scrollbar position
         if (p.X >= Bounds.Right - 8 && p.X <= Bounds.Right) {
             float totalHeight = GetTotalTextHeight();
             float visibleHeight = Bounds.Height;
@@ -207,10 +261,11 @@ public class TextBox : IControl {
                 return true;
             }
         }
+
         return false;
     }
 
-    public bool OnMouseMove(Point p) {
+    public override bool OnMouseMove(Point p) {
         if (_isDraggingMarker) {
             float totalHeight = GetTotalTextHeight();
             float visibleHeight = Bounds.Height;
@@ -227,16 +282,16 @@ public class TextBox : IControl {
         return false;
     }
 
-    public bool OnMouseUp(Point p) {
+    public override bool OnMouseUp(Point p) {
         _isDraggingMarker = false;
         return false;
     }
 
-    public bool OnMouseWheel(int delta, Point p) {
+    public override bool OnMouseWheel(int delta, Point p) {
         if (!Bounds.Contains(p))
             return false;
 
-        int scrollStep = _lineHeight * 3;
+        int scrollStep = Math.Max(1, _lineHeight) * 3;
         _scrollOffset -= Math.Sign(delta) * scrollStep;
 
         float maxScroll = Math.Max(0, GetTotalTextHeight() - Bounds.Height);
@@ -253,28 +308,28 @@ public class TextBox : IControl {
     }
 
     private float GetTotalTextHeight() {
-        int lines = Text.Split(["\r\n", "\n"], StringSplitOptions.None).Length;
+        int lines = (Text ?? string.Empty).Split(["\r\n", "\n"], StringSplitOptions.None).Length;
         return lines * _lineHeight;
     }
 
-    public void Dispose() {
-        Dispose(true);
-        GC.SuppressFinalize(this); // verhindert unnötigen Finalizer
-    }
-
-    protected virtual void Dispose(bool disposing) {
+    protected override void Dispose(bool disposing) {
         if (_disposed)
             return;
 
         if (disposing) {
-            // Managed Ressourcen freigeben
-            if (_ownsFont)
-                Font.Dispose();
+            if (_ownsFont) {
+                try { Font.Dispose(); }
+                catch { }
+            }
 
-            _textPaint?.Dispose();
-            _bgPaint?.Dispose();
-            _skFont?.Dispose();
-            _typeface?.Dispose();
+            try { _textPaint?.Dispose(); }
+            catch { }
+            try { _bgPaint?.Dispose(); }
+            catch { }
+            try { _skFont?.Dispose(); }
+            catch { }
+            try { _typeface?.Dispose(); }
+            catch { }
 
             _textPaint = null;
             _bgPaint = null;
@@ -284,6 +339,8 @@ public class TextBox : IControl {
 
         // Unmanaged Ressourcen hier freigeben
         _disposed = true;
+
+        base.Dispose(disposing);
     }
 
 }

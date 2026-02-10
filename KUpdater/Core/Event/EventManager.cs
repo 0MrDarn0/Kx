@@ -100,7 +100,7 @@ namespace KUpdater.Core.Event {
 
             void action(T ev) {
                 try {
-                    (_skin as SkinBase)?.SafeInvokeDyn(luaFunc, ev!);
+                    ((SkinBase)_skin)?.SafeInvokeDyn(luaFunc, ev!);
                 }
                 catch (Exception ex) {
                     Console.Error.WriteLine($"Lua listener for {typeof(T).Name} threw: {ex}");

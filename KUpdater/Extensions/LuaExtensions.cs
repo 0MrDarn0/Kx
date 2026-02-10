@@ -81,4 +81,16 @@ public static class LuaExtensions {
             return val.AsUserData();
         return val.ToObject();
     }
+
+    public static Rectangle ToRectangle(this Table t) {
+        int x = (int)(t.Get("x").CastToNumber() ?? 0);
+        int y = (int)(t.Get("y").CastToNumber() ?? 0);
+        int w = (int)(t.Get("width").CastToNumber() ?? 0);
+        int h = (int)(t.Get("height").CastToNumber() ?? 0);
+
+        return new Rectangle(x, y, w, h);
+    }
+
+    public static Func<Rectangle> ToBoundsFunc(this Table t) => () => t.ToRectangle();
+
 }

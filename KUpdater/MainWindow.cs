@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
-using KUpdater.Core.Event;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
@@ -52,34 +51,6 @@ public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
     protected override async void OnShown(EventArgs e) {
         base.OnShown(e);
         _ctx.Renderer.RequestRender();
-
-        //Events abonnieren
-        _ctx.Events.Register<StatusEvent>(ev => {
-            _ctx.State.SetStatus(ev.Text);
-            _ctx.Renderer.RequestRender();
-        });
-
-        _ctx.Events.Register<ProgressEvent>(ev => {
-            _ctx.State.SetProgress(ev.Percent);
-            _ctx.Renderer.RequestRender();
-        });
-
-        _ctx.Events.Register<UpdateRequired>(_ => {
-            _ctx.State.SetStartButtonVisible(false);
-            _ctx.State.SetProgressVisible(true);
-            _ctx.Renderer.RequestRender();
-        });
-
-        _ctx.Events.Register<UpdatePipelineCompleted>(_ => {
-            _ctx.State.SetProgressVisible(false);
-            _ctx.State.SetStartButtonVisible(true);
-            _ctx.Renderer.RequestRender();
-        });
-
-        _ctx.Events.Register<ChangelogEvent>(ev => {
-            _ctx.State.SetChangelog(ev.Text);
-            _ctx.Renderer.RequestRender();
-        });
 
         // Pipeline starten
         await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);

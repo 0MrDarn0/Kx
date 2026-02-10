@@ -8,135 +8,184 @@ using SkiaSharp;
 namespace KUpdater.UI.Control;
 
 [ExposeToLua]
-public class ProgressBar : IControl {
-    public string Id { get; }
-    private readonly Func<Rectangle> _boundsFunc;
-    public Rectangle Bounds => _boundsFunc();
-
-    public bool Visible { get; set; } = true;
-    private float _progress = 0f;
+public class ProgressBar : ControlBase {
+    // progress value (0..1)
+    private readonly Property<float> _progress;
     public float Progress {
-        get => _progress;
-        set => _progress = Math.Clamp(value, 0f, 1f);
+        get => _progress.Value;
+        set => _progress.Value = Math.Clamp(value, 0f, 1f);
     }
 
-    // Farben
-    private SKColor _fillColor = SKColors.Goldenrod;
-    private SKColor _borderColor = SKColors.Black;
-    private SKColor _backgroundColor = SKColors.Transparent;
+    // Visible is provided by ControlBase (Property<bool>)
 
-    public SKColor FillColor {
-        get => _fillColor;
-        set { _fillColor = value; _fillPaint.Color = value; }
-    }
-    public SKColor BorderColor {
-        get => _borderColor;
-        set { _borderColor = value; _borderPaint.Color = value; }
-    }
-    public SKColor BackgroundColor {
-        get => _backgroundColor;
-        set { _backgroundColor = value; _bgPaint.Color = value; }
-    }
+    // Skia paints (cached)
+    private SKPaint _fillPaint;
+    private SKPaint _borderPaint;
+    private SKPaint _bgPaint;
 
-    private bool _disposed;
+    // Colors are Property so Lua can set them from any thread
+    private readonly Property<SKColor> _fillColor;
+    private readonly Property<SKColor> _borderColor;
+    private readonly Property<SKColor> _backgroundColor;
 
-    // 🧩 Skia Paints cachen
-    private readonly SKPaint _fillPaint;
-    private readonly SKPaint _borderPaint;
-    private readonly SKPaint _bgPaint;
-
-    // 🧩 Font/Text Ressourcen
+    // Text resources
     private SKTypeface? _typeface;
     private SKFont? _skFont;
     private SKPaint? _skTextPaint;
     private readonly bool _ownsFont;
 
-    public Font Font { get; set; }
-    public Color TextColor { get; set; } = Color.Black;
+    // Public font and text color (TextColor is System.Drawing.Color)
+    private readonly Property<Font> _font;
+    private readonly Property<Color> _textColor;
 
-    public ProgressBar(string id, Func<Rectangle> boundsFunc, Font font, Color textColor, bool ownsFont = true) {
-        Id = id;
-        _boundsFunc = boundsFunc;
-        Font = font;
-        TextColor = textColor;
+    public Font Font {
+        get => _font.Value;
+        set => _font.Value = value;
+    }
+
+    public Color TextColor {
+        get => _textColor.Value;
+        set => _textColor.Value = value;
+    }
+
+    // Backing for convenience properties (not Property)
+    public SKColor FillColor {
+        get => _fillColor.Value;
+        set => _fillColor.Value = value;
+    }
+
+    public SKColor BorderColor {
+        get => _borderColor.Value;
+        set => _borderColor.Value = value;
+    }
+
+    public SKColor BackgroundColor {
+        get => _backgroundColor.Value;
+        set => _backgroundColor.Value = value;
+    }
+
+    private bool _disposed;
+
+    public ProgressBar(
+        string id,
+        Func<Rectangle> boundsFunc,
+        Font font,
+        Color textColor,
+        bool ownsFont = true)
+        : base(UIContextProvider.Current ?? throw new InvalidOperationException("UI context not initialized"), id, boundsFunc) {
         _ownsFont = ownsFont;
 
-        _fillPaint = new SKPaint { Color = _fillColor, IsAntialias = true };
-        _borderPaint = new SKPaint { Color = _borderColor, Style = SKPaintStyle.Stroke, StrokeWidth = 2, IsAntialias = true };
-        _bgPaint = new SKPaint { Color = _backgroundColor, IsAntialias = true };
+        // Initialize paints with defaults
+        _fillPaint = new SKPaint { Color = SKColors.Goldenrod, IsAntialias = true };
+        _borderPaint = new SKPaint { Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 2, IsAntialias = true };
+        _bgPaint = new SKPaint { Color = SKColors.Transparent, IsAntialias = true };
 
+        // Property fields: onChanged callbacks update paints/text resources and request render
+        _progress = new Property<float>(_ui, 0f, () => Invalidate());
+        _fillColor = new Property<SKColor>(_ui, _fillPaint.Color, () => { _fillPaint.Color = _fillColor!.Value; Invalidate(); });
+        _borderColor = new Property<SKColor>(_ui, _borderPaint.Color, () => { _borderPaint.Color = _borderColor!.Value; Invalidate(); });
+        _backgroundColor = new Property<SKColor>(_ui, _bgPaint.Color, () => { _bgPaint.Color = _backgroundColor!.Value; Invalidate(); });
+
+        _font = new Property<Font>(_ui, font, () => { InitTextResources(); Invalidate(); });
+        _textColor = new Property<Color>(_ui, textColor, () => { UpdateTextPaintColor(); Invalidate(); });
+
+        // Initialize text resources
         InitTextResources();
     }
 
-    public ProgressBar(string id, Table bounds, Font font, Color textColor, bool ownsFont = true)
-        : this(id, () => new Rectangle(
-            (int)(bounds.Get("x").CastToNumber() ?? 0),
-            (int)(bounds.Get("y").CastToNumber() ?? 0),
-            (int)(bounds.Get("width").CastToNumber() ?? 0),
-            (int)(bounds.Get("height").CastToNumber() ?? 0)
-        ), font, textColor, ownsFont) {
+    public ProgressBar(
+        string id,
+        Table bounds,
+        Font font,
+        Color textColor,
+        bool ownsFont = true)
+        : this(id, bounds.ToBoundsFunc(), font, textColor, ownsFont) {
     }
 
     private void InitTextResources() {
-        SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
-        SKFontStyleSlant slant = Font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
-        _typeface = SKTypeface.FromFamilyName(Font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
-        _skFont = new SKFont(_typeface, Font.Size * 1.33f);
+        // Dispose previous text resources safely
+        try { _skTextPaint?.Dispose(); }
+        catch { }
+        try { _skFont?.Dispose(); }
+        catch { }
+        try { _typeface?.Dispose(); }
+        catch { }
+
+        var font = Font ?? throw new ArgumentNullException(nameof(Font));
+        SKFontStyleWeight weight = font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+        SKFontStyleSlant slant = font.Style.HasFlag(FontStyle.Italic) ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+
+        _typeface = SKTypeface.FromFamilyName(font.Name, new SKFontStyle(weight, SKFontStyleWidth.Normal, slant));
+        _skFont = new SKFont(_typeface, font.Size * 1.33f);
         _skTextPaint = new SKPaint { Color = TextColor.ToSKColor(), IsAntialias = true };
     }
 
-    public void Draw(SKCanvas canvas) {
+    private void UpdateTextPaintColor() {
+        if (_skTextPaint == null)
+            _skTextPaint = new SKPaint { IsAntialias = true };
+        _skTextPaint.Color = TextColor.ToSKColor();
+    }
+
+    public override void Draw(SKCanvas canvas) {
         if (!Visible)
             return;
+
         var rect = Bounds;
 
-        // Hintergrund
-        if (_backgroundColor.Alpha > 0)
+        // Background
+        if (_bgPaint.Color.Alpha > 0)
             canvas.DrawRect(rect.X, rect.Y, rect.Width, rect.Height, _bgPaint);
 
-        // Fortschritt
-        float barWidth = rect.Width * Progress;
-        canvas.DrawRect(rect.X, rect.Y, barWidth, rect.Height, _fillPaint);
+        // Progress bar fill
+        float clamped = Math.Clamp(Progress, 0f, 1f);
+        float barWidth = rect.Width * clamped;
+        if (barWidth > 0)
+            canvas.DrawRect(rect.X, rect.Y, barWidth, rect.Height, _fillPaint);
 
-        // Rahmen
+        // Border
         canvas.DrawRect(rect.X, rect.Y, rect.Width, rect.Height, _borderPaint);
 
-        // Prozent-Text mittig
-        string percentText = $"{(int)(Progress * 100)}%";
-        var metrics = _skFont!.Metrics;
-        float x = rect.X + rect.Width / 2;
-        float y = rect.Y + rect.Height / 2 - (metrics.Ascent + metrics.Descent) / 2 - metrics.Descent * 0.3f;
-
-        canvas.DrawText(percentText, x, y, SKTextAlign.Center, _skFont, _skTextPaint!);
+        // Percent text centered
+        if (_skFont != null && _skTextPaint != null) {
+            string percentText = $"{(int)(clamped * 100)}%";
+            var metrics = _skFont.Metrics;
+            float x = rect.X + rect.Width / 2;
+            float y = rect.Y + rect.Height / 2 - (metrics.Ascent + metrics.Descent) / 2 - metrics.Descent * 0.3f;
+            canvas.DrawText(percentText, x, y, SKTextAlign.Center, _skFont, _skTextPaint);
+        }
     }
 
-    public bool OnMouseMove(Point p) => false;
-    public bool OnMouseDown(Point p) => false;
-    public bool OnMouseUp(Point p) => false;
-    public bool OnMouseWheel(int delta, Point p) => false;
+    public override bool OnMouseMove(Point p) => false;
+    public override bool OnMouseDown(Point p) => false;
+    public override bool OnMouseUp(Point p) => false;
+    public override bool OnMouseWheel(int delta, Point p) => false;
 
-    public void Dispose() {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing) {
+    protected override void Dispose(bool disposing) {
         if (_disposed)
             return;
 
         if (disposing) {
-            _fillPaint.Dispose();
-            _borderPaint.Dispose();
-            _bgPaint.Dispose();
+            try { _fillPaint?.Dispose(); }
+            catch { }
+            try { _borderPaint?.Dispose(); }
+            catch { }
+            try { _bgPaint?.Dispose(); }
+            catch { }
 
-            if (_ownsFont)
-                Font.Dispose();
+            if (_ownsFont) {
+                try { Font?.Dispose(); }
+                catch { }
+            }
 
-            _typeface?.Dispose();
-            _skFont?.Dispose();
-            _skTextPaint?.Dispose();
+            try { _skTextPaint?.Dispose(); }
+            catch { }
+            try { _skFont?.Dispose(); }
+            catch { }
+            try { _typeface?.Dispose(); }
+            catch { }
         }
 
         _disposed = true;
+        base.Dispose(disposing);
     }
 }
