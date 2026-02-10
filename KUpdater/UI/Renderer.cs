@@ -29,6 +29,12 @@ public class Renderer : IRenderer {
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
+
+    private bool _showDebugOverlay = false;
+    public void ToggleDebugOverlay() => _showDebugOverlay = !_showDebugOverlay;
+    public void SetDebugOverlay(bool enabled) => _showDebugOverlay = enabled;
+
+
     public Renderer(WindowContext ctx) {
         _ctx = ctx;
         _renderTimer = new System.Windows.Forms.Timer { Interval = _ctx.Config.RenderTimerInterval };
@@ -116,6 +122,11 @@ public class Renderer : IRenderer {
             var canvas = _renderSurface!.Canvas;
             DrawWindowFrame(canvas, new Size(width, height));
             _ctx.Controls.Draw(canvas);
+
+            // innerhalb Render(), direkt nach _ctx.Controls.Draw(canvas);
+            if (_showDebugOverlay) {
+                DrawDebugOverlay(canvas, new Size(width, height));
+            }
 
             // Fehlende Platzhalter zuletzt zeichnen -> topmost
             if (_missingRects.Count > 0) {
@@ -298,6 +309,90 @@ public class Renderer : IRenderer {
                 _ = NativeMethods.ReleaseDC(IntPtr.Zero, screenDc);
         }
     }
+
+
+    private void DrawDebugOverlay(SKCanvas canvas, Size size) {
+        float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
+
+        int width = size.Width;
+        int height = size.Height;
+
+        int basNumberSpacing = 80;
+        int numberSpacing = Math.Max(8, (int)(basNumberSpacing * scale));
+
+        int baseRasterSpacing = 25;
+        int rasterSpacing = Math.Max(8, (int)(baseRasterSpacing * scale));
+        float mouseMarkerSize = 4f;
+
+        using var linePaint = new SKPaint {
+            Color = new SKColor(0xFF, 0xFF, 0xFF, 0x28),
+            StrokeWidth = 1,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        using var axisPaint = new SKPaint {
+            Color = new SKColor(0xFF, 0xFF, 0x00, 0xFF),
+            StrokeWidth = 2,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
+
+        // Text paint: nur Farbe/AA; Größe über SKFont
+        using var textPaint = new SKPaint {
+            Color = new SKColor(0, 255, 100, 220),//new SKColor(0xFF, 0xFF, 0xFF, 0xE0),
+            IsAntialias = true
+        };
+
+        float fontSize = Math.Max(7f, 12f * scale);
+        using var font = new SKFont(SKTypeface.Default, fontSize);
+
+        // Rasterlinien
+        for (int x = 0; x < width; x += rasterSpacing)
+            canvas.DrawLine(x, 0, x, height, linePaint);
+
+        for (int y = 0; y < height; y += rasterSpacing)
+            canvas.DrawLine(0, y, width, y, linePaint);
+
+        // Achsen bei 0
+        canvas.DrawLine(0, 0, width, 0, axisPaint);
+        canvas.DrawLine(0, 0, 0, height, axisPaint);
+
+        // Zahlen oben (x) und links (y) — nur Kanten, um Unordnung zu vermeiden
+        // Berechne Baseline so dass Text vertikal zentriert zur Zeile sitzt
+        var metrics = font.Metrics;
+        float baselineOffset = -(metrics.Descent + metrics.Ascent) / 2f;
+
+        // Oben: x-Koordinaten
+        for (int x = 0; x < width; x += numberSpacing) {
+            string sx = x.ToString();
+            // Zeichne zentriert über der Linie
+            canvas.DrawText(sx, x + 2, 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
+        }
+
+        // Links: y-Koordinaten
+        for (int y = 0; y < height; y += numberSpacing) {
+            string sy = y.ToString();
+            canvas.DrawText(sy, 2, y + 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
+        }
+
+        // Mausposition markieren (Window-Koordinaten)
+        try {
+            var cursorScreen = System.Windows.Forms.Cursor.Position;
+            int cursorX = cursorScreen.X - _ctx.Target.Left;
+            int cursorY = cursorScreen.Y - _ctx.Target.Top;
+            if (cursorX >= 0 && cursorX < width && cursorY >= 0 && cursorY < height) {
+                using var cursorPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true };
+                canvas.DrawCircle(cursorX, cursorY, mouseMarkerSize * scale, cursorPaint);
+                string pos = $"{cursorX},{cursorY}";
+                canvas.DrawText(pos, cursorX + 8f * scale, cursorY - 8f * scale, SKTextAlign.Left, font, textPaint);
+                RequestRender();
+            }
+        }
+        catch { /* Cursor.Position kann in manchen Kontexten fehlschlagen; safe ignore */ }
+    }
+
+
 
     // Zeichnet ein rotes X über schwarzem Hintergrund in das gegebene Rect
     // Zusätzlich zentriert das Wort "MISSING IMAGE" entlang der längeren Kante (horizontal zur längeren Kante)

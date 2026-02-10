@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Runtime.InteropServices;
+
 namespace KUpdater.Interop;
 
 internal static class NativeMethods {
@@ -12,6 +13,15 @@ internal static class NativeMethods {
     public const uint RDW_UPDATENOW = 0x0100;
     public const uint RDW_FRAME = 0x0400;
     public const uint RDW_ALLCHILDREN = 0x0080;
+
+    public const int WM_HOTKEY = 0x0312;
+
+    public const uint MOD_NONE    = 0x0000;
+    public const uint MOD_ALT     = 0x0001;
+    public const uint MOD_CONTROL = 0x0002;
+    public const uint MOD_SHIFT   = 0x0004;
+    public const uint MOD_WIN     = 0x0008;
+    public const uint MOD_NOREPEAT = 0x4000;
 
     [StructLayout(LayoutKind.Sequential)]
     public struct BITMAPINFOHEADER {
@@ -89,6 +99,10 @@ internal static class NativeMethods {
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, uint flags);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
 
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
 }

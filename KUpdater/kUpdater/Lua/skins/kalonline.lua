@@ -36,7 +36,7 @@ local function ServerStatus()
 
     local serverStatusLabel = Label(
       "lb_server_status",
-      util.make_bounds(-150, 40, 150, 20),
+      util.make_bounds(-280, 14, 150, 20),
       text,
       Font("Segoe UI", 9, "Bold"),
       color
@@ -132,8 +132,8 @@ return {
 
 
     local bgColor = MakeColor.FromHex("#00000000")
-    local fillColor = MakeColor.FromHex("#A49167")
-    local borderColor = MakeColor.FromHex("#564F3D")  --#564F3D  #7A623C
+    local fillColor = MakeColor.FromHex("#564F3D")--#A49167
+    local borderColor = MakeColor.FromHex("#7A623C")  --#564F3D  #7A623C
     local textColor = MakeColor.FromHex("#7B6D4A")--#BC7900 #282828
     
     -- ProgressBar
@@ -208,13 +208,13 @@ return {
     end)
 
     Events.TryRegisterLua("MainWindow_OnShown", function(ev)
-      print("MainWindow_OnShown")
-      progressBar.Progress = clamp(100 / 100, 0, 1)
-      progressBar.Visible = true
+      --print("MainWindow_OnShown")
+      --progressBar.Progress = clamp(100 / 100, 0, 1)
+      --progressBar.Visible = true
 
-      --if progressBar.Visible then
-        --progressBar.Visible = false
-      --end
+      if progressBar.Visible then
+        progressBar.Visible = false
+      end
     end)
 
     Events.TryRegisterLua("MainWindow_OnFormClosed", function(ev)
