@@ -42,6 +42,8 @@ public abstract class Lua : IDisposable {
         UserData.RegisterType<KUpdater.Core.Event.UpdatePipelineStarted>();
         UserData.RegisterType<KUpdater.Core.Event.UpdatePipelineCompleted>();
         UserData.RegisterType<KUpdater.Core.Event.UpdateRequired>();
+        UserData.RegisterType<KUpdater.Core.Event.MainWindow_OnShown>();
+        UserData.RegisterType<KUpdater.Core.Event.MainWindow_OnFormClosed>();
     }
 
     protected virtual void RegisterGlobals() {

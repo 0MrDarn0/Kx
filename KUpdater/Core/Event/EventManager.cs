@@ -28,6 +28,8 @@ namespace KUpdater.Core.Event {
             builder[nameof(UpdateRequired)] = typeof(UpdateRequired);
             builder[nameof(UpdatePipelineCompleted)] = typeof(UpdatePipelineCompleted);
             builder[nameof(ChangelogEvent)] = typeof(ChangelogEvent);
+            builder[nameof(MainWindow_OnShown)] = typeof(MainWindow_OnShown);
+            builder[nameof(MainWindow_OnFormClosed)] = typeof(MainWindow_OnFormClosed);
             _eventTypes = builder.ToImmutable();
         }
 

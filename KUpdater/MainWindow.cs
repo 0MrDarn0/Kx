@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
+using KUpdater.Core.Event;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
@@ -42,6 +43,7 @@ public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e) {
+        _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(e.CloseReason == CloseReason.UserClosing));
         _trayIcon?.Dispose();
         _ctx.Dispose();
         Instance = null;
@@ -50,9 +52,9 @@ public partial class MainWindow : Window, IRenderTarget, IUiThreadInvoker {
 
     protected override async void OnShown(EventArgs e) {
         base.OnShown(e);
-        _ctx.Renderer.RequestRender();
+        _ctx.Events.NotifyAll(new MainWindow_OnShown());
 
-        // Pipeline starten
+        // UpdatePipeline starten
         await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
     }
 

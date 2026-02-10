@@ -16,8 +16,6 @@ public class ProgressBar : ControlBase {
         set => _progress.Value = Math.Clamp(value, 0f, 1f);
     }
 
-    // Visible is provided by ControlBase (Property<bool>)
-
     // Skia paints (cached)
     private SKPaint _fillPaint;
     private SKPaint _borderPaint;

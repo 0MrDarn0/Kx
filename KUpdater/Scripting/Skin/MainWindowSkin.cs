@@ -25,13 +25,11 @@ public class MainWindowSkin(WindowContext ctx)
             DynValue.NewNumber(ctx.Target.Width),
             DynValue.NewNumber(ctx.Target.Height)
         ));
-        SetGlobal(LuaKeys.Actions.ApplicationExit, (Action)(() => Application.Exit()));
         SetGlobal("clamp", (Func<double, double, double, double>)((x, lo, hi) => Math.Max(lo, Math.Min(hi, x))));
         ctx.Events.SetSkin(this);
 
         ExposeToLua("Controls", ctx.Controls);
         ExposeToLua("EventManager", ctx.Events);
-        ExposeToLua("UIState", ctx.State);
         ExposeToLua<Font>();
         ExposeToLua<Color>();
         ExposeMarkedTypes();

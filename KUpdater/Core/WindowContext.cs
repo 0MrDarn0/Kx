@@ -2,7 +2,6 @@
 
 using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
-using KUpdater.Core.UI;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
@@ -17,7 +16,6 @@ public sealed class WindowContext : IDisposable {
     public SkinBase Skin { get; }
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
-    public UIState State { get; }
     public BaseConfig Config { get; }
     public IResourceProvider Resources { get; }
     public IRenderer Renderer { get; }
@@ -35,7 +33,6 @@ public sealed class WindowContext : IDisposable {
         Resources = new FileResourceProvider(Paths.ResFolder);
         Controls = new ControlManager();
         Events = new EventManager();
-        State = new UIState();
 
         UIContextProvider.Initialize(this);
 

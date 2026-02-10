@@ -101,7 +101,7 @@ return {
       Font("Segoe UI", 10, "Regular"),
       Color.Orange,
       "KalOnline:Buttons",
-      function() application_exit() end
+      function() Application.Exit() end
     )
     Controls.Add(exitBtn)
 
@@ -189,16 +189,29 @@ return {
 
 
     EventManager.TryRegisterLua("UpdateRequired", function(ev)
-      progressBar.Visible = true
       startBtn.Visible = false
+      settingsBtn.Visible = false
     end)
 
 
     EventManager.TryRegisterLua("UpdatePipelineCompleted", function(ev)
       progressBar.Visible = false
       startBtn.Visible = true
+      settingsBtn.Visible = true
     end)
 
+    EventManager.TryRegisterLua("MainWindow_OnShown", function(ev)
+      print("MainWindow_OnShown")
+      if progressBar.Visible then
+        progressBar.Visible = false
+      end
+    end)
+
+    EventManager.TryRegisterLua("MainWindow_OnFormClosed", function(ev)
+      if ev.IsUserInitiated then
+        print("User closed the window")
+      end
+    end)
 
     --[[
         EventManager.PrintAllEvents()

@@ -10,3 +10,6 @@ public record UpdateStepCompleted(string StepName) : IEvent;
 public record UpdatePipelineStarted() : IEvent;
 public record UpdatePipelineCompleted() : IEvent;
 public record UpdateRequired() : IEvent;
+
+public record MainWindow_OnShown() : IEvent;
+public record MainWindow_OnFormClosed(bool IsUserInitiated) : IEvent;
