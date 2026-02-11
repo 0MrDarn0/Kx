@@ -1,116 +1,90 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using System.Diagnostics;
+using KUpdater.Core;
+using KUpdater.Core.Event;
 using KUpdater.Interop;
+using KUpdater.Scripting.Runtime;
+using KUpdater.Scripting.Skin;
+using KUpdater.UI.Interface;
+using KUpdater.Utility;
 
 namespace KUpdater.UI;
 
-public abstract class Window : Form {
-    protected bool _isDragging = false;
-    protected Point _dragStart;
+public class Window : IDisposable {
+    public static Window? Instance { get; private set; }
 
-    protected bool _isResizing = false;
-    protected Point _resizeStartCursor;
-    protected Size _resizeStartSize;
-    protected readonly int _resizeHitSize = 40;
+    private readonly IWindowBackend _backend;
+    private readonly WindowContext _ctx;
+    private readonly WindowInteraction _interaction;
+    private readonly TrayIcon? _trayIcon;
+    private HotkeyManager? _hotkeyManager;
+    private int _toggleDebugOverlayHotkeyId;
 
-    protected virtual int MinClientWidth => 450;
-    protected virtual int MinClientHeight => 300;
+    public Window(IWindowBackend backend) {
+        Instance = this;
+        _backend = backend;
 
-    protected Window() {
-        FormBorderStyle = FormBorderStyle.None;
-        StartPosition = FormStartPosition.CenterScreen;
-        DoubleBuffered = true;
+        _ctx = new WindowContext(
+            backend,                // IRenderTarget
+            backend,                // IUiThreadInvoker
+            ctx => new MainWindowSkin(ctx),
+            ctx => new Renderer(ctx));
+
+        _interaction = new WindowInteraction(_backend, _ctx);
+
+        LuaHost.OnNotify += (level, message) => {
+            _backend.BeginInvoke(() =>
+                MessageBox.Show(null, message, level, MessageBoxButtons.OK, MessageBoxIcon.Information));
+        };
+
+        _trayIcon = new TrayIcon()
+            .Name("kUpdater")
+            .Icon(Paths.Resource("Default/app.ico"))
+            .StatusIcons(status => status
+                .Item("default", Paths.Resource("Default/app.ico")))
+            .Menu(menu => menu
+                .Exit((s, e) => Application.Exit()));
     }
 
-    protected abstract void RequestRender();
-    protected virtual bool OnChildMouseMove(MouseEventArgs e) => false;
-    protected virtual bool OnChildMouseDown(MouseEventArgs e) => false;
-    protected virtual bool OnChildMouseUp(MouseEventArgs e) => false;
-    protected virtual bool OnChildMouseWheel(MouseEventArgs e) => false;
+    private void HookHotkeys() {
+        _backend.BeginInvoke(() => {
+            _hotkeyManager = new HotkeyManager(_backend.Handle);
+            _hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
 
-    protected override CreateParams CreateParams {
-        get {
-            var cp = base.CreateParams;
-            cp.ExStyle |= (int)WindowStylesEx.WS_EX_LAYERED;
-            return cp;
+            try {
+                _toggleDebugOverlayHotkeyId = _hotkeyManager.Register(
+                    NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT | NativeMethods.MOD_NOREPEAT,
+                    Keys.Y);
+            }
+            catch (Exception ex) {
+                Debug.WriteLine($"Hotkey registration failed: {ex.Message}");
+            }
+        });
+    }
+
+    private void HotkeyManager_HotkeyPressed(object? sender, HotkeyEventArgs e) {
+        if (e.Id == _toggleDebugOverlayHotkeyId) {
+            (_ctx.Renderer as Renderer)?.ToggleDebugOverlay();
+            _ctx.Renderer.RequestRender();
         }
     }
 
-    protected override void OnResize(EventArgs e) {
-        base.OnResize(e);
-        RequestRender();
+    public async void OnShown() {
+        HookHotkeys();
+        _ctx.Events.NotifyAll(new MainWindow_OnShown());
+        await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
     }
 
-    protected override void OnMouseMove(MouseEventArgs e) {
-        if (_isResizing) {
-            Point delta = new(
-               Cursor.Position.X - _resizeStartCursor.X,
-               Cursor.Position.Y - _resizeStartCursor.Y);
-
-            Rectangle workArea = Screen.FromPoint(Cursor.Position).WorkingArea;
-
-            int maxWidth = workArea.Width;
-            int maxHeight = workArea.Height;
-
-            int newWidth = _resizeStartSize.Width + delta.X;
-            int newHeight = _resizeStartSize.Height + delta.Y;
-
-            newWidth = Math.Max(MinClientWidth, Math.Min(newWidth, maxWidth));
-            newHeight = Math.Max(MinClientHeight, Math.Min(newHeight, maxHeight));
-
-            this.Size = new Size(newWidth, newHeight);
-            return;
-        }
-
-        if (_isDragging) {
-            Point newLocation = new(this.Left + e.X - _dragStart.X, this.Top + e.Y - _dragStart.Y);
-            this.Location = newLocation;
-            return;
-        }
-
-        this.Cursor = new Rectangle(
-            this.Width - _resizeHitSize,
-            this.Height - _resizeHitSize,
-            _resizeHitSize,
-            _resizeHitSize
-        ).Contains(e.Location) ? Cursors.SizeNWSE : Cursors.Default;
-
-
-        if (OnChildMouseMove(e))
-            RequestRender();
+    public void OnClosed(bool userClosing) {
+        _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
+        _trayIcon?.Dispose();
+        _ctx.Dispose();
+        _hotkeyManager?.Dispose();
+        Instance = null;
     }
 
-    protected override void OnMouseDown(MouseEventArgs e) {
-        if (e.Button != MouseButtons.Left)
-            return;
-
-        if (OnChildMouseDown(e)) {
-            RequestRender();
-            return;
-        }
-
-        Rectangle resizeRect = new(this.Width - _resizeHitSize, this.Height - _resizeHitSize, _resizeHitSize, _resizeHitSize);
-        if (resizeRect.Contains(e.Location)) {
-            _isResizing = true;
-            _resizeStartCursor = Cursor.Position;
-            _resizeStartSize = this.Size;
-            return;
-        }
-
-        _isDragging = true;
-        _dragStart = e.Location;
-    }
-
-    protected override void OnMouseUp(MouseEventArgs e) {
-        _isDragging = false;
-        _isResizing = false;
-
-        if (OnChildMouseUp(e))
-            RequestRender();
-    }
-
-    protected override void OnMouseWheel(MouseEventArgs e) {
-        if (OnChildMouseWheel(e))
-            RequestRender();
+    public void Dispose() {
+        OnClosed(false);
     }
 }

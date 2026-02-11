@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using KUpdater.Interop;
+using KUpdater.UI;
 
 namespace KUpdater;
 
@@ -19,8 +20,11 @@ internal static class Program {
             return;
         }
 
-        ApplicationConfiguration.Initialize();
-        Application.Run(new MainWindow());
+        var backend = new WinFormsBackend();
+        var window = new Window(backend);
+        backend.Shown += (_, _) => window.OnShown();
+        backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
+        Application.Run(backend);
         GC.KeepAlive(Mutex);
     }
 

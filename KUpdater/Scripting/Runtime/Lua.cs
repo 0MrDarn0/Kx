@@ -5,6 +5,7 @@ using System.Reflection;
 using KUpdater.Core.Attributes;
 using KUpdater.Extensions;
 using KUpdater.UI.Control;
+using KUpdater.UI;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
@@ -396,15 +397,15 @@ public abstract class Lua : IDisposable {
                         int w = (int)(t.Get("width").AsNumber() ?? 0);
                         int h = (int)(t.Get("height").AsNumber() ?? 0);
 
-                        // Optional anchoring for negatives
-                        var form = MainWindow.Instance;
-                        if (form != null) {
+                        // Optional anchoring for negatives: use current UI target if available
+                        var target = UIContextProvider.Current?.Target;
+                        if (target != null) {
                             if (x < 0)
-                                x = form.Width + x;
+                                x = target.Width + x;
                             if (y < 0)
-                                y = form.Height + y;
+                                y = target.Height + y;
                             if (w < 0)
-                                w = form.Width + w;
+                                w = target.Width + w;
                         }
 
                         last = new Rectangle(x, y, w, h);
@@ -464,14 +465,14 @@ public abstract class Lua : IDisposable {
                 int w = (int)(tbl.Get("width").AsNumber() ?? 0);
                 int h = (int)(tbl.Get("height").AsNumber() ?? 0);
 
-                var form = MainWindow.Instance;
-                if (form != null) {
+                var target = UIContextProvider.Current?.Target;
+                if (target != null) {
                     if (x < 0)
-                        x = form.Width + x;
+                        x = target.Width + x;
                     if (y < 0)
-                        y = form.Height + y;
+                        y = target.Height + y;
                     if (w < 0)
-                        w = form.Width + w;
+                        w = target.Width + w;
                 }
                 result = new Rectangle(x, y, w, h);
                 return true;
