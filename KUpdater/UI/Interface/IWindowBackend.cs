@@ -1,4 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+using KUpdater.Utility;
+
 namespace KUpdater.UI.Interface;
 
 public interface IWindowBackend : IRenderTarget, IUiThreadInvoker {
@@ -12,4 +14,6 @@ public interface IWindowBackend : IRenderTarget, IUiThreadInvoker {
     void SetPosition(int x, int y);
 
     Cursor? Cursor { get; set; }
+    IHotkeyMessageSink? HotkeySink { get; set; }
+
 }

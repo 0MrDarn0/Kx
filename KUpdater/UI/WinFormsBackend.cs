@@ -1,7 +1,9 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using System.ComponentModel;
 using KUpdater.Interop;
 using KUpdater.UI.Interface;
+using KUpdater.Utility;
 namespace KUpdater.UI;
 
 public class WinFormsBackend : Form, IWindowBackend {
@@ -34,6 +36,11 @@ public class WinFormsBackend : Form, IWindowBackend {
         set => base.Cursor = value;
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    [Browsable(false)]
+    public IHotkeyMessageSink? HotkeySink { get; set; }
+
+
     public WinFormsBackend() {
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
@@ -47,6 +54,13 @@ public class WinFormsBackend : Form, IWindowBackend {
             cp.ExStyle |= (int)WindowStylesEx.WS_EX_LAYERED;
             return cp;
         }
+    }
+
+    protected override void WndProc(ref Message m) {
+        if (HotkeySink?.ProcessWndProc(ref m) == true)
+            return;
+
+        base.WndProc(ref m);
     }
 
     protected override void OnResize(EventArgs e) {

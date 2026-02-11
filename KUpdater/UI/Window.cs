@@ -19,7 +19,7 @@ public class Window : IDisposable {
     private readonly WindowContext _ctx;
     private readonly WindowInteraction _interaction;
     private readonly TrayIcon? _trayIcon;
-    private HotkeyManager? _hotkeyManager;
+    public HotkeyManager? _hotkeyManager;
     private int _toggleDebugOverlayHotkeyId;
 
     public Window(IWindowBackend backend) {
@@ -66,6 +66,7 @@ public class Window : IDisposable {
     private void HookHotkeys() {
         _backend.BeginInvoke(() => {
             _hotkeyManager = new HotkeyManager(_backend.Handle);
+            _backend.HotkeySink = _hotkeyManager;
             _hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
 
             try {
@@ -97,6 +98,7 @@ public class Window : IDisposable {
         _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
         _trayIcon?.Dispose();
         _ctx.Dispose();
+        _backend.HotkeySink = null;
         _hotkeyManager?.Dispose();
         Instance = null;
     }

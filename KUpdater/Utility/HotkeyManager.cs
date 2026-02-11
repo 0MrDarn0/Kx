@@ -19,7 +19,11 @@ public sealed class HotkeyEventArgs : EventArgs {
     }
 }
 
-public sealed class HotkeyManager : IDisposable {
+public interface IHotkeyMessageSink {
+    bool ProcessWndProc(ref Message m);
+}
+
+public sealed class HotkeyManager : IDisposable, IHotkeyMessageSink {
     // Internes Mapping id -> (key, modifiers)
     private readonly ConcurrentDictionary<int, (Keys key, uint modifiers)> _hotkeys = new();
     private int _nextId = 0;
