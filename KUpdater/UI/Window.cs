@@ -28,7 +28,7 @@ public class Window : IDisposable {
         _ctx = new WindowContext(
             backend,                // IRenderTarget
             backend,                // IUiThreadInvoker
-            ctx => new MainWindowSkin(ctx),
+            ctx => new MainSkin(ctx),
             ctx => new Renderer(ctx));
 
         _interaction = new WindowInteraction(_backend, _ctx);

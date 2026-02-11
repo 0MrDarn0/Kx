@@ -21,9 +21,12 @@ internal static class Program {
         }
 
         var backend = new WinFormsBackend();
-        var window = new Window(backend);
-        backend.Shown += (_, _) => window.OnShown();
-        backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
+        backend.HandleCreated += (_, _) => {
+            var window = new Window(backend);
+            backend.Shown += (_, _) => window.OnShown();
+            backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
+        };
+
         Application.Run(backend);
         GC.KeepAlive(Mutex);
     }
