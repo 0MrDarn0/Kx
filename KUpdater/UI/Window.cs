@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using KUpdater.Core;
 using KUpdater.Core.Event;
+using KUpdater.Core.Pipeline;
 using KUpdater.Interop;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
@@ -26,10 +27,23 @@ public class Window : IDisposable {
         _backend = backend;
 
         _ctx = new WindowContext(
-            backend,                // IRenderTarget
-            backend,                // IUiThreadInvoker
-            ctx => new MainSkin(ctx),
-            ctx => new Renderer(ctx));
+            backend,
+            backend,
+            eventManager: new EventManager());
+
+        var skin = new MainSkin(_ctx);
+        _ctx.SetSkin(skin);
+
+        var renderer = new Renderer(_ctx);
+        _ctx.SetRenderer(renderer);
+
+        var pipeline = new UpdaterPipelineRunner(
+            _ctx.Events,
+            new HttpUpdateSource(),
+            _ctx.Config.Url,
+            AppDomain.CurrentDomain.BaseDirectory);
+
+        _ctx.SetPipeline(pipeline);
 
         _interaction = new WindowInteraction(_backend, _ctx);
 
@@ -45,6 +59,8 @@ public class Window : IDisposable {
                 .Item("default", Paths.Resource("Default/app.ico")))
             .Menu(menu => menu
                 .Exit((s, e) => Application.Exit()));
+
+        HookHotkeys();
     }
 
     private void HookHotkeys() {
@@ -71,9 +87,10 @@ public class Window : IDisposable {
     }
 
     public async void OnShown() {
-        HookHotkeys();
         _ctx.Events.NotifyAll(new MainWindow_OnShown());
-        await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
+
+        if (_ctx.Pipeline != null)
+            await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
     }
 
     public void OnClosed(bool userClosing) {

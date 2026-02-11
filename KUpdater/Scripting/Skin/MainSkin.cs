@@ -11,7 +11,7 @@ namespace KUpdater.Scripting.Skin;
 public class MainSkin(WindowContext ctx)
     : SkinBase("skin_loader.lua", ctx.Config.Language, ctx.Config.MainWindowSkin, ctx.Resources) {
 
-    protected override string GetName() => "main_window_skin";
+    protected override string GetName() => "MainSkin";
 
     protected override void RegisterGlobals() {
         base.RegisterGlobals();

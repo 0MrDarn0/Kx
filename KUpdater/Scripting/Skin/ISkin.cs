@@ -5,6 +5,7 @@ using SkiaSharp;
 namespace KUpdater.Scripting.Skin;
 
 public interface ISkin {
+    void Dispose();
     SkinBackground GetBackground();
     SkinLayout GetLayout();
 }

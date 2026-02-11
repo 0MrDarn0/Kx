@@ -13,37 +13,46 @@ namespace KUpdater.Core;
 public sealed class WindowContext : IDisposable {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
-    public SkinBase Skin { get; }
-    public ControlManager Controls { get; }
-    public IEventManager Events { get; }
     public BaseConfig Config { get; }
     public IResourceProvider Resources { get; }
-    public IRenderer Renderer { get; }
-    public UpdaterPipelineRunner Pipeline { get; }
+    public ControlManager Controls { get; }
+    public IEventManager Events { get; }
+
+    public ISkin Skin { get; private set; } = null!;
+    public IRenderer Renderer { get; private set; } = null!;
+    public UpdaterPipelineRunner? Pipeline { get; private set; }
 
     public WindowContext(
         IRenderTarget target,
         IUiThreadInvoker uiThread,
-        Func<WindowContext, SkinBase> skinFactory,
-        Func<WindowContext, IRenderer>? rendererFactory = null) {
-
+        IEventManager? eventManager = null) {
         Target = target;
         UiThread = uiThread;
+
         Config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
         Resources = new FileResourceProvider(Paths.ResFolder);
         Controls = new ControlManager();
-        Events = new EventManager();
+        Events = eventManager ?? new EventManager();
 
         UIContextProvider.Initialize(this);
+    }
 
-        Skin = skinFactory(this);
-        Renderer = (rendererFactory ?? (ctx => new Renderer(ctx)))(this);
-        Pipeline = new UpdaterPipelineRunner(Events, new HttpUpdateSource(), Config.Url, AppDomain.CurrentDomain.BaseDirectory);
+    public void SetSkin(ISkin skin) {
+        Skin = skin;
+        Events.SetSkin(skin);
+    }
+
+    public void SetRenderer(IRenderer renderer) {
+        Renderer = renderer;
+    }
+
+    public void SetPipeline(UpdaterPipelineRunner pipeline) {
+        Pipeline = pipeline;
     }
 
     public void Dispose() {
-        Renderer.Dispose();
-        Skin.Dispose();
+        Renderer?.Dispose();
+        Skin?.Dispose();
         Controls.Dispose();
         Resources.Dispose();
         UIContextProvider.Clear();
