@@ -5,4 +5,5 @@ namespace KUpdater.UI.Interface;
 public interface IUiThreadInvoker {
     bool InvokeRequired { get; }
     void BeginInvoke(Delegate d);
+    void Invoke(Action action);
 }

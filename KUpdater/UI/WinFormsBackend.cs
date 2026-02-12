@@ -20,6 +20,7 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
     // IUiThreadInvoker
     bool IUiThreadInvoker.InvokeRequired => base.InvokeRequired;
     void IUiThreadInvoker.BeginInvoke(Delegate d) => base.BeginInvoke(d);
+    void IUiThreadInvoker.Invoke(Action action) => base.Invoke(action);
 
     // IWindowBackend
     public event Action<int, int>? BackendResized;

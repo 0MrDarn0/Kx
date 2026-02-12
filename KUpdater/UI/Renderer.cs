@@ -1,6 +1,5 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Buffers;
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -12,78 +11,105 @@ using SkiaSharp;
 
 namespace KUpdater.UI;
 
-public class Renderer : IRenderer {
+public unsafe class Renderer : IRenderer, IDisposable {
     private readonly WindowContext _ctx;
-    private readonly System.Windows.Forms.Timer _renderTimer;
+
+    // Steuerflags
     private int _needsRender;
     private int _invokePending;
     private int _isRenderingFlag;
+
+    // Skia / Backbuffers
     private SKBitmap? _renderBuffer;
     private SKSurface? _renderSurface;
-    private Bitmap? _backBuffer;
-    private bool _disposed;
+
+    // Background worker buffers
+    private readonly CancellationTokenSource _renderCts = new();
+    private Task? _renderWorker;
+    private readonly object _swapLock = new();
+    private SKBitmap? _bgRenderBitmap;    // vom Worker beschrieben
+    private SKBitmap? _uiPresentBitmap;   // vom Worker getauscht, bereit für Present
+    private volatile bool _workerRunning;
+
+    // DIBSection mit FileMapping (UI-Thread erstellt, Worker schreibt direkt hinein)
+    private IntPtr _hSection = IntPtr.Zero; // FileMapping handle
+    private IntPtr _hDib = IntPtr.Zero;     // HBITMAP (DIBSection)
+    private IntPtr _dibPixels = IntPtr.Zero; // Pointer auf Bitmapbits
+    private int _dibWidth;
+    private int _dibHeight;
+    private readonly object _dibLock = new(); // schützt _dibPixels/_hDib/_hSection während Schreiben/Present
+
+    // Hilfspinsel
     private readonly SKPaint _fillPaint = new() { IsAntialias = true };
 
-    // Sammlung der fehlenden Bereiche, die als Overlay (topmost) gezeichnet werden sollen
-    private readonly List<SKRect> _missingRects = [];
+    // Persistent zero-row buffer (für Fallbacks, falls nötig)
+    private byte[]? _zeroRowBuffer;
+    private int _zeroRowBufferSize;
 
+    // Fehlende Bereiche
+    private readonly List<SKRect> _missingRects = new();
+
+    // Telemetrie
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
-
+    // Debug / Overlay
     private bool _showDebugRasterOverlay = false;
     public void ToggleDebugOverlay() => _showDebugRasterOverlay = !_showDebugRasterOverlay;
     public void SetDebugOverlay(bool enabled) => _showDebugRasterOverlay = enabled;
 
+    // Performance Overlay Felder
+    private readonly object _perfLock = new();
+    private readonly Queue<long> _frameTimestamps = new();
+    private const int FrameHistory = 60;
+    private bool _showPerfOverlay = true;
+    public void TogglePerfOverlay() => _showPerfOverlay = !_showPerfOverlay;
+    public void SetPerfOverlay(bool enabled) => _showPerfOverlay = enabled;
+
+    // Dispose
+    private bool _disposed;
 
     public Renderer(WindowContext ctx) {
         _ctx = ctx;
-        _renderTimer = new System.Windows.Forms.Timer { Interval = _ctx.Config.RenderTimerInterval };
-        _renderTimer.Tick += RenderTimer_Tick;
-        _renderTimer.Start();
+        StartRenderWorker();
     }
 
-    public void RequestRender()
-        => Interlocked.Exchange(ref _needsRender, 1);
+    // Public API
+    public void RequestRender() => Interlocked.Exchange(ref _needsRender, 1);
 
-    private void RenderTimer_Tick(object? sender, EventArgs e)
-        => RenderTick();
+    public void Resize(int width, int height) => EnsureBuffers(width, height);
 
-    public void Resize(int width, int height)
-        => EnsureBuffers(width, height);
-
-    private void RenderTick() {
-        if (Interlocked.Exchange(ref _needsRender, 0) == 0)
-            return;
-        if (_disposed || _ctx.Target.IsDisposed)
+    // Ensure Skia buffers (für Fälle, in denen du noch Skia direkt auf UI brauchst)
+    public void EnsureBuffers(int width, int height) {
+        if (width <= 0 || height <= 0)
             return;
 
-        if (_ctx.UiThread.InvokeRequired) {
-            if (Interlocked.Exchange(ref _invokePending, 1) == 0) {
-                _ctx.UiThread.BeginInvoke(new Action(() => {
-                    Interlocked.Exchange(ref _invokePending, 0);
-                    if (_disposed || _ctx.Target.IsDisposed)
-                        return;
-                    Render();
-                }));
-            }
-            return;
-        }
-
-        if (Interlocked.Exchange(ref _isRenderingFlag, 1) == 1)
-            return;
-        var sw = Stopwatch.StartNew();
-        try {
-            Render();
-        }
-        finally {
-            sw.Stop();
-            LastRenderDurationMs = sw.ElapsedMilliseconds;
-            Interlocked.Exchange(ref _isRenderingFlag, 0);
+        if (_renderBuffer == null || _renderBuffer.Width != width || _renderBuffer.Height != height) {
+            try { _renderSurface?.Dispose(); }
+            catch { }
+            try { _renderBuffer?.Dispose(); }
+            catch { }
+            _renderBuffer = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+            _renderSurface = SKSurface.Create(_renderBuffer.Info, _renderBuffer.GetPixels(), _renderBuffer.RowBytes);
         }
     }
 
+    // Worker lifecycle
+    private void StartRenderWorker() {
+        if (_workerRunning)
+            return;
+        _workerRunning = true;
+        _renderWorker = Task.Run(() => RenderWorkerLoop(_renderCts.Token));
+    }
 
+    private void StopRenderWorker() {
+        _renderCts.Cancel();
+        try { _renderWorker?.Wait(500); }
+        catch { }
+        _workerRunning = false;
+    }
+
+    // Device size helper (UI-Thread access expected)
     private void GetDeviceSize(out int deviceWidth, out int deviceHeight) {
         float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
         deviceWidth = (int)Math.Ceiling(_ctx.Target.Width * scale);
@@ -94,113 +120,478 @@ public class Renderer : IRenderer {
             deviceHeight = 1;
     }
 
-    public void EnsureBuffers(int width, int height) {
-        if (width <= 0 || height <= 0)
-            return;
-
-        if (_renderBuffer == null || _renderBuffer.Width != width || _renderBuffer.Height != height) {
-            _renderSurface?.Dispose();
-            _renderBuffer?.Dispose();
-            _renderBuffer = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
-            _renderSurface = SKSurface.Create(_renderBuffer.Info, _renderBuffer.GetPixels(), _renderBuffer.RowBytes);
-        }
-
-        if (_backBuffer == null || _backBuffer.Width != width || _backBuffer.Height != height) {
-            _backBuffer?.Dispose();
-            _backBuffer = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
+    // Record frame timestamp for FPS
+    private void RecordFrameTimestamp() {
+        long now = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
+        lock (_perfLock) {
+            _frameTimestamps.Enqueue(now);
+            while (_frameTimestamps.Count > FrameHistory)
+                _frameTimestamps.Dequeue();
         }
     }
 
-    public void Render() {
-        try {
-            if (_ctx.Target.IsDisposed || !_ctx.Target.IsHandleCreated || _disposed)
-                return;
+    // Ensure zero-row buffer
+    private void EnsureZeroRowBuffer(int size) {
+        if (_zeroRowBuffer == null || _zeroRowBufferSize < size) {
+            _zeroRowBuffer = new byte[size];
+            _zeroRowBufferSize = size;
+        }
+    }
 
-            GetDeviceSize(out int width, out int height);
-            Resize(width, height);
+    // --- CreateFileMapping P/Invoke ---
+    private const uint PAGE_READWRITE = 0x04;
+    private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
 
-            var canvas = _renderSurface!.Canvas;
-            DrawWindowFrame(canvas, new Size(width, height));
-            _ctx.Controls.Draw(canvas);
+    [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern IntPtr CreateFileMapping(
+        IntPtr hFile,
+        IntPtr lpFileMappingAttributes,
+        uint flProtect,
+        uint dwMaximumSizeHigh,
+        uint dwMaximumSizeLow,
+        string? lpName);
 
-            if (_showDebugRasterOverlay) {
-                DrawDebugRasterOverlay(canvas, new Size(width, height));
-            }
+    [DllImport("kernel32", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr hObject);
 
-            // Fehlende Platzhalter zuletzt zeichnen -> topmost
-            if (_missingRects.Count > 0) {
-                foreach (var rect in _missingRects) {
-                    DrawMissingImageError(canvas, rect);
+    // Ensure mapped DIBSection (CreateFileMapping + CreateDIBSection with hSection)
+    // Muss auf UI-Thread laufen
+    private bool EnsureMappedDib(int width, int height) {
+        if (width <= 0 || height <= 0)
+            return false;
+
+        lock (_dibLock) {
+            // Wenn bereits passend vorhanden, nichts tun
+            if (_hDib != IntPtr.Zero && _dibWidth == width && _dibHeight == height && _dibPixels != IntPtr.Zero)
+                return true;
+
+            // Alte Ressourcen freigeben
+            try {
+                if (_hDib != IntPtr.Zero) {
+                    _ = NativeMethods.DeleteObject(_hDib);
+                    _hDib = IntPtr.Zero;
                 }
-                _missingRects.Clear();
             }
-
-            var bmpData = _backBuffer!.LockBits(
-            new Rectangle(0, 0, width, height),
-            ImageLockMode.WriteOnly,
-            PixelFormat.Format32bppPArgb);
+            catch { }
 
             try {
-                unsafe {
-                    byte* src = (byte*)_renderBuffer!.GetPixels();
-                    if (src == null)
-                        return;
-
-                    int srcRowBytes = _renderBuffer.RowBytes;
-                    long srcExpectedBytes = (long)srcRowBytes * height;
-                    long skByteCount = _renderBuffer.ByteCount;
-                    if (skByteCount < srcExpectedBytes)
-                        return;
-
-                    byte* dst = (byte*)bmpData.Scan0;
-                    if (dst == null)
-                        return;
-
-                    int dstRowBytes = bmpData.Stride;
-                    if (dstRowBytes > srcRowBytes) {
-                        var pool = ArrayPool<byte>.Shared;
-                        byte[] zeros = pool.Rent(dstRowBytes);
-                        try {
-                            Array.Clear(zeros, 0, dstRowBytes);
-                            for (int y = 0; y < height; y++) {
-                                IntPtr rowPtr = new((byte*)dst + (long)y * dstRowBytes);
-                                Marshal.Copy(zeros, 0, rowPtr, dstRowBytes);
-                            }
-                        }
-                        finally { pool.Return(zeros); }
-                    }
-
-                    long dstExpectedBytes = (long)dstRowBytes * height;
-                    if (srcRowBytes <= 0 || dstRowBytes <= 0 || height <= 0)
-                        return;
-                    if (srcExpectedBytes > Int64.MaxValue / 2 || dstExpectedBytes > Int64.MaxValue / 2)
-                        return;
-
-                    if (srcRowBytes == dstRowBytes && skByteCount >= srcExpectedBytes && dstExpectedBytes <= skByteCount) {
-                        Buffer.MemoryCopy(src, dst, dstExpectedBytes, srcExpectedBytes);
-                    } else {
-                        int bytesPerRowToCopy = Math.Min(srcRowBytes, dstRowBytes);
-                        for (int y = 0; y < height; y++) {
-                            byte* sRow = src + (long)y * srcRowBytes;
-                            byte* dRow = dst + (long)y * dstRowBytes;
-                            long sOffset = (long)y * srcRowBytes + bytesPerRowToCopy;
-                            long dOffset = (long)y * dstRowBytes + bytesPerRowToCopy;
-                            if (sOffset > skByteCount || dOffset > dstExpectedBytes)
-                                break;
-                            Buffer.MemoryCopy(sRow, dRow, dstRowBytes, bytesPerRowToCopy);
-                        }
-                    }
+                if (_hSection != IntPtr.Zero) {
+                    _ = CloseHandle(_hSection);
+                    _hSection = IntPtr.Zero;
                 }
             }
-            finally { _backBuffer.UnlockBits(bmpData); }
+            catch { }
 
-            Present(_backBuffer);
-        }
-        catch (Exception ex) {
-            Debug.WriteLine($"Render error: {ex}");
+            // Größe in Bytes
+            long bytes = (long)width * height * 4;
+            if (bytes <= 0 || bytes > (long)int.MaxValue * 4L) {
+                Debug.WriteLine("Requested DIB too large");
+                return false;
+            }
+
+            uint sizeLow = (uint)(bytes & 0xFFFFFFFF);
+            uint sizeHigh = (uint)((bytes >> 32) & 0xFFFFFFFF);
+
+            // CreateFileMapping mit INVALID_HANDLE_VALUE -> page-backed (kein File)
+            IntPtr hSection = CreateFileMapping(INVALID_HANDLE_VALUE, IntPtr.Zero, PAGE_READWRITE, sizeHigh, sizeLow, null);
+            if (hSection == IntPtr.Zero) {
+                var err = Marshal.GetLastWin32Error();
+                Debug.WriteLine($"CreateFileMapping failed: {err}");
+                return false;
+            }
+
+            // Erzeuge BITMAPINFO (top-down)
+            var bmi = new NativeMethods.BITMAPINFO {
+                bmiHeader = new NativeMethods.BITMAPINFOHEADER {
+                    biSize = (uint)Marshal.SizeOf<NativeMethods.BITMAPINFOHEADER>(),
+                    biWidth = width,
+                    biHeight = -height,
+                    biPlanes = 1,
+                    biBitCount = 32,
+                    biCompression = NativeMethods.BI_RGB,
+                    biSizeImage = (uint)(width * height * 4)
+                },
+                bmiColors = new uint[3]
+            };
+
+            IntPtr dibPixels;
+            IntPtr hDib = NativeMethods.CreateDIBSection(IntPtr.Zero, ref bmi, NativeMethods.DIB_RGB_COLORS, out dibPixels, hSection, 0);
+            if (hDib == IntPtr.Zero || dibPixels == IntPtr.Zero) {
+                var err = Marshal.GetLastWin32Error();
+                Debug.WriteLine($"CreateDIBSection with mapping failed: {err}");
+                // Aufräumen
+                try { _ = CloseHandle(hSection); }
+                catch { }
+                return false;
+            }
+
+            // Speichere Handles
+            _hSection = hSection;
+            _hDib = hDib;
+            _dibPixels = dibPixels;
+            _dibWidth = width;
+            _dibHeight = height;
+
+            return true;
         }
     }
 
+    // Release mapped DIB and mapping (UI-Thread)
+    private void ReleaseMappedDib() {
+        lock (_dibLock) {
+            try {
+                if (_hDib != IntPtr.Zero) {
+                    _ = NativeMethods.DeleteObject(_hDib);
+                    _hDib = IntPtr.Zero;
+                }
+            }
+            catch { }
+
+            try {
+                if (_hSection != IntPtr.Zero) {
+                    _ = CloseHandle(_hSection);
+                    _hSection = IntPtr.Zero;
+                }
+            }
+            catch { }
+
+            _dibPixels = IntPtr.Zero;
+            _dibWidth = 0;
+            _dibHeight = 0;
+        }
+    }
+
+    // zeichnet im Hintergrund und schreibt direkt in DIB (wenn möglich)
+    private void RenderWorkerLoop(CancellationToken ct) {
+        try {
+            while (!ct.IsCancellationRequested) {
+                if (Interlocked.Exchange(ref _needsRender, 0) == 0) {
+                    Thread.Sleep(8);
+                    continue;
+                }
+
+                // Größe vom UI-Thread holen
+                int width = 0, height = 0;
+                try {
+                    _ctx.UiThread.Invoke(new Action(() => GetDeviceSize(out width, out height)));
+                }
+                catch {
+                    continue;
+                }
+
+                if (width <= 0 || height <= 0 || _ctx.Target.IsDisposed)
+                    continue;
+
+                // Ensure SK bitmaps (wiederverwenden)
+                try {
+                    if (_bgRenderBitmap == null || _bgRenderBitmap.Width != width || _bgRenderBitmap.Height != height) {
+                        try { _bgRenderBitmap?.Dispose(); }
+                        catch { }
+                        _bgRenderBitmap = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+                    }
+                    if (_uiPresentBitmap == null || _uiPresentBitmap.Width != width || _uiPresentBitmap.Height != height) {
+                        try { _uiPresentBitmap?.Dispose(); }
+                        catch { }
+                        _uiPresentBitmap = new SKBitmap(width, height, SKColorType.Bgra8888, SKAlphaType.Premul);
+                    }
+                }
+                catch (Exception ex) {
+                    Debug.WriteLine($"Buffer alloc error: {ex}");
+                    continue;
+                }
+
+                // Zeichnen im Hintergrundbuffer
+                try {
+                    using var surface = SKSurface.Create(_bgRenderBitmap.Info, _bgRenderBitmap.GetPixels(), _bgRenderBitmap.RowBytes);
+                    var canvas = surface.Canvas;
+                    canvas.Clear(SKColors.Transparent);
+
+                    DrawWindowFrame(canvas, new Size(width, height));
+                    _ctx.Controls.Draw(canvas);
+
+                    if (_showDebugRasterOverlay)
+                        DrawDebugRasterOverlay(canvas, new Size(width, height));
+
+                    lock (_missingRects) {
+                        foreach (var r in _missingRects)
+                            DrawMissingImageError(canvas, r);
+                        _missingRects.Clear();
+                    }
+
+                    RecordFrameTimestamp();
+                }
+                catch (Exception ex) {
+                    Debug.WriteLine($"Background draw error: {ex}");
+                }
+
+                // Buffer tauschen
+                lock (_swapLock) {
+                    (_bgRenderBitmap, _uiPresentBitmap) = (_uiPresentBitmap, _bgRenderBitmap);
+                }
+
+                // Ensure mapped DIB on UI-Thread (create or resize if needed)
+                bool dibReady = false;
+                try {
+                    _ctx.UiThread.Invoke(new Action(() => {
+                        dibReady = EnsureMappedDib(width, height);
+                    }));
+                }
+                catch {
+                    dibReady = false;
+                }
+
+                if (!dibReady) {
+                    // Fallback: falls DIB nicht verfügbar, enqueuen wir normalen UI-Post, der Bitmap kopiert
+                    EnqueueUiPresentFallback();
+                    continue;
+                }
+
+                // Hole Referenz auf toPresent
+                SKBitmap? toPresent;
+                lock (_swapLock) {
+                    toPresent = _uiPresentBitmap;
+                    _uiPresentBitmap = null;
+                }
+
+                if (toPresent == null)
+                    continue;
+
+                // Kopiere SKBitmap direkt in dibPixels (unter dibLock) mit Span-basierten Operationen
+                bool fallbackNeeded = false;
+                lock (_dibLock) {
+                    if (_dibPixels == IntPtr.Zero) {
+                        fallbackNeeded = true;
+                    } else {
+                        byte* src = (byte*)toPresent.GetPixels();
+                        byte* dst = (byte*)_dibPixels;
+                        int srcStride = toPresent.RowBytes;
+                        int dstStride = _dibWidth * 4;
+                        long srcExpected = (long)srcStride * toPresent.Height;
+                        long dstExpected = (long)dstStride * toPresent.Height;
+                        long skByteCount = toPresent.ByteCount;
+
+                        if (src == null || dst == null || skByteCount < srcExpected) {
+                            fallbackNeeded = true;
+                        } else {
+                            Span<byte> srcSpan = new(src, (int)srcExpected);
+                            Span<byte> dstSpan = new(dst, (int)dstExpected);
+
+                            if (dstStride > srcStride) {
+                                EnsureZeroRowBuffer(dstStride);
+                                for (int y = 0; y < toPresent.Height; y++) {
+                                    var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
+                                    var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                                    sRow.CopyTo(dRow);
+                                    if (dstStride > sRow.Length) {
+                                        dRow.Slice(sRow.Length).Clear();
+                                    }
+                                }
+                            } else if (srcStride == dstStride) {
+                                srcSpan.CopyTo(dstSpan);
+                            } else {
+                                for (int y = 0; y < toPresent.Height; y++) {
+                                    var sRow = srcSpan.Slice(y * srcStride, srcStride);
+                                    var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                                    sRow.Slice(0, dstStride).CopyTo(dRow);
+                                }
+                            }
+                        }
+                    }
+                } // lock dibLock Ende
+
+                if (fallbackNeeded) {
+                    EnqueueUiPresentFallbackWithBitmap(toPresent);
+                    continue;
+                }
+
+                // Enqueue UI update (nur UpdateLayeredWindow, kein weiterer Copy)
+                bool enqueued = false;
+                if (Interlocked.Exchange(ref _invokePending, 1) == 0) {
+                    try {
+                        _ctx.UiThread.BeginInvoke(new Action(() => {
+                            Interlocked.Exchange(ref _invokePending, 0);
+
+                            if (_disposed || _ctx.Target.IsDisposed || !_ctx.Target.IsHandleCreated)
+                                return;
+
+                            if (Interlocked.Exchange(ref _isRenderingFlag, 1) == 1)
+                                return;
+
+                            var presentSw = Stopwatch.StartNew();
+                            try {
+                                // Present DIB (unter dibLock, damit Worker nicht gleichzeitig schreibt)
+                                lock (_dibLock) {
+                                    if (_hDib == IntPtr.Zero || _dibPixels == IntPtr.Zero)
+                                        return;
+
+                                    IntPtr screenDc = IntPtr.Zero;
+                                    IntPtr memDc = IntPtr.Zero;
+                                    IntPtr oldObj = IntPtr.Zero;
+                                    try {
+                                        screenDc = NativeMethods.GetDC(IntPtr.Zero);
+                                        if (screenDc == IntPtr.Zero)
+                                            return;
+
+                                        memDc = NativeMethods.CreateCompatibleDC(screenDc);
+                                        if (memDc == IntPtr.Zero)
+                                            return;
+
+                                        oldObj = NativeMethods.SelectObject(memDc, _hDib);
+
+                                        Size size = new(_dibWidth, _dibHeight);
+                                        Point source = new(0, 0);
+                                        Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
+
+                                        var blend = new NativeMethods.BLENDFUNCTION {
+                                            BlendOp = NativeMethods.AC_SRC_OVER,
+                                            BlendFlags = 0,
+                                            SourceConstantAlpha = 255,
+                                            AlphaFormat = NativeMethods.AC_SRC_ALPHA
+                                        };
+
+                                        bool success = NativeMethods.UpdateLayeredWindow(
+                                            _ctx.Target.Handle, screenDc, ref topPos, ref size, memDc, ref source, 0, ref blend, NativeMethods.ULW_ALPHA);
+
+                                        if (!success) {
+                                            var err = Marshal.GetLastWin32Error();
+                                            LastPresentError = err;
+                                            Debug.WriteLine($"UpdateLayeredWindow failed: {err}");
+                                        }
+                                    }
+                                    finally {
+                                        if (memDc != IntPtr.Zero)
+                                            _ = NativeMethods.SelectObject(memDc, oldObj);
+                                        if (memDc != IntPtr.Zero)
+                                            _ = NativeMethods.DeleteDC(memDc);
+                                        if (screenDc != IntPtr.Zero)
+                                            _ = NativeMethods.ReleaseDC(IntPtr.Zero, screenDc);
+                                    }
+                                }
+                            }
+                            catch (Exception ex) {
+                                Debug.WriteLine($"Present (DIB) error: {ex}");
+                            }
+                            finally {
+                                presentSw.Stop();
+                                LastRenderDurationMs = presentSw.ElapsedMilliseconds;
+                                Interlocked.Exchange(ref _isRenderingFlag, 0);
+                            }
+                        }));
+                        enqueued = true;
+                    }
+                    catch (Exception ex) {
+                        Interlocked.Exchange(ref _invokePending, 0);
+                        Debug.WriteLine($"BeginInvoke failed: {ex}");
+                    }
+                }
+
+                if (!enqueued) {
+                    Interlocked.Exchange(ref _needsRender, 1);
+                }
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) {
+            Debug.WriteLine($"RenderWorkerLoop fatal error: {ex}");
+        }
+    }
+
+    // Fallback: falls DIB nicht verfügbar, enqueuen wir normalen UI-Post, der Bitmap kopiert
+    private void EnqueueUiPresentFallback() {
+        SKBitmap? toPresent;
+        lock (_swapLock) {
+            toPresent = _uiPresentBitmap;
+            _uiPresentBitmap = null;
+        }
+        if (toPresent == null)
+            return;
+        EnqueueUiPresentFallbackWithBitmap(toPresent);
+    }
+
+    // Fallback-Present: nutzt Span-basierte Kopien in ein temporäres Bitmap und ruft Present(bitmap)
+    private void EnqueueUiPresentFallbackWithBitmap(SKBitmap toPresent) {
+        bool enqueued = false;
+        if (Interlocked.Exchange(ref _invokePending, 1) == 0) {
+            try {
+                _ctx.UiThread.BeginInvoke(new Action(() => {
+                    Interlocked.Exchange(ref _invokePending, 0);
+                    if (_disposed || _ctx.Target.IsDisposed || !_ctx.Target.IsHandleCreated)
+                        return;
+                    if (Interlocked.Exchange(ref _isRenderingFlag, 1) == 1)
+                        return;
+
+                    var presentSw = Stopwatch.StartNew();
+                    try {
+                        Bitmap tmpBmp = null;
+                        try {
+                            tmpBmp = new Bitmap(toPresent.Width, toPresent.Height, PixelFormat.Format32bppPArgb);
+                            var bmpData = tmpBmp.LockBits(new Rectangle(0, 0, tmpBmp.Width, tmpBmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
+                            try {
+                                byte* src = (byte*)toPresent.GetPixels();
+                                byte* dst = (byte*)bmpData.Scan0;
+                                int srcStride = toPresent.RowBytes;
+                                int dstStride = bmpData.Stride;
+                                long srcExpected = (long)srcStride * toPresent.Height;
+                                long dstExpected = (long)dstStride * toPresent.Height;
+                                long skByteCount = toPresent.ByteCount;
+                                if (src == null || dst == null || skByteCount < srcExpected)
+                                    return;
+
+                                Span<byte> srcSpan = new(src, (int)srcExpected);
+                                Span<byte> dstSpan = new(dst, (int)dstExpected);
+
+                                if (dstStride > srcStride) {
+                                    EnsureZeroRowBuffer(dstStride);
+                                    for (int y = 0; y < toPresent.Height; y++) {
+                                        var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
+                                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                                        sRow.CopyTo(dRow);
+                                        if (dstStride > sRow.Length)
+                                            dRow[sRow.Length..].Clear();
+                                    }
+                                } else if (srcStride == dstStride) {
+                                    srcSpan.CopyTo(dstSpan);
+                                } else {
+                                    for (int y = 0; y < toPresent.Height; y++) {
+                                        var sRow = srcSpan.Slice(y * srcStride, srcStride);
+                                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                                        sRow[..dstStride].CopyTo(dRow);
+                                    }
+                                }
+                            }
+                            finally { tmpBmp.UnlockBits(bmpData); }
+
+                            Present(tmpBmp);
+                        }
+                        finally {
+                            try { tmpBmp?.Dispose(); }
+                            catch { }
+                        }
+                    }
+                    catch (Exception ex) {
+                        Debug.WriteLine($"Fallback present error: {ex}");
+                    }
+                    finally {
+                        presentSw.Stop();
+                        LastRenderDurationMs = presentSw.ElapsedMilliseconds;
+                        Interlocked.Exchange(ref _isRenderingFlag, 0);
+                    }
+                }));
+                enqueued = true;
+            }
+            catch (Exception ex) {
+                Interlocked.Exchange(ref _invokePending, 0);
+                Debug.WriteLine($"BeginInvoke failed (fallback): {ex}");
+            }
+        }
+
+        if (!enqueued) {
+            Interlocked.Exchange(ref _needsRender, 1);
+        }
+    }
+
+    // Present (wird weiterhin gebraucht für Fallbacks)
     public void Present(Bitmap bitmap, byte opacity = 255) {
         if (_disposed || bitmap == null)
             return;
@@ -213,9 +604,9 @@ public class Renderer : IRenderer {
 
         IntPtr screenDc = IntPtr.Zero;
         IntPtr memDc = IntPtr.Zero;
-        IntPtr hDib = IntPtr.Zero;
+        IntPtr hDibLocal = IntPtr.Zero;
         IntPtr oldObj = IntPtr.Zero;
-        IntPtr dibPixels = IntPtr.Zero;
+        IntPtr dibPixelsLocal = IntPtr.Zero;
 
         try {
             screenDc = NativeMethods.GetDC(IntPtr.Zero);
@@ -229,10 +620,8 @@ public class Renderer : IRenderer {
             int width = bitmap.Width;
             int height = bitmap.Height;
 
-            var bmi = new NativeMethods.BITMAPINFO
-            {
-                bmiHeader = new NativeMethods.BITMAPINFOHEADER
-                {
+            var bmi = new NativeMethods.BITMAPINFO {
+                bmiHeader = new NativeMethods.BITMAPINFOHEADER {
                     biSize = (uint)Marshal.SizeOf<NativeMethods.BITMAPINFOHEADER>(),
                     biWidth = width,
                     biHeight = -height,
@@ -244,53 +633,56 @@ public class Renderer : IRenderer {
                 bmiColors = new uint[3]
             };
 
-            hDib = NativeMethods.CreateDIBSection(screenDc, ref bmi, NativeMethods.DIB_RGB_COLORS, out dibPixels, IntPtr.Zero, 0);
-            if (hDib == IntPtr.Zero || dibPixels == IntPtr.Zero)
+            hDibLocal = NativeMethods.CreateDIBSection(screenDc, ref bmi, NativeMethods.DIB_RGB_COLORS, out dibPixelsLocal, IntPtr.Zero, 0);
+            if (hDibLocal == IntPtr.Zero || dibPixelsLocal == IntPtr.Zero)
                 return;
 
-            var bmpData = bitmap.LockBits(
-                new Rectangle(0, 0, width, height),
-                ImageLockMode.ReadOnly,
-                PixelFormat.Format32bppPArgb);
-
+            var bmpData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
             try {
-                unsafe {
-                    byte* src = (byte*)bmpData.Scan0;
-                    byte* dst = (byte*)dibPixels;
-                    int srcStride = bmpData.Stride;
-                    int dstStride = width * 4;
+                byte* src = (byte*)bmpData.Scan0;
+                byte* dst = (byte*)dibPixelsLocal;
+                int srcStride = bmpData.Stride;
+                int dstStride = width * 4;
+                long srcExpected = (long)srcStride * height;
+                long dstExpected = (long)dstStride * height;
 
-                    if (srcStride == dstStride) {
-                        Buffer.MemoryCopy(src, dst, (long)dstStride * height, (long)srcStride * height);
-                    } else {
-                        for (int y = 0; y < height; y++) {
-                            byte* sRow = src + (long)y * srcStride;
-                            byte* dRow = dst + (long)y * dstStride;
-                            int bytesToCopy = Math.Min(srcStride, dstStride);
-                            Buffer.MemoryCopy(sRow, dRow, dstStride, bytesToCopy);
-                        }
+                Span<byte> srcSpan = new(src, (int)srcExpected);
+                Span<byte> dstSpan = new(dst, (int)dstExpected);
+
+                if (srcStride == dstStride) {
+                    srcSpan.CopyTo(dstSpan);
+                } else if (dstStride > srcStride) {
+                    for (int y = 0; y < height; y++) {
+                        var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
+                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                        sRow.CopyTo(dRow);
+                        if (dstStride > sRow.Length)
+                            dRow[sRow.Length..].Clear();
+                    }
+                } else {
+                    for (int y = 0; y < height; y++) {
+                        var sRow = srcSpan.Slice(y * srcStride, srcStride);
+                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                        sRow[..dstStride].CopyTo(dRow);
                     }
                 }
             }
             finally { bitmap.UnlockBits(bmpData); }
 
-            oldObj = NativeMethods.SelectObject(memDc, hDib);
+            oldObj = NativeMethods.SelectObject(memDc, hDibLocal);
 
             Size size = new(width, height);
             Point source = new(0, 0);
             Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
 
-            var blend = new NativeMethods.BLENDFUNCTION
-            {
+            var blend = new NativeMethods.BLENDFUNCTION {
                 BlendOp = NativeMethods.AC_SRC_OVER,
                 BlendFlags = 0,
                 SourceConstantAlpha = opacity,
                 AlphaFormat = NativeMethods.AC_SRC_ALPHA
             };
 
-            bool success = NativeMethods.UpdateLayeredWindow(
-                hwnd, screenDc, ref topPos, ref size, memDc, ref source, 0, ref blend, NativeMethods.ULW_ALPHA);
-
+            bool success = NativeMethods.UpdateLayeredWindow(hwnd, screenDc, ref topPos, ref size, memDc, ref source, 0, ref blend, NativeMethods.ULW_ALPHA);
             if (!success) {
                 var err = Marshal.GetLastWin32Error();
                 LastPresentError = err;
@@ -300,8 +692,8 @@ public class Renderer : IRenderer {
         finally {
             if (memDc != IntPtr.Zero)
                 _ = NativeMethods.SelectObject(memDc, oldObj);
-            if (hDib != IntPtr.Zero)
-                _ = NativeMethods.DeleteObject(hDib);
+            if (hDibLocal != IntPtr.Zero)
+                _ = NativeMethods.DeleteObject(hDibLocal);
             if (memDc != IntPtr.Zero)
                 _ = NativeMethods.DeleteDC(memDc);
             if (screenDc != IntPtr.Zero)
@@ -309,7 +701,120 @@ public class Renderer : IRenderer {
         }
     }
 
+    // DrawWindowFrame (aus deinem Code, leicht angepasst)
+    public void DrawWindowFrame(SKCanvas canvas, Size size) {
+        var bg = _ctx.Skin.GetBackground();
+        var layout = _ctx.Skin.GetLayout();
+        if (bg == null || layout == null)
+            return;
 
+        int width = size.Width;
+        int height = size.Height;
+
+        _missingRects.Clear();
+        canvas.Clear(SKColors.Transparent);
+
+        if (bg.TopLeft != null)
+            canvas.DrawBitmap(bg.TopLeft, new SKPoint(0, 0));
+        else
+            _missingRects.Add(new SKRect(0, 0, Math.Min(64, width / 6f), Math.Min(64, height / 6f)));
+
+        if (bg.TopRight != null)
+            canvas.DrawBitmap(bg.TopRight, new SKPoint(width - bg.TopRight.Width, 0));
+        else
+            _missingRects.Add(new SKRect(width - Math.Min(64, width / 6f), 0, width, Math.Min(64, height / 6f)));
+
+        if (bg.BottomLeft != null)
+            canvas.DrawBitmap(bg.BottomLeft, new SKPoint(0, height - bg.BottomLeft.Height));
+        else
+            _missingRects.Add(new SKRect(0, height - Math.Min(64, height / 6f), Math.Min(64, width / 6f), height));
+
+        if (bg.BottomRight != null)
+            canvas.DrawBitmap(bg.BottomRight, new SKPoint(width - bg.BottomRight.Width, height - bg.BottomRight.Height));
+        else
+            _missingRects.Add(new SKRect(width - Math.Min(64, width / 6f), height - Math.Min(64, height / 6f), width, height));
+
+        if (bg.TopCenter != null) {
+            float left = (bg.TopLeft?.Width) ?? 0f;
+            float right = left + (width - ((bg.TopLeft?.Width) ?? 0f) - ((bg.TopRight?.Width) ?? 0f) + layout.TopWidthOffset);
+            float bottom = bg.TopCenter.Height;
+            if (right > left)
+                canvas.DrawBitmap(bg.TopCenter, new SKRect(left, 0, right, bottom));
+        } else {
+            float left = (bg.TopLeft?.Width) ?? 0f;
+            float right = left + (width - ((bg.TopLeft?.Width) ?? 0f) - ((bg.TopRight?.Width) ?? 0f) + layout.TopWidthOffset);
+            if (right > left)
+                _missingRects.Add(new SKRect(left, 0, right, Math.Min(64, height / 6f)));
+        }
+
+        if (bg.BottomCenter != null) {
+            float left = (bg.BottomLeft?.Width) ?? 0f;
+            float top = height - bg.BottomCenter.Height;
+            float right = left + (width - ((bg.BottomLeft?.Width) ?? 0f) - ((bg.BottomRight?.Width) ?? 0f) + layout.BottomWidthOffset);
+            float bottom = top + bg.BottomCenter.Height;
+            if (right > left)
+                canvas.DrawBitmap(bg.BottomCenter, new SKRect(left, top, right, bottom));
+        } else {
+            float left = (bg.BottomLeft?.Width) ?? 0f;
+            float top = Math.Max(0, height - Math.Min(64, height / 6f));
+            float right = left + (width - ((bg.BottomLeft?.Width) ?? 0f) - ((bg.BottomRight?.Width) ?? 0f) + layout.BottomWidthOffset);
+            if (right > left)
+                _missingRects.Add(new SKRect(left, top, right, height));
+        }
+
+        if (bg.LeftCenter != null) {
+            float top = (bg.TopLeft?.Height) ?? 0f;
+            float bottom = top + (height - ((bg.TopLeft?.Height) ?? 0f) - ((bg.BottomLeft?.Height) ?? 0f) + layout.LeftHeightOffset);
+            if (bottom > top)
+                canvas.DrawBitmap(bg.LeftCenter, new SKRect(0, top, bg.LeftCenter.Width, bottom));
+        } else {
+            float top = (bg.TopLeft?.Height) ?? 0f;
+            float bottom = top + (height - ((bg.TopLeft?.Height) ?? 0f) - ((bg.BottomLeft?.Height) ?? 0f) + layout.LeftHeightOffset);
+            if (bottom > top)
+                _missingRects.Add(new SKRect(0, top, Math.Min(64, size.Width / 6f), bottom));
+        }
+
+        if (bg.RightCenter != null) {
+            float left = size.Width - bg.RightCenter.Width;
+            float top = (bg.TopRight?.Height) ?? 0f;
+            float bottom = top + (size.Height - ((bg.TopRight?.Height) ?? 0f) - ((bg.BottomRight?.Height) ?? 0f) + layout.RightHeightOffset);
+            if (bottom > top)
+                canvas.DrawBitmap(bg.RightCenter, new SKRect(left, top, left + bg.RightCenter.Width, bottom));
+        } else {
+            float left = size.Width - Math.Min(64, size.Width / 6f);
+            float top = (bg.TopRight?.Height) ?? 0f;
+            float bottom = top + (size.Height - ((bg.TopRight?.Height) ?? 0f) - ((bg.BottomRight?.Height) ?? 0f) + layout.RightHeightOffset);
+            if (bottom > top)
+                _missingRects.Add(new SKRect(left, top, size.Width, bottom));
+        }
+
+        float leftWidth = (bg.LeftCenter?.Width) ?? 0f;
+        float topHeight = (bg.TopCenter?.Height) ?? 0f;
+        float bottomHeight = (bg.BottomCenter?.Height) ?? 0f;
+        float fillLeft = Math.Max(0f, leftWidth - layout.FillPosOffset);
+        float fillTop = Math.Max(0f, topHeight - layout.FillPosOffset);
+        float fillRight = fillLeft + Math.Max(0f, size.Width - leftWidth * 2 + layout.FillWidthOffset);
+        float fillBottom = fillTop + Math.Max(0f, size.Height - topHeight - bottomHeight + layout.FillHeightOffset);
+
+        if (fillRight > fillLeft && fillBottom > fillTop) {
+            var fillRect = new SKRect(fillLeft, fillTop, fillRight, fillBottom);
+            if (bg.FillBitmap != null) {
+                bool useTileMode = false;
+                if (useTileMode) {
+                    using var shader = SKShader.CreateBitmap(bg.FillBitmap, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat);
+                    using var paint = new SKPaint { Shader = shader, IsAntialias = true };
+                    canvas.DrawRect(fillRect, paint);
+                } else {
+                    canvas.DrawBitmap(bg.FillBitmap, fillRect);
+                }
+            } else {
+                _fillPaint.Color = bg.FillColor.ToSKColor();
+                canvas.DrawRect(fillRect, _fillPaint);
+            }
+        }
+    }
+
+    // Debug Raster Overlay (unverändert)
     private void DrawDebugRasterOverlay(SKCanvas canvas, Size size) {
         float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
 
@@ -337,45 +842,36 @@ public class Renderer : IRenderer {
             Style = SKPaintStyle.Stroke
         };
 
-        // Text paint: nur Farbe/AA; Größe über SKFont
         using var textPaint = new SKPaint {
-            Color = new SKColor(0, 255, 100, 220),//new SKColor(0xFF, 0xFF, 0xFF, 0xE0),
+            Color = new SKColor(0, 255, 100, 220),
             IsAntialias = true
         };
 
         float fontSize = Math.Max(7f, 12f * scale);
         using var font = new SKFont(SKTypeface.Default, fontSize);
 
-        // Rasterlinien
         for (int x = 0; x < width; x += rasterSpacing)
             canvas.DrawLine(x, 0, x, height, linePaint);
 
         for (int y = 0; y < height; y += rasterSpacing)
             canvas.DrawLine(0, y, width, y, linePaint);
 
-        // Achsen bei 0
         canvas.DrawLine(0, 0, width, 0, axisPaint);
         canvas.DrawLine(0, 0, 0, height, axisPaint);
 
-        // Zahlen oben (x) und links (y) — nur Kanten, um Unordnung zu vermeiden
-        // Berechne Baseline so dass Text vertikal zentriert zur Zeile sitzt
         var metrics = font.Metrics;
         float baselineOffset = -(metrics.Descent + metrics.Ascent) / 2f;
 
-        // Oben: x-Koordinaten
         for (int x = 0; x < width; x += numberSpacing) {
             string sx = x.ToString();
-            // Zeichne zentriert über der Linie
             canvas.DrawText(sx, x + 2, 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
         }
 
-        // Links: y-Koordinaten
         for (int y = 0; y < height; y += numberSpacing) {
             string sy = y.ToString();
             canvas.DrawText(sy, 2, y + 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
         }
 
-        // Mausposition markieren (Window-Koordinaten)
         try {
             var cursorScreen = System.Windows.Forms.Cursor.Position;
             int cursorX = cursorScreen.X - _ctx.Target.Left;
@@ -388,232 +884,140 @@ public class Renderer : IRenderer {
                 RequestRender();
             }
         }
-        catch { /* Cursor.Position kann in manchen Kontexten fehlschlagen; safe ignore */ }
+        catch { /* ignore */ }
     }
 
+    // Performance Overlay (einfach)
+    private void DrawPerformanceOverlay(SKCanvas canvas, Size size) {
+        if (!_showPerfOverlay)
+            return;
 
+        long nowMs = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
+        double fps = 0;
+        int frameCount = 0;
+        lock (_perfLock) {
+            frameCount = _frameTimestamps.Count;
+            if (frameCount >= 2) {
+                long first = _frameTimestamps.Peek();
+                long last = _frameTimestamps.Last();
+                double span = Math.Max(1, last - first);
+                fps = (frameCount - 1) * 1000.0 / span;
+            }
+        }
 
-    // Zeichnet ein rotes X über schwarzem Hintergrund in das gegebene Rect
-    // Zusätzlich zentriert das Wort "MISSING IMAGE" entlang der längeren Kante (horizontal zur längeren Kante)
+        long lastRenderMs = LastRenderDurationMs;
+        int lastPresentErr = LastPresentError;
+        long workingSet = Process.GetCurrentProcess().WorkingSet64 / 1024;
+        int threadCount = Process.GetCurrentProcess().Threads.Count;
+        int bufW = _renderBuffer?.Width ?? 0;
+        int bufH = _renderBuffer?.Height ?? 0;
+
+        using var bgPaint = new SKPaint { Color = new SKColor(0, 0, 0, 180), IsAntialias = true, Style = SKPaintStyle.Fill };
+        using var textPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true, TextSize = 12 };
+        using var titlePaint = new SKPaint { Color = SKColors.White, IsAntialias = true, TextSize = 13, Typeface = SKTypeface.FromFamilyName("Consolas") };
+
+        float padding = 8f;
+        float lineHeight = 16f;
+        float boxWidth = 260f;
+        float boxHeight = padding * 2 + lineHeight * 7;
+
+        var rect = new SKRect(padding, padding, padding + boxWidth, padding + boxHeight);
+        canvas.DrawRoundRect(rect, 6, 6, bgPaint);
+
+        float x = rect.Left + padding;
+        float y = rect.Top + padding + lineHeight;
+
+        void DrawLine(string label, string value) {
+            canvas.DrawText(label, x, y, titlePaint);
+            canvas.DrawText(value, x + 120, y, textPaint);
+            y += lineHeight;
+        }
+
+        DrawLine("FPS", fps > 0 ? $"{fps:F1}" : "—");
+        DrawLine("Last Render ms", $"{lastRenderMs} ms");
+        DrawLine("Last Present Err", lastPresentErr == 0 ? "OK" : lastPresentErr.ToString());
+        DrawLine("RenderBuffer", $"{bufW}x{bufH}");
+        DrawLine("Process Mem", $"{workingSet} KB");
+        DrawLine("Threads", threadCount.ToString());
+        DrawLine("Time", DateTime.Now.ToString("HH:mm:ss"));
+
+        float barMax = boxWidth - 2 * padding;
+        float barY = rect.Bottom - padding - 6;
+        float normalized = Math.Min(1f, lastRenderMs / 50f);
+        using var barBg = new SKPaint { Color = new SKColor(255, 255, 255, 30), IsAntialias = true };
+        using var barFill = new SKPaint { Color = normalized < 0.5 ? SKColors.Lime : SKColors.OrangeRed, IsAntialias = true };
+        canvas.DrawRect(x, barY, barMax, 6, barBg);
+        canvas.DrawRect(x, barY, barMax * normalized, 6, barFill);
+    }
+
+    // Missing image drawing (unverändert)
     private static void DrawMissingImageError(SKCanvas canvas, SKRect rect) {
         using var bgPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = SKColors.Black, IsAntialias = true };
         using var borderPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Magenta, StrokeWidth = 2, IsAntialias = true };
-        using var xPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Black, IsAntialias = true, StrokeCap = SKStrokeCap.Square };
         using var textPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = SKColors.Magenta, IsAntialias = true };
 
         float stroke = Math.Max(4f, Math.Min(rect.Width, rect.Height) / 8f);
-        xPaint.StrokeWidth = stroke;
+        using var font = new SKFont(SKTypeface.Default, Math.Max(10f, Math.Max(rect.Width, rect.Height) / 20f));
+        var metrics = font.Metrics;
 
         canvas.DrawRect(rect, bgPaint);
         canvas.DrawRect(rect, borderPaint);
 
-        //float inset = stroke / 2f + 1f;
-
-        //var p1 = new SKPoint(rect.Left + inset, rect.Top + inset);
-        //var p2 = new SKPoint(rect.Right - inset, rect.Bottom - inset);
-        //var p3 = new SKPoint(rect.Left + inset, rect.Bottom - inset);
-        //var p4 = new SKPoint(rect.Right - inset, rect.Top + inset);
-
-        //canvas.DrawLine(p1, p2, xPaint);
-        //canvas.DrawLine(p3, p4, xPaint);
-
-        // Text "MISSING" entlang der längeren Kante (immer horizontal zur längeren Kante)
-        float longSide = Math.Max(rect.Width, rect.Height);
-        float fontSize = Math.Max(10f, longSide / 20f);
-        using var font = new SKFont(SKTypeface.Default, fontSize);
-        var metrics = font.Metrics;
-
-        // Zeichnen zentriert; bei Bedarf rotieren, damit Text horizontal zur längeren Kante liegt
         float cx = rect.MidX;
         float cy = rect.MidY;
-        bool rotate = rect.Height > rect.Width; // wenn Hochformat, rotiere -90deg damit Text "horizontal" zur längeren Kante erscheint
+        bool rotate = rect.Height > rect.Width;
 
         canvas.Save();
         canvas.Translate(cx, cy);
-        if (rotate) {
+        if (rotate)
             canvas.RotateDegrees(-90);
-        }
-
-        // Nach Translate ist Zentrum (0,0). Berechne baseline y so dass Text vertikal zentriert bleibt.
         float baselineY = -(metrics.Descent + metrics.Ascent) / 2f;
-
         canvas.DrawText("MISSING IMAGE", 0, baselineY, SKTextAlign.Center, font, textPaint);
         canvas.Restore();
     }
 
-    public void DrawWindowFrame(SKCanvas canvas, Size size) {
-        var bg = _ctx.Skin.GetBackground();
-        var layout = _ctx.Skin.GetLayout();
-
-        if (bg == null || layout == null)
-            return;
-
-        int width = size.Width;
-        int height = size.Height;
-
-        _missingRects.Clear();
-
-        canvas.Clear(SKColors.Transparent);
-
-        // Ecken
-        if (bg.TopLeft != null)
-            canvas.DrawBitmap(bg.TopLeft, new SKPoint(0, 0));
-        else
-            _missingRects.Add(new SKRect(0, 0, Math.Min(64, width / 6f), Math.Min(64, height / 6f)));
-
-        if (bg.TopRight != null)
-            canvas.DrawBitmap(bg.TopRight, new SKPoint(width - bg.TopRight.Width, 0));
-        else
-            _missingRects.Add(new SKRect(width - Math.Min(64, width / 6f), 0, width, Math.Min(64, height / 6f)));
-
-        if (bg.BottomLeft != null)
-            canvas.DrawBitmap(bg.BottomLeft, new SKPoint(0, height - bg.BottomLeft.Height));
-        else
-            _missingRects.Add(new SKRect(0, height - Math.Min(64, height / 6f), Math.Min(64, width / 6f), height));
-
-        if (bg.BottomRight != null)
-            canvas.DrawBitmap(bg.BottomRight, new SKPoint(width - bg.BottomRight.Width, height - bg.BottomRight.Height));
-        else
-            _missingRects.Add(new SKRect(width - Math.Min(64, width / 6f), height - Math.Min(64, height / 6f), width, height));
-
-        // Top Center
-        if (bg.TopCenter != null) {
-            float left = (bg.TopLeft?.Width) ?? 0f;
-            float right = left + (width - ((bg.TopLeft?.Width) ?? 0f) - ((bg.TopRight?.Width) ?? 0f) + layout.TopWidthOffset);
-            float bottom = bg.TopCenter.Height;
-            if (right > left)
-                canvas.DrawBitmap(bg.TopCenter, new SKRect(left, 0, right, bottom));
-        } else {
-            float left = (bg.TopLeft?.Width) ?? 0f;
-            float right = left + (width - ((bg.TopLeft?.Width) ?? 0f) - ((bg.TopRight?.Width) ?? 0f) + layout.TopWidthOffset);
-            if (right > left)
-                _missingRects.Add(new SKRect(left, 0, right, Math.Min(64, height / 6f)));
-        }
-
-        // Bottom Center
-        if (bg.BottomCenter != null) {
-            float left = (bg.BottomLeft?.Width) ?? 0f;
-            float top = height - bg.BottomCenter.Height;
-            float right = left + (width - ((bg.BottomLeft?.Width) ?? 0f) - ((bg.BottomRight?.Width) ?? 0f) + layout.BottomWidthOffset);
-            float bottom = top + bg.BottomCenter.Height;
-            if (right > left)
-                canvas.DrawBitmap(bg.BottomCenter, new SKRect(left, top, right, bottom));
-        } else {
-            float left = (bg.BottomLeft?.Width) ?? 0f;
-            float top = Math.Max(0, height - Math.Min(64, height / 6f));
-            float right = left + (width - ((bg.BottomLeft?.Width) ?? 0f) - ((bg.BottomRight?.Width) ?? 0f) + layout.BottomWidthOffset);
-            if (right > left)
-                _missingRects.Add(new SKRect(left, top, right, height));
-        }
-
-        // Left Center
-        if (bg.LeftCenter != null) {
-            float top = (bg.TopLeft?.Height) ?? 0f;
-            float bottom = top + (height - ((bg.TopLeft?.Height) ?? 0f) - ((bg.BottomLeft?.Height) ?? 0f) + layout.LeftHeightOffset);
-            if (bottom > top)
-                canvas.DrawBitmap(bg.LeftCenter, new SKRect(0, top, bg.LeftCenter.Width, bottom));
-        } else {
-            float top = (bg.TopLeft?.Height) ?? 0f;
-            float bottom = top + (height - ((bg.TopLeft?.Height) ?? 0f) - ((bg.BottomLeft?.Height) ?? 0f) + layout.LeftHeightOffset);
-            if (bottom > top)
-                _missingRects.Add(new SKRect(0, top, Math.Min(64, width / 6f), bottom));
-        }
-
-        // Right Center
-        if (bg.RightCenter != null) {
-            float left = width - bg.RightCenter.Width;
-            float top = (bg.TopRight?.Height) ?? 0f;
-            float bottom = top + (height - ((bg.TopRight?.Height) ?? 0f) - ((bg.BottomRight?.Height) ?? 0f) + layout.RightHeightOffset);
-            if (bottom > top)
-                canvas.DrawBitmap(bg.RightCenter, new SKRect(left, top, left + bg.RightCenter.Width, bottom));
-        } else {
-            float left = width - Math.Min(64, width / 6f);
-            float top = (bg.TopRight?.Height) ?? 0f;
-            float bottom = top + (height - ((bg.TopRight?.Height) ?? 0f) - ((bg.BottomRight?.Height) ?? 0f) + layout.RightHeightOffset);
-            if (bottom > top)
-                _missingRects.Add(new SKRect(left, top, width, bottom));
-        }
-
-        // Fill-Bereich: sichere Berechnung mit Fallbacks und Validierung
-        float leftWidth = (bg.LeftCenter?.Width) ?? 0f;
-        float topHeight = (bg.TopCenter?.Height) ?? 0f;
-        float bottomHeight = (bg.BottomCenter?.Height) ?? 0f;
-        float fillLeft = Math.Max(0f, leftWidth - layout.FillPosOffset);
-        float fillTop = Math.Max(0f, topHeight - layout.FillPosOffset);
-        float fillRight = fillLeft + Math.Max(0f, width - leftWidth * 2 + layout.FillWidthOffset);
-        float fillBottom = fillTop + Math.Max(0f, height - topHeight - bottomHeight + layout.FillHeightOffset);
-
-        if (fillRight > fillLeft && fillBottom > fillTop) {
-            var fillRect = new SKRect(fillLeft, fillTop, fillRight, fillBottom);
-
-            // Wenn ein Fill-Bitmap vorhanden ist, benutze es; sonst Farbe
-            if (bg.FillBitmap != null) {
-                // Beispiel: zwei Modi — Tile (wiederholen) oder Stretch (skaliert)
-                // Du kannst den Modus aus layout oder bg konfigurieren; hier hardcoded als Tile.
-                bool useTileMode = false; // setze auf false für Stretch
-
-                if (useTileMode) {
-                    // Tile: Shader mit Repeat
-                    using var shader = SKShader.CreateBitmap(bg.FillBitmap, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat);
-                    using var paint = new SKPaint { Shader = shader, IsAntialias = true };
-                    canvas.DrawRect(fillRect, paint);
-                } else {
-                    // Stretch: Bitmap in das Fill-Rect skalieren
-                    // Achtung: DrawBitmap(SKBitmap, SKRect) skaliert automatisch
-                    canvas.DrawBitmap(bg.FillBitmap, fillRect);
-                }
-            } else {
-                // Fallback: Farbe wie bisher
-                _fillPaint.Color = bg.FillColor.ToSKColor();
-                canvas.DrawRect(fillRect, _fillPaint);
-            }
-        }
-
-    }
-
+    // Dispose pattern
     public void Dispose() {
-        Dispose(disposing: true);
+        Dispose(true);
         GC.SuppressFinalize(this);
     }
 
     protected virtual void Dispose(bool disposing) {
         if (_disposed)
             return;
+        _disposed = true;
 
-        // Reset Render-Anforderung unabhängig vom disposing-Zustand
+        try { StopRenderWorker(); }
+        catch { }
+
         _needsRender = 0;
+        Interlocked.Exchange(ref _invokePending, 0);
+        Interlocked.Exchange(ref _isRenderingFlag, 0);
 
         if (disposing) {
-            try {
-                // Event abmelden bevor der Timer disposed wird
-                _renderTimer.Tick -= RenderTimer_Tick;
-            }
+            try { _renderWorker = null; }
             catch { }
-
-            try { _renderTimer.Stop(); }
-            catch { }
-
-            try { _renderTimer.Dispose(); }
+            try { _renderCts.Dispose(); }
             catch { }
 
             try { _renderSurface?.Dispose(); }
             catch { }
-
             try { _renderBuffer?.Dispose(); }
             catch { }
-
-            try { _backBuffer?.Dispose(); }
+            try { _bgRenderBitmap?.Dispose(); }
             catch { }
-
+            try { _uiPresentBitmap?.Dispose(); }
+            catch { }
             try { _fillPaint.Dispose(); }
             catch { }
         }
 
-        // Hier könnten unverwaltete Ressourcen freigegeben werden, falls später hinzugefügt.
-        // Felder auf "leeren" Zustand setzen (readonly Felder bleiben unverändert)
-        _renderSurface = null;
-        _renderBuffer = null;
-        _backBuffer = null;
-        _disposed = true;
+        // DIB + Mapping freigeben (UI-Thread)
+        try {
+            ReleaseMappedDib();
+        }
+        catch { }
+
+        _zeroRowBuffer = null;
     }
 }
