@@ -65,6 +65,71 @@ function util.make_anchor(x, y, w, h, mode)
 end
 
 
+-- full_anchor(20, 20, 20, 20)
+-- Control bleibt 20px Abstand zu allen Seiten
+-- wächst mit dem Fenster
+function util.full_anchor(x1, y1, x2, y2)
+    -- x1,y1 = Abstand zur linken/oberen Ecke
+    -- x2,y2 = Abstand zur rechten/unteren Ecke
+
+    return function()
+        local winW, winH = get_window_size()
+
+        return {
+            x = x1,
+            y = y1,
+            width = winW - x1 - x2,
+            height = winH - y1 - y2
+        }
+    end
+end
+
+
+function util.dock(mode, margin)
+    margin = margin or 0
+
+    return function()
+        local winW, winH = get_window_size()
+
+        if mode == "fill" then
+            return { x = margin, y = margin, width = winW - margin*2, height = winH - margin*2 }
+        end
+
+        if mode == "top" then
+            return { x = margin, y = margin, width = winW - margin*2, height = margin }
+        end
+
+        if mode == "bottom" then
+            return { x = margin, y = winH - margin*2, width = winW - margin*2, height = margin }
+        end
+
+        if mode == "left" then
+            return { x = margin, y = margin, width = margin, height = winH - margin*2 }
+        end
+
+        if mode == "right" then
+            return { x = winW - margin*2, y = margin, width = margin, height = winH - margin*2 }
+        end
+    end
+end
+
+
+-- util.scale(0.1, 0.1, 0.8, 0.8)
+-- Control nimmt immer 80% der Fenstergröße ein
+-- bleibt 10% vom Rand entfernt
+function util.scale(x, y, w, h)
+    return function()
+        local winW, winH = get_window_size()
+        return {
+            x = winW * x,
+            y = winH * y,
+            width = winW * w,
+            height = winH * h
+        }
+    end
+end
+
+
 return util
 
 

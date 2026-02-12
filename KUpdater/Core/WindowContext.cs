@@ -13,6 +13,7 @@ namespace KUpdater.Core;
 public sealed class WindowContext : IDisposable {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
+    public IWindowBackend Backend { get; }
     public BaseConfig Config { get; }
     public IResourceProvider Resources { get; }
     public ControlManager Controls { get; }
@@ -25,10 +26,11 @@ public sealed class WindowContext : IDisposable {
     public WindowContext(
         IRenderTarget target,
         IUiThreadInvoker uiThread,
+        IWindowBackend backend,
         IEventManager? eventManager = null) {
         Target = target;
         UiThread = uiThread;
-
+        Backend = backend;
         Config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
         Resources = new FileResourceProvider(Paths.ResFolder);
         Controls = new ControlManager();

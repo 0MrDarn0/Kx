@@ -84,7 +84,7 @@ return {
 
     -- Start Button
     local startBtn = Button(
-      "btn_start",
+      "btn_default",
       util.make_bounds(-150, -70, 97, 22),
       T("button.start"),
       Font("Segoe UI", 11, "Regular"),
@@ -108,7 +108,7 @@ return {
 
     -- Settings Button
     local settingsBtn = Button(
-      "btn_settings",
+      "btn_default",
       util.make_bounds(-255, -70, 97, 22),
       T("button.settings"),
       Font("Segoe UI", 11, "Regular"),
@@ -120,7 +120,7 @@ return {
 
     -- Website Button
     local websiteBtn = Button(
-      "btn_website",
+      "btn_default",
       util.make_bounds(-360, -70, 97, 22),
       T("button.website"),
       Font("Segoe UI", 11, "Regular"),

@@ -3,6 +3,7 @@
 namespace KUpdater.UI.Interface;
 
 public interface IRenderer : IDisposable {
+    void ToggleDebugOverlay();
     void RequestRender();
     void Render();
     void Resize(int width, int height);

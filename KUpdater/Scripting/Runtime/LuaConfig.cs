@@ -10,6 +10,7 @@ public class BaseConfig {
     public string Url { get; set; } = string.Empty;
     public string Language { get; set; } = "en";
     public string MainWindowSkin { get; set; } = "kalonline";
+    public string MessageBoxSkin { get; set; } = "messagebox";
     public int RenderTimerInterval { get; set; } = 16;
     //public NetworkConfig Network { get; set; } = new();
 }

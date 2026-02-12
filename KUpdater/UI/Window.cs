@@ -29,6 +29,7 @@ public class Window : IDisposable {
         _ctx = new WindowContext(
             backend,
             backend,
+            backend,
             eventManager: new EventManager());
 
         var skin = new MainSkin(_ctx);
@@ -63,6 +64,22 @@ public class Window : IDisposable {
         HookHotkeys();
     }
 
+    public async void OnShown() {
+        _ctx.Events.NotifyAll(new MainWindow_OnShown());
+
+        if (_ctx.Pipeline != null)
+            await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
+    }
+
+    public void OnClosed(bool userClosing) {
+        _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
+        _trayIcon?.Dispose();
+        _ctx.Dispose();
+        _backend.HotkeySink = null;
+        _hotkeyManager?.Dispose();
+        Instance = null;
+    }
+
     private void HookHotkeys() {
         _backend.BeginInvoke(() => {
             _hotkeyManager = new HotkeyManager(_backend.Handle);
@@ -82,25 +99,11 @@ public class Window : IDisposable {
 
     private void HotkeyManager_HotkeyPressed(object? sender, HotkeyEventArgs e) {
         if (e.Id == _toggleDebugOverlayHotkeyId) {
-            (_ctx.Renderer as Renderer)?.ToggleDebugOverlay();
+            _ctx.Renderer.ToggleDebugOverlay();
             _ctx.Renderer.RequestRender();
+            var msg = new MessageBoxWindow(new WinFormsBackend(), "Fehler", "Etwas ist schiefgelaufen");
+            msg.Show();
         }
-    }
-
-    public async void OnShown() {
-        _ctx.Events.NotifyAll(new MainWindow_OnShown());
-
-        if (_ctx.Pipeline != null)
-            await _ctx.Pipeline.RunAsync(AppDomain.CurrentDomain.BaseDirectory);
-    }
-
-    public void OnClosed(bool userClosing) {
-        _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
-        _trayIcon?.Dispose();
-        _ctx.Dispose();
-        _backend.HotkeySink = null;
-        _hotkeyManager?.Dispose();
-        Instance = null;
     }
 
     public void Dispose() {

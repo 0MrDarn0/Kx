@@ -6,7 +6,7 @@ using KUpdater.UI.Interface;
 using KUpdater.Utility;
 namespace KUpdater.UI;
 
-public class WinFormsBackend : Form, IWindowBackend {
+public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBackend {
     // IRenderTarget
     IntPtr IRenderTarget.Handle => Handle;
     bool IRenderTarget.IsDisposed => IsDisposed;
@@ -30,6 +30,8 @@ public class WinFormsBackend : Form, IWindowBackend {
 
     public void SetSize(int width, int height) => Size = new Size(width, height);
     public void SetPosition(int x, int y) => Location = new Point(x, y);
+    public void ShowWindow() => Show();
+    public void CloseWindow() => Close();
 
     public override Cursor? Cursor {
         get => base.Cursor;

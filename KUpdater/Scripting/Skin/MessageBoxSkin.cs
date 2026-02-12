@@ -2,30 +2,34 @@
 
 using KUpdater.Core;
 using KUpdater.Scripting.Runtime;
-using KUpdater.Scripting.Security;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 
 namespace KUpdater.Scripting.Skin;
 
-public class MainSkin(WindowContext ctx)
-    : SkinBase("skin_loader.lua", ctx.Config.Language, ctx.Config.MainWindowSkin, ctx.Resources) {
+public class MessageBoxSkin(WindowContext ctx, string title, string message)
+    : SkinBase("skin_loader.lua", ctx.Config.Language, ctx.Config.MessageBoxSkin, ctx.Resources) {
 
-    protected override string GetName() => "MainSkin";
+    protected override string GetName() => "MessageBoxSkin";
 
     protected override void RegisterGlobals() {
         base.RegisterGlobals();
-        LuaPolicy.Clear();
-        LuaPolicy.Grant("Process.Start");
-        LuaPolicy.Grant("Website.Open");
-        LuaPathGuard.SetAllowedRoots(AppDomain.CurrentDomain.BaseDirectory);
-
         SetGlobal(LuaKeys.Skin.Dir, Paths.LuaSkins.Replace("\\", "/"));
         SetGlobal(LuaKeys.UI.GetWindowSize, () => DynValue.NewTuple(
             DynValue.NewNumber(ctx.Target.Width),
             DynValue.NewNumber(ctx.Target.Height)
         ));
-        SetGlobal("clamp", (Func<double, double, double, double>)((x, lo, hi) => Math.Max(lo, Math.Min(hi, x))));
+
+        SetGlobal("msg_title", title);
+        SetGlobal("msg_text", message);
+
+        SetGlobal("close_window", (Action)(() => {
+            ctx.UiThread.BeginInvoke(new Action(() => {
+                ctx.Backend?.CloseWindow();
+            }));
+        }));
+
+
         ctx.Events.SetSkin(this);
 
         ExposeToLua("Controls", ctx.Controls);
@@ -35,7 +39,8 @@ public class MainSkin(WindowContext ctx)
         ExposeMarkedTypes();
     }
 
-    protected override void UpdateLastState() { }
+    protected override void UpdateLastState() {
+    }
 
 
     protected override SkinBackground BuildBackground() {

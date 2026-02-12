@@ -16,16 +16,17 @@ public class WindowInteraction {
     private Point _resizeStartCursor;
     private Size _resizeStartSize;
     private readonly int _resizeHitSize = 40;
+    private bool _allowResizing = true;
 
     private readonly int _minClientWidth;
     private readonly int _minClientHeight;
 
-    public WindowInteraction(IWindowBackend backend, WindowContext ctx,
-        int minClientWidth = 450, int minClientHeight = 300) {
+    public WindowInteraction(IWindowBackend backend, WindowContext ctx, bool allowResizing = true, int minClientWidth = 450, int minClientHeight = 300) {
         _backend = backend;
         _ctx = ctx;
         _minClientWidth = minClientWidth;
         _minClientHeight = minClientHeight;
+        _allowResizing = allowResizing;
 
         backend.BackendMouseMove += OnMouseMove;
         backend.BackendMouseDown += OnMouseDown;
@@ -67,15 +68,17 @@ public class WindowInteraction {
             return;
         }
 
-        var resizeRect = new Rectangle(
+        if (_allowResizing) {
+            var resizeRect = new Rectangle(
             _backend.Width - _resizeHitSize,
             _backend.Height - _resizeHitSize,
             _resizeHitSize,
             _resizeHitSize);
 
-        _backend.Cursor = resizeRect.Contains(e.Location)
-            ? Cursors.SizeNWSE
-            : Cursors.Default;
+            _backend.Cursor = resizeRect.Contains(e.Location)
+                ? Cursors.SizeNWSE
+                : Cursors.Default;
+        }
 
         if (_ctx.Controls.MouseMove(e.Location))
             _ctx.Renderer.RequestRender();
@@ -96,7 +99,7 @@ public class WindowInteraction {
             _resizeHitSize,
             _resizeHitSize);
 
-        if (resizeRect.Contains(e.Location)) {
+        if (_allowResizing && resizeRect.Contains(e.Location)) {
             _isResizing = true;
             _resizeStartCursor = Cursor.Position;
             _resizeStartSize = new Size(_backend.Width, _backend.Height);

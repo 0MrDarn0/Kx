@@ -12,8 +12,9 @@ public interface IWindowBackend : IRenderTarget, IUiThreadInvoker {
 
     void SetSize(int width, int height);
     void SetPosition(int x, int y);
+    void ShowWindow();
+    void CloseWindow();
 
     Cursor? Cursor { get; set; }
     IHotkeyMessageSink? HotkeySink { get; set; }
-
 }
