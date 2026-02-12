@@ -48,7 +48,7 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
         DoubleBuffered = true;
-        Width = 900;
+        Width = 950;
         Height = 600;
     }
     protected override CreateParams CreateParams {

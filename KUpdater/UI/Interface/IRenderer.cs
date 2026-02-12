@@ -6,6 +6,8 @@ public interface IRenderer : IDisposable {
     void ToggleDebugOverlay();
     void RequestRender();
     void Resize(int width, int height);
+    void TogglePerfOverlay();
+
     long LastRenderDurationMs { get; }
     int LastPresentError { get; }
 }

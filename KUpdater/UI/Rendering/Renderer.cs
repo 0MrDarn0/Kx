@@ -58,7 +58,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
     private readonly object _perfLock = new();
     private readonly Queue<long> _frameTimestamps = new();
     private const int FrameHistory = 60;
-    private bool _showPerfOverlay = true;
+    private bool _showPerfOverlay = false;
     public void TogglePerfOverlay() => _showPerfOverlay = !_showPerfOverlay;
     public void SetPerfOverlay(bool enabled) => _showPerfOverlay = enabled;
 
@@ -284,14 +284,16 @@ public unsafe class Renderer : IRenderer, IDisposable {
                     DrawWindowFrame(canvas, new Size(width, height));
                     _ctx.Controls.Draw(canvas);
 
-                    if (_showDebugRasterOverlay)
-                        DrawDebugRasterOverlay(canvas, new Size(width, height));
-
                     lock (_missingRects) {
                         foreach (var r in _missingRects)
                             DrawMissingImageError(canvas, r);
                         _missingRects.Clear();
                     }
+
+                    if (_showDebugRasterOverlay)
+                        DrawDebugRasterOverlay(canvas, new Size(width, height));
+                    if (_showPerfOverlay)
+                        DrawPerformanceOverlay(canvas, new Size(width, height));
 
                     RecordFrameTimestamp();
                 }
@@ -920,14 +922,14 @@ public unsafe class Renderer : IRenderer, IDisposable {
         int bufW = _renderBuffer?.Width ?? 0;
         int bufH = _renderBuffer?.Height ?? 0;
 
-        using var bgPaint = new SKPaint { Color = new SKColor(0, 0, 0, 180), IsAntialias = true, Style = SKPaintStyle.Fill };
+        using var bgPaint = new SKPaint { Color = new SKColor(0, 0, 0, 140), IsAntialias = true, Style = SKPaintStyle.Fill };
         using var textPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true };
         using var titlePaint = new SKPaint { Color = SKColors.White, IsAntialias = true };
 
         using var textFont = new SKFont(SKTypeface.FromFamilyName("Consolas"), 12);
         using var titleFont = new SKFont(SKTypeface.FromFamilyName("Consolas"), 13);
 
-        float padding = 8f;
+        float padding = 48f;
         float lineHeight = 16f;
         float boxWidth = 260f;
         float boxHeight = padding * 2 + lineHeight * 7;

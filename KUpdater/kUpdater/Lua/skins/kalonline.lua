@@ -150,7 +150,7 @@ return {
     -- Changelog TextBox
     local changelogBox = TextBox(
       "tb_changelog",
-      util.make_anchor(36, 55, -400, 200, "bottom_left"),
+      util.relative_anchor(0.55, 0.35, 40, -85, "bottom_left"),
       "Changelog ...",
       Font("Segoe UI", 10, "Regular"),
       Color.White,

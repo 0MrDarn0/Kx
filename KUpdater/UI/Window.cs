@@ -60,7 +60,16 @@ public class Window : IDisposable {
             .StatusIcons(status => status
                 .Item("default", Paths.Resource("Default/app.ico")))
             .Menu(menu => menu
-                .Exit((s, e) => Application.Exit()));
+                .Exit((s, e) => Application.Exit())
+                .Item("GridOverlay", (s, e) => {
+                    _ctx.Renderer.ToggleDebugOverlay();
+                    _ctx.Renderer.RequestRender();
+                })
+                .Item("PerfOverlay", (s, e) => {
+                    _ctx.Renderer.TogglePerfOverlay();
+                    _ctx.Renderer.RequestRender();
+                }
+                ));
 
         HookHotkeys();
     }

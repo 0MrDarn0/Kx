@@ -85,33 +85,64 @@ function util.full_anchor(x1, y1, x2, y2)
 end
 
 
-function util.dock(mode, margin)
+local function parseSize(size, total, margin)
+    if not size then return nil end
+    if type(size) == "string" and size:match("%%$") then
+        local p = tonumber(size:sub(1, -2)) or 0
+        return math.floor((total - margin*2) * (p / 100))
+    end
+    return tonumber(size)
+end
+
+function util.dock(mode, margin, offsetX, offsetY, sizeW, sizeH, anchorX, anchorY)
     margin = margin or 0
+    offsetX = offsetX or 0
+    offsetY = offsetY or 0
+    anchorX = anchorX or "left"    -- "left", "center", "right"
+    anchorY = anchorY or "bottom"  -- "top", "center", "bottom"
 
     return function()
         local winW, winH = get_window_size()
 
-        if mode == "fill" then
-            return { x = margin, y = margin, width = winW - margin*2, height = winH - margin*2 }
+        local w = parseSize(sizeW, winW, margin) or (winW - margin*2)
+        local h = parseSize(sizeH, winH, margin) or margin
+
+        -- X nach anchorX
+        local x
+        if anchorX == "center" then
+            x = math.floor((winW - w) / 2) + offsetX
+        elseif anchorX == "right" then
+            x = winW - margin - w + offsetX
+        else -- left
+            x = margin + offsetX
         end
 
-        if mode == "top" then
-            return { x = margin, y = margin, width = winW - margin*2, height = margin }
+        -- Y nach anchorY und mode
+        local y
+        if anchorY == "center" then
+            y = math.floor((winH - h) / 2) + offsetY
+        elseif anchorY == "top" then
+            y = margin + offsetY
+        else -- bottom
+            y = winH - margin - h + offsetY
         end
 
-        if mode == "bottom" then
-            return { x = margin, y = winH - margin*2, width = winW - margin*2, height = margin }
-        end
+        -- Schutz: nicht außerhalb
+        if x < 0 then x = 0 end
+        if y < 0 then y = 0 end
+        if x + w > winW then x = winW - w end
+        if y + h > winH then y = winH - h end
 
-        if mode == "left" then
-            return { x = margin, y = margin, width = margin, height = winH - margin*2 }
-        end
-
-        if mode == "right" then
-            return { x = winW - margin*2, y = margin, width = margin, height = winH - margin*2 }
-        end
+        return { x = x, y = y, width = w, height = h }
     end
 end
+
+
+
+function util.rect(x, y, w, h)
+    return function() return { x = x, y = y, width = w, height = h } end
+end
+
 
 
 -- util.scale(0.1, 0.1, 0.8, 0.8)
@@ -127,6 +158,53 @@ function util.scale(x, y, w, h)
             height = winH * h
         }
     end
+end
+
+
+
+-- sizeWPercent, sizeHPercent: Werte zwischen 0 und 1 (z. B. 0.30 = 30%)
+-- offsetX, offsetY: Pixel-Offsets relativ zum Anchor
+-- anchor: "bottom_left", "bottom_right", "top_left", "center", ...
+function util.relative_anchor(sizeWPercent, sizeHPercent, offsetX, offsetY, anchor)
+  sizeWPercent = sizeWPercent or 0.3
+  sizeHPercent = sizeHPercent or 0.15
+  offsetX = offsetX or 0
+  offsetY = offsetY or 0
+  anchor = anchor or "bottom_left"
+
+  return function()
+    local winW, winH = get_window_size()
+    local w = math.floor(winW * sizeWPercent)
+    local h = math.floor(winH * sizeHPercent)
+
+    local x, y
+
+    if anchor == "bottom_left" then
+      x = 0 + offsetX
+      y = winH - h + offsetY
+    elseif anchor == "bottom_right" then
+      x = winW - w + offsetX
+      y = winH - h + offsetY
+    elseif anchor == "top_left" then
+      x = 0 + offsetX
+      y = 0 + offsetY
+    elseif anchor == "center" then
+      x = math.floor((winW - w) / 2) + offsetX
+      y = math.floor((winH - h) / 2) + offsetY
+    else
+      -- fallback
+      x = 0 + offsetX
+      y = winH - h + offsetY
+    end
+
+    -- Clamp: bleibt im Fenster
+    if x < 0 then x = 0 end
+    if y < 0 then y = 0 end
+    if x + w > winW then x = winW - w end
+    if y + h > winH then y = winH - h end
+
+    return { x = x, y = y, width = w, height = h }
+  end
 end
 
 
