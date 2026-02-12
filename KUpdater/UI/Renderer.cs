@@ -16,6 +16,8 @@ public class Renderer : IRenderer {
     private readonly WindowContext _ctx;
     private readonly System.Windows.Forms.Timer _renderTimer;
     private int _needsRender;
+    private int _invokePending;
+    private int _isRenderingFlag;
     private SKBitmap? _renderBuffer;
     private SKSurface? _renderSurface;
     private Bitmap? _backBuffer;
@@ -25,14 +27,13 @@ public class Renderer : IRenderer {
     // Sammlung der fehlenden Bereiche, die als Overlay (topmost) gezeichnet werden sollen
     private readonly List<SKRect> _missingRects = [];
 
-    public bool IsRendering { get; private set; }
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
 
-    private bool _showDebugOverlay = false;
-    public void ToggleDebugOverlay() => _showDebugOverlay = !_showDebugOverlay;
-    public void SetDebugOverlay(bool enabled) => _showDebugOverlay = enabled;
+    private bool _showDebugRasterOverlay = false;
+    public void ToggleDebugOverlay() => _showDebugRasterOverlay = !_showDebugRasterOverlay;
+    public void SetDebugOverlay(bool enabled) => _showDebugRasterOverlay = enabled;
 
 
     public Renderer(WindowContext ctx) {
@@ -58,31 +59,30 @@ public class Renderer : IRenderer {
             return;
 
         if (_ctx.UiThread.InvokeRequired) {
-            if (_disposed || _ctx.Target.IsDisposed)
-                return;
-            try {
+            if (Interlocked.Exchange(ref _invokePending, 1) == 0) {
                 _ctx.UiThread.BeginInvoke(new Action(() => {
+                    Interlocked.Exchange(ref _invokePending, 0);
                     if (_disposed || _ctx.Target.IsDisposed)
                         return;
                     Render();
                 }));
             }
-            catch (InvalidOperationException) { }
             return;
         }
 
-        IsRendering = true;
+        if (Interlocked.Exchange(ref _isRenderingFlag, 1) == 1)
+            return;
         var sw = Stopwatch.StartNew();
         try {
-            //_ctx.Skin.ApplyLastState();
             Render();
         }
         finally {
             sw.Stop();
             LastRenderDurationMs = sw.ElapsedMilliseconds;
-            IsRendering = false;
+            Interlocked.Exchange(ref _isRenderingFlag, 0);
         }
     }
+
 
     private void GetDeviceSize(out int deviceWidth, out int deviceHeight) {
         float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
@@ -123,9 +123,8 @@ public class Renderer : IRenderer {
             DrawWindowFrame(canvas, new Size(width, height));
             _ctx.Controls.Draw(canvas);
 
-            // innerhalb Render(), direkt nach _ctx.Controls.Draw(canvas);
-            if (_showDebugOverlay) {
-                DrawDebugOverlay(canvas, new Size(width, height));
+            if (_showDebugRasterOverlay) {
+                DrawDebugRasterOverlay(canvas, new Size(width, height));
             }
 
             // Fehlende Platzhalter zuletzt zeichnen -> topmost
@@ -311,7 +310,7 @@ public class Renderer : IRenderer {
     }
 
 
-    private void DrawDebugOverlay(SKCanvas canvas, Size size) {
+    private void DrawDebugRasterOverlay(SKCanvas canvas, Size size) {
         float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
 
         int width = size.Width;
@@ -555,11 +554,9 @@ public class Renderer : IRenderer {
 
                 if (useTileMode) {
                     // Tile: Shader mit Repeat
-                    using (var shader = SKShader.CreateBitmap(bg.FillBitmap, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat)) {
-                        using (var paint = new SKPaint { Shader = shader, IsAntialias = true }) {
-                            canvas.DrawRect(fillRect, paint);
-                        }
-                    }
+                    using var shader = SKShader.CreateBitmap(bg.FillBitmap, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat);
+                    using var paint = new SKPaint { Shader = shader, IsAntialias = true };
+                    canvas.DrawRect(fillRect, paint);
                 } else {
                     // Stretch: Bitmap in das Fill-Rect skalieren
                     // Achtung: DrawBitmap(SKBitmap, SKRect) skaliert automatisch

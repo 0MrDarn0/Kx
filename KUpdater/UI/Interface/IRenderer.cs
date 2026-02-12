@@ -7,7 +7,6 @@ public interface IRenderer : IDisposable {
     void RequestRender();
     void Render();
     void Resize(int width, int height);
-    bool IsRendering { get; }
     long LastRenderDurationMs { get; }
     int LastPresentError { get; }
 }
