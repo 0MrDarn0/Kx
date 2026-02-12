@@ -15,6 +15,8 @@ namespace KUpdater.Scripting.Runtime;
 
 public abstract class Lua : IDisposable {
     protected readonly Script _script;
+    public readonly object _scriptLock = new object();
+
     public Script Script => _script;
     private bool _disposed;
 
@@ -78,8 +80,34 @@ public abstract class Lua : IDisposable {
         loader.ModulePaths = [.. paths];
     }
 
-    protected internal void SetGlobal(string name, object value)
-        => _script.Globals.Set(name, DynValue.FromObject(_script, value));
+    public void SetGlobal(string name, string[] values) {
+        lock (_script) {
+            var tbl = new Table(_script);
+            for (int i = 0; i < values.Length; i++)
+                tbl[i + 1] = DynValue.NewString(values[i]);
+            _script.Globals.Set(name, DynValue.NewTable(tbl));
+        }
+    }
+    public void SetGlobal(string name, string value) {
+        lock (_script)
+            _script.Globals.Set(name, DynValue.NewString(value ?? ""));
+    }
+
+    public void SetGlobal(string name, bool value) {
+        lock (_script)
+            _script.Globals.Set(name, DynValue.NewBoolean(value));
+    }
+
+    protected internal void SetGlobal(string name, object value) {
+        lock (_script)
+            _script.Globals.Set(name, DynValue.FromObject(_script, value));
+    }
+
+    public void SetGlobal(string name, DynValue dyn) {
+        lock (_script)
+            _script.Globals.Set(name, dyn);
+    }
+
 
     protected LuaValue<T> GetGlobal<T>(string name)
          => new(_script.Globals.Get(name));

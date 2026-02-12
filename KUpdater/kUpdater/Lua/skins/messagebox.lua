@@ -21,7 +21,7 @@ local layout_config = {
   left_height_offset  = 5,
   right_height_offset = 5,
   fill_pos_offset     = 5,
-  fill_width_offset   = 12, --12,
+  fill_width_offset   = 12,
   fill_height_offset  = 9
 }
 
@@ -33,7 +33,12 @@ return {
 
   init = function()
 
--- Title
+
+--print("button count:", msg_buttons and #msg_buttons or 0)
+--for i,v in ipairs(msg_buttons or {}) do print(i, v) end
+--print("msg_default:", msg_default)
+
+
     local titleLabel = Label(
       "lb_title",
       util.make_bounds(35, 0, 200, 40),
@@ -43,7 +48,6 @@ return {
     )
     Controls.Add(titleLabel)
 
-    -- Changelog TextBox
     local messageTextBox = TextBox(
       "tb_changelog",
       util.full_anchor(36, 55, 36, 70),
@@ -60,29 +64,40 @@ return {
     messageTextBox.GlowRadius      = 6
     Controls.Add(messageTextBox)
 
-    -- Start Button
-    local okBtn = Button(
-      "btn_default",
-      util.make_bounds(-140, -55, 97, 22),
-      "OK",
-      Font("Segoe UI", 11, "Regular"),
-      Color.Orange,
-      "KalOnline:Buttons",
-      function()  end
-    )
-    Controls.Add(okBtn)
 
-        -- Exit Button
-    local exitBtn = Button(
-      "btn_exit",
-      util.make_bounds(-35, 16, 18, 18),
-      T("button.exit"),
-      Font("Segoe UI", 10, "Regular"),
-      Color.Orange,
-      "KalOnline:Buttons",
-      function() close_window() end
-    )
-    Controls.Add(exitBtn)
+
+    -- dynamische, rechtsbündige Buttons (erste an -140,-55, weitere links davon)
+    local buttons = msg_buttons or {"OK"}
+    local default = (msg_default and type(msg_default) == "string" and msg_default) or buttons[1]
+
+    local btnWidth, btnHeight, spacing = 97, 22, 8
+    local firstX, firstY = -140, -55
+
+    local function add_button_at(id, x, y, w, h, text, onClick)
+      Controls.Add(Button(
+        id,
+        util.make_bounds(x, y, w, h),
+        text,
+        Font("Segoe UI", 11, "Regular"),
+        Color.Orange,
+        "KalOnline:Buttons",
+        onClick
+      ))
+    end
+
+    if #buttons == 1 then
+    -- genau ein Button: an der alten Position platzieren
+    local name = buttons[1]
+    add_button_at("btn_default", firstX, firstY, btnWidth, btnHeight, name,
+      function() close_with_result(name) end)
+    else
+      -- mehrere Buttons: erste an firstX, weitere links davon
+      for i, name in ipairs(buttons) do
+        local x = firstX - (i - 1) * (btnWidth + spacing)
+        add_button_at("btn_default", x, firstY, btnWidth, btnHeight, name,
+          function() close_with_result(name) end)
+      end
+    end
 
   end
 }

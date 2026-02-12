@@ -50,8 +50,7 @@ public class Window : IDisposable {
         _interaction = new WindowInteraction(_backend, _ctx);
 
         LuaHost.OnNotify += (level, message) => {
-            _backend.BeginInvoke(() =>
-                MessageBox.Show(null, message, level, MessageBoxButtons.OK, MessageBoxIcon.Information));
+            _backend.BeginInvoke(() => new MessageBoxWindow(new WinFormsBackend(), level, message, new MessageBoxOptions { Buttons = ["Ok"] }).ShowDialog());
         };
 
         _trayIcon = new TrayIcon()
@@ -109,10 +108,15 @@ public class Window : IDisposable {
 
     private void HotkeyManager_HotkeyPressed(object? sender, HotkeyEventArgs e) {
         if (e.Id == _toggleDebugOverlayHotkeyId) {
-            _ctx.Renderer.ToggleDebugOverlay();
-            _ctx.Renderer.RequestRender();
-            var msg = new MessageBoxWindow(new WinFormsBackend(), "Fehler", "Etwas ist schiefgelaufen");
-            msg.Show();
+
+
+            //var msg = new MessageBoxWindow(new WinFormsBackend(), "Exit?", "Are you sure?", new MessageBoxOptions{ Buttons=["Yes", "No"] });
+            //var result = msg.ShowDialog();
+
+            //if (result == MessageBoxResult.No) {
+            //    Application.Exit();
+            //}
+
         }
     }
 

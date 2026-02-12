@@ -2,15 +2,17 @@
 
 using KUpdater.Core;
 using KUpdater.Scripting.Runtime;
+using KUpdater.UI;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 
 namespace KUpdater.Scripting.Skin;
 
-public class MessageBoxSkin(WindowContext ctx, string title, string message)
+public class MessageBoxSkin(WindowContext ctx, string title, string message, UI.MessageBoxOptions options)
     : SkinBase("skin_loader.lua", ctx.Config.Language, ctx.Config.MessageBoxSkin, ctx.Resources) {
 
     protected override string GetName() => "MessageBoxSkin";
+    public MessageBoxWindow? Owner { get; set; }
 
     protected override void RegisterGlobals() {
         base.RegisterGlobals();
@@ -19,14 +21,28 @@ public class MessageBoxSkin(WindowContext ctx, string title, string message)
             DynValue.NewNumber(ctx.Target.Width),
             DynValue.NewNumber(ctx.Target.Height)
         ));
-
         SetGlobal("msg_title", title);
         SetGlobal("msg_text", message);
+        SetGlobal("msg_buttons", options.Buttons);
+        SetGlobal("msg_default", options.DefaultButton ?? options.Buttons.FirstOrDefault() ?? "OK");
+        SetGlobal("allowResizing", options.AllowResizing);
 
         SetGlobal("close_window", (Action)(() => {
             ctx.UiThread.BeginInvoke(new Action(() => {
-                ctx.Backend?.CloseWindow();
+                Owner?.Close();
             }));
+        }));
+
+
+        SetGlobal("close_with_result", (Action<string>)(name => {
+            var result = name switch {
+                "OK" => MessageBoxResult.Ok,
+                "Yes" => MessageBoxResult.Yes,
+                "No" => MessageBoxResult.No,
+                "Cancel" => MessageBoxResult.Cancel,
+                _ => MessageBoxResult.None
+            };
+            Owner?.CloseWithResult(result);
         }));
 
 
