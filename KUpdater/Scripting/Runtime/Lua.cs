@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.Reflection;
 using KUpdater.Core.Attributes;
 using KUpdater.Extensions;
-using KUpdater.UI.Control;
 using KUpdater.UI;
+using KUpdater.UI.Control;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 using MoonSharp.Interpreter.Loaders;
@@ -364,7 +364,7 @@ public abstract class Lua : IDisposable {
                                 gotLock = System.Threading.Monitor.TryEnter(script);
                                 if (!gotLock) {
                                     // Script ist gerade in Benutzung — gib das letzte bekannte Rectangle zurück
-                                    Debug.WriteLine($"[Lua] boundsClosure: script busy, returning cached bounds (thread {Thread.CurrentThread.ManagedThreadId})");
+                                    Debug.WriteLine($"[Lua] boundsClosure: script busy, returning cached bounds (thread {Environment.CurrentManagedThreadId})");
                                     return last;
                                 }
 

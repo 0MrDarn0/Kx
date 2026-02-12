@@ -4,6 +4,7 @@ using KUpdater.Core;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI;
 using KUpdater.UI.Interface;
+using KUpdater.UI.Rendering;
 
 public class MessageBoxWindow : IDisposable {
     private readonly IWindowBackend _backend;

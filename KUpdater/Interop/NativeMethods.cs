@@ -48,6 +48,23 @@ internal static class NativeMethods {
     public const uint BI_RGB = 0u;
     public const int DIB_RGB_COLORS = 0;
 
+    // --- CreateFileMapping P/Invoke ---
+    public const uint PAGE_READWRITE = 0x04;
+    public static readonly IntPtr INVALID_HANDLE_VALUE = new(-1);
+
+    [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr CreateFileMapping(
+        IntPtr hFile,
+        IntPtr lpFileMappingAttributes,
+        uint flProtect,
+        uint dwMaximumSizeHigh,
+        uint dwMaximumSizeLow,
+        string? lpName);
+
+    [DllImport("kernel32", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool CloseHandle(IntPtr hObject);
+
     [DllImport("gdi32.dll", SetLastError = true)]
     public static extern IntPtr CreateDIBSection(IntPtr hdc, [In] ref BITMAPINFO pbmi, uint iUsage, out IntPtr ppvBits, IntPtr hSection, uint dwOffset);
 

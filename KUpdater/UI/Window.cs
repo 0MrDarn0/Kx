@@ -8,6 +8,7 @@ using KUpdater.Interop;
 using KUpdater.Scripting.Runtime;
 using KUpdater.Scripting.Skin;
 using KUpdater.UI.Interface;
+using KUpdater.UI.Rendering;
 using KUpdater.Utility;
 
 namespace KUpdater.UI;

@@ -9,7 +9,7 @@ using KUpdater.Interop;
 using KUpdater.UI.Interface;
 using SkiaSharp;
 
-namespace KUpdater.UI;
+namespace KUpdater.UI.Rendering;
 
 public unsafe class Renderer : IRenderer, IDisposable {
     private readonly WindowContext _ctx;
@@ -39,17 +39,13 @@ public unsafe class Renderer : IRenderer, IDisposable {
     private int _dibHeight;
     private readonly object _dibLock = new(); // schützt _dibPixels/_hDib/_hSection während Schreiben/Present
 
-    // Hilfspinsel
     private readonly SKPaint _fillPaint = new() { IsAntialias = true };
 
-    // Persistent zero-row buffer (für Fallbacks, falls nötig)
+    // Persistent zero-row buffer für Fallbacks
     private byte[]? _zeroRowBuffer;
     private int _zeroRowBufferSize;
 
-    // Fehlende Bereiche
     private readonly List<SKRect> _missingRects = new();
-
-    // Telemetrie
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
 
@@ -58,7 +54,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
     public void ToggleDebugOverlay() => _showDebugRasterOverlay = !_showDebugRasterOverlay;
     public void SetDebugOverlay(bool enabled) => _showDebugRasterOverlay = enabled;
 
-    // Performance Overlay Felder
+    // Performance Overlay
     private readonly object _perfLock = new();
     private readonly Queue<long> _frameTimestamps = new();
     private const int FrameHistory = 60;
@@ -66,7 +62,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
     public void TogglePerfOverlay() => _showPerfOverlay = !_showPerfOverlay;
     public void SetPerfOverlay(bool enabled) => _showPerfOverlay = enabled;
 
-    // Dispose
     private bool _disposed;
 
     public Renderer(WindowContext ctx) {
@@ -74,12 +69,11 @@ public unsafe class Renderer : IRenderer, IDisposable {
         StartRenderWorker();
     }
 
-    // Public API
     public void RequestRender() => Interlocked.Exchange(ref _needsRender, 1);
 
     public void Resize(int width, int height) => EnsureBuffers(width, height);
 
-    // Ensure Skia buffers (für Fälle, in denen du noch Skia direkt auf UI brauchst)
+    // Ensure Skia buffers
     public void EnsureBuffers(int width, int height) {
         if (width <= 0 || height <= 0)
             return;
@@ -109,7 +103,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         _workerRunning = false;
     }
 
-    // Device size helper (UI-Thread access expected)
     private void GetDeviceSize(out int deviceWidth, out int deviceHeight) {
         float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
         deviceWidth = (int)Math.Ceiling(_ctx.Target.Width * scale);
@@ -120,7 +113,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
             deviceHeight = 1;
     }
 
-    // Record frame timestamp for FPS
     private void RecordFrameTimestamp() {
         long now = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
         lock (_perfLock) {
@@ -130,7 +122,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // Ensure zero-row buffer
     private void EnsureZeroRowBuffer(int size) {
         if (_zeroRowBuffer == null || _zeroRowBufferSize < size) {
             _zeroRowBuffer = new byte[size];
@@ -138,24 +129,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // --- CreateFileMapping P/Invoke ---
-    private const uint PAGE_READWRITE = 0x04;
-    private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
-
-    [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern IntPtr CreateFileMapping(
-        IntPtr hFile,
-        IntPtr lpFileMappingAttributes,
-        uint flProtect,
-        uint dwMaximumSizeHigh,
-        uint dwMaximumSizeLow,
-        string? lpName);
-
-    [DllImport("kernel32", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool CloseHandle(IntPtr hObject);
-
-    // Ensure mapped DIBSection (CreateFileMapping + CreateDIBSection with hSection)
+    // mapped DIBSection (CreateFileMapping + CreateDIBSection mit hSection)
     // Muss auf UI-Thread laufen
     private bool EnsureMappedDib(int width, int height) {
         if (width <= 0 || height <= 0)
@@ -177,7 +151,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
 
             try {
                 if (_hSection != IntPtr.Zero) {
-                    _ = CloseHandle(_hSection);
+                    _ = NativeMethods.CloseHandle(_hSection);
                     _hSection = IntPtr.Zero;
                 }
             }
@@ -194,14 +168,14 @@ public unsafe class Renderer : IRenderer, IDisposable {
             uint sizeHigh = (uint)((bytes >> 32) & 0xFFFFFFFF);
 
             // CreateFileMapping mit INVALID_HANDLE_VALUE -> page-backed (kein File)
-            IntPtr hSection = CreateFileMapping(INVALID_HANDLE_VALUE, IntPtr.Zero, PAGE_READWRITE, sizeHigh, sizeLow, null);
+            IntPtr hSection = NativeMethods.CreateFileMapping(NativeMethods.INVALID_HANDLE_VALUE, IntPtr.Zero, NativeMethods.PAGE_READWRITE, sizeHigh, sizeLow, null);
             if (hSection == IntPtr.Zero) {
                 var err = Marshal.GetLastWin32Error();
                 Debug.WriteLine($"CreateFileMapping failed: {err}");
                 return false;
             }
 
-            // Erzeuge BITMAPINFO (top-down)
+            // Erzeuge BITMAPINFO
             var bmi = new NativeMethods.BITMAPINFO {
                 bmiHeader = new NativeMethods.BITMAPINFOHEADER {
                     biSize = (uint)Marshal.SizeOf<NativeMethods.BITMAPINFOHEADER>(),
@@ -221,7 +195,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
                 var err = Marshal.GetLastWin32Error();
                 Debug.WriteLine($"CreateDIBSection with mapping failed: {err}");
                 // Aufräumen
-                try { _ = CloseHandle(hSection); }
+                try { _ = NativeMethods.CloseHandle(hSection); }
                 catch { }
                 return false;
             }
@@ -237,7 +211,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // Release mapped DIB and mapping (UI-Thread)
     private void ReleaseMappedDib() {
         lock (_dibLock) {
             try {
@@ -250,7 +223,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
 
             try {
                 if (_hSection != IntPtr.Zero) {
-                    _ = CloseHandle(_hSection);
+                    _ = NativeMethods.CloseHandle(_hSection);
                     _hSection = IntPtr.Zero;
                 }
             }
@@ -262,10 +235,11 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // zeichnet im Hintergrund und schreibt direkt in DIB (wenn möglich)
+    // Zeichnet im Hintergrund und schreibt direkt in DIB (wenn möglich)
     private void RenderWorkerLoop(CancellationToken ct) {
         try {
             while (!ct.IsCancellationRequested) {
+                // nur weiter wenn ein Render angefordert wurde
                 if (Interlocked.Exchange(ref _needsRender, 0) == 0) {
                     Thread.Sleep(8);
                     continue;
@@ -283,7 +257,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
                 if (width <= 0 || height <= 0 || _ctx.Target.IsDisposed)
                     continue;
 
-                // Ensure SK bitmaps (wiederverwenden)
+                // SK bitmaps wiederverwenden
                 try {
                     if (_bgRenderBitmap == null || _bgRenderBitmap.Width != width || _bgRenderBitmap.Height != height) {
                         try { _bgRenderBitmap?.Dispose(); }
@@ -330,7 +304,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
                     (_bgRenderBitmap, _uiPresentBitmap) = (_uiPresentBitmap, _bgRenderBitmap);
                 }
 
-                // Ensure mapped DIB on UI-Thread (create or resize if needed)
+                // mapped DIB on UI-Thread
                 bool dibReady = false;
                 try {
                     _ctx.UiThread.Invoke(new Action(() => {
@@ -357,55 +331,86 @@ public unsafe class Renderer : IRenderer, IDisposable {
                 if (toPresent == null)
                     continue;
 
-                // Kopiere SKBitmap direkt in dibPixels (unter dibLock) mit Span-basierten Operationen
+                // Kopiere SKBitmap direkt in dibPixels (unter dibLock) mit sicheren PeekPixels/Span-Operationen
                 bool fallbackNeeded = false;
                 lock (_dibLock) {
                     if (_dibPixels == IntPtr.Zero) {
                         fallbackNeeded = true;
                     } else {
-                        byte* src = (byte*)toPresent.GetPixels();
-                        byte* dst = (byte*)_dibPixels;
-                        int srcStride = toPresent.RowBytes;
-                        int dstStride = _dibWidth * 4;
-                        long srcExpected = (long)srcStride * toPresent.Height;
-                        long dstExpected = (long)dstStride * toPresent.Height;
-                        long skByteCount = toPresent.ByteCount;
+                        // Verwende die non-out Variante von PeekPixels
+                        SKPixmap pixmap = new();
+                        bool hasPixmap = false;
+                        try {
+                            // Manche SkiaSharp-Versionen erwarten ein SKPixmap-Objekt als Parameter (nicht out)
+                            hasPixmap = toPresent.PeekPixels(pixmap);
+                        }
+                        catch {
+                            // Falls PeekPixels diese Signatur nicht unterstützt
+                            hasPixmap = false;
+                        }
 
-                        if (src == null || dst == null || skByteCount < srcExpected) {
+                        if (!hasPixmap || pixmap.GetPixels() == IntPtr.Zero) {
+                            // Fallback: falls PeekPixels nicht verfügbar
                             fallbackNeeded = true;
                         } else {
-                            Span<byte> srcSpan = new(src, (int)srcExpected);
-                            Span<byte> dstSpan = new(dst, (int)dstExpected);
+                            int srcStride = pixmap.RowBytes;
+                            int srcHeight = pixmap.Height;
+                            long srcExpected = (long)srcStride * srcHeight;
+                            int dstStride = _dibWidth * 4;
+                            long dstExpected = (long)dstStride * srcHeight;
+                            long skByteCount = toPresent.ByteCount;
 
-                            if (dstStride > srcStride) {
-                                EnsureZeroRowBuffer(dstStride);
-                                for (int y = 0; y < toPresent.Height; y++) {
-                                    var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
-                                    var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                                    sRow.CopyTo(dRow);
-                                    if (dstStride > sRow.Length) {
-                                        dRow.Slice(sRow.Length).Clear();
+                            if (srcExpected <= 0 || dstExpected <= 0 || skByteCount < srcExpected) {
+                                fallbackNeeded = true;
+                            } else {
+                                // Logging vor der Kopie
+                                //Debug.WriteLine($"Copy start: toPresent != null: {toPresent != null}, Width={toPresent?.Width}, Height={toPresent?.Height}, RowBytes={toPresent?.RowBytes}, ByteCount={toPresent?.ByteCount}");
+                                try {
+                                    unsafe {
+                                        byte* srcPtr = (byte*)pixmap.GetPixels();
+                                        byte* dstPtr = (byte*)_dibPixels;
+
+                                        Span<byte> srcSpan = new(srcPtr, (int)srcExpected);
+                                        Span<byte> dstSpan = new(dstPtr, (int)dstExpected);
+
+                                        if (dstStride > srcStride) {
+                                            EnsureZeroRowBuffer(dstStride);
+                                            for (int y = 0; y < srcHeight; y++) {
+                                                var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
+                                                var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                                                sRow.CopyTo(dRow);
+                                                if (dstStride > sRow.Length)
+                                                    dRow[sRow.Length..].Clear();
+                                            }
+                                        } else if (srcStride == dstStride) {
+                                            srcSpan.CopyTo(dstSpan);
+                                        } else {
+                                            for (int y = 0; y < srcHeight; y++) {
+                                                var sRow = srcSpan.Slice(y * srcStride, srcStride);
+                                                var dRow = dstSpan.Slice(y * dstStride, dstStride);
+                                                sRow[..dstStride].CopyTo(dRow);
+                                            }
+                                        }
+
+                                        GC.KeepAlive(toPresent);
                                     }
                                 }
-                            } else if (srcStride == dstStride) {
-                                srcSpan.CopyTo(dstSpan);
-                            } else {
-                                for (int y = 0; y < toPresent.Height; y++) {
-                                    var sRow = srcSpan.Slice(y * srcStride, srcStride);
-                                    var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                                    sRow.Slice(0, dstStride).CopyTo(dRow);
+                                catch (Exception e) {
+                                    Debug.WriteLine($"Unexpected exception during pixel copy: {e}");
+                                    fallbackNeeded = true;
                                 }
                             }
                         }
                     }
-                } // lock dibLock Ende
+                }
 
                 if (fallbackNeeded) {
                     EnqueueUiPresentFallbackWithBitmap(toPresent);
                     continue;
                 }
 
-                // Enqueue UI update (nur UpdateLayeredWindow, kein weiterer Copy)
+                // Enqueue UI update
+                // nur UpdateLayeredWindow, kein weiterer Copy
                 bool enqueued = false;
                 if (Interlocked.Exchange(ref _invokePending, 1) == 0) {
                     try {
@@ -420,7 +425,8 @@ public unsafe class Renderer : IRenderer, IDisposable {
 
                             var presentSw = Stopwatch.StartNew();
                             try {
-                                // Present DIB (unter dibLock, damit Worker nicht gleichzeitig schreibt)
+                                // Present DIB
+                                // unter dibLock, damit Worker nicht gleichzeitig schreibt
                                 lock (_dibLock) {
                                     if (_hDib == IntPtr.Zero || _dibPixels == IntPtr.Zero)
                                         return;
@@ -451,7 +457,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
                                         };
 
                                         bool success = NativeMethods.UpdateLayeredWindow(
-                                            _ctx.Target.Handle, screenDc, ref topPos, ref size, memDc, ref source, 0, ref blend, NativeMethods.ULW_ALPHA);
+                                        _ctx.Target.Handle, screenDc, ref topPos, ref size, memDc, ref source, 0, ref blend, NativeMethods.ULW_ALPHA);
 
                                         if (!success) {
                                             var err = Marshal.GetLastWin32Error();
@@ -497,7 +503,9 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // Fallback: falls DIB nicht verfügbar, enqueuen wir normalen UI-Post, der Bitmap kopiert
+
+    // Fallback: falls DIB nicht verfügbar
+    // enqueuen wir normalen UI-Post, der Bitmap kopiert
     private void EnqueueUiPresentFallback() {
         SKBitmap? toPresent;
         lock (_swapLock) {
@@ -509,8 +517,11 @@ public unsafe class Renderer : IRenderer, IDisposable {
         EnqueueUiPresentFallbackWithBitmap(toPresent);
     }
 
-    // Fallback-Present: nutzt Span-basierte Kopien in ein temporäres Bitmap und ruft Present(bitmap)
-    private void EnqueueUiPresentFallbackWithBitmap(SKBitmap toPresent) {
+    // Fallback: nutzt Span-basierte Kopien in ein temporäres Bitmap und ruft Present(bitmap)
+    private void EnqueueUiPresentFallbackWithBitmap(SKBitmap? toPresent) {
+        if (toPresent is null)
+            return;
+
         bool enqueued = false;
         if (Interlocked.Exchange(ref _invokePending, 1) == 0) {
             try {
@@ -523,7 +534,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
 
                     var presentSw = Stopwatch.StartNew();
                     try {
-                        Bitmap tmpBmp = null;
+                        Bitmap? tmpBmp = null;
                         try {
                             tmpBmp = new Bitmap(toPresent.Width, toPresent.Height, PixelFormat.Format32bppPArgb);
                             var bmpData = tmpBmp.LockBits(new Rectangle(0, 0, tmpBmp.Width, tmpBmp.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppPArgb);
@@ -591,7 +602,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // Present (wird weiterhin gebraucht für Fallbacks)
+    // Present (für Fallbacks)
     public void Present(Bitmap bitmap, byte opacity = 255) {
         if (_disposed || bitmap == null)
             return;
@@ -701,7 +712,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // DrawWindowFrame (aus deinem Code, leicht angepasst)
     public void DrawWindowFrame(SKCanvas canvas, Size size) {
         var bg = _ctx.Skin.GetBackground();
         var layout = _ctx.Skin.GetLayout();
@@ -814,7 +824,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
-    // Debug Raster Overlay (unverändert)
     private void DrawDebugRasterOverlay(SKCanvas canvas, Size size) {
         float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
 
@@ -887,7 +896,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         catch { /* ignore */ }
     }
 
-    // Performance Overlay (einfach)
     private void DrawPerformanceOverlay(SKCanvas canvas, Size size) {
         if (!_showPerfOverlay)
             return;
@@ -913,8 +921,11 @@ public unsafe class Renderer : IRenderer, IDisposable {
         int bufH = _renderBuffer?.Height ?? 0;
 
         using var bgPaint = new SKPaint { Color = new SKColor(0, 0, 0, 180), IsAntialias = true, Style = SKPaintStyle.Fill };
-        using var textPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true, TextSize = 12 };
-        using var titlePaint = new SKPaint { Color = SKColors.White, IsAntialias = true, TextSize = 13, Typeface = SKTypeface.FromFamilyName("Consolas") };
+        using var textPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true };
+        using var titlePaint = new SKPaint { Color = SKColors.White, IsAntialias = true };
+
+        using var textFont = new SKFont(SKTypeface.FromFamilyName("Consolas"), 12);
+        using var titleFont = new SKFont(SKTypeface.FromFamilyName("Consolas"), 13);
 
         float padding = 8f;
         float lineHeight = 16f;
@@ -928,10 +939,11 @@ public unsafe class Renderer : IRenderer, IDisposable {
         float y = rect.Top + padding + lineHeight;
 
         void DrawLine(string label, string value) {
-            canvas.DrawText(label, x, y, titlePaint);
-            canvas.DrawText(value, x + 120, y, textPaint);
+            canvas.DrawText(label, x, y, SKTextAlign.Left, titleFont, titlePaint);
+            canvas.DrawText(value, x + 120, y, SKTextAlign.Left, textFont, textPaint);
             y += lineHeight;
         }
+
 
         DrawLine("FPS", fps > 0 ? $"{fps:F1}" : "—");
         DrawLine("Last Render ms", $"{lastRenderMs} ms");
@@ -950,7 +962,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
         canvas.DrawRect(x, barY, barMax * normalized, 6, barFill);
     }
 
-    // Missing image drawing (unverändert)
     private static void DrawMissingImageError(SKCanvas canvas, SKRect rect) {
         using var bgPaint = new SKPaint { Style = SKPaintStyle.Fill, Color = SKColors.Black, IsAntialias = true };
         using var borderPaint = new SKPaint { Style = SKPaintStyle.Stroke, Color = SKColors.Magenta, StrokeWidth = 2, IsAntialias = true };
@@ -976,12 +987,10 @@ public unsafe class Renderer : IRenderer, IDisposable {
         canvas.Restore();
     }
 
-    // Dispose pattern
     public void Dispose() {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
-
     protected virtual void Dispose(bool disposing) {
         if (_disposed)
             return;
@@ -1012,7 +1021,6 @@ public unsafe class Renderer : IRenderer, IDisposable {
             catch { }
         }
 
-        // DIB + Mapping freigeben (UI-Thread)
         try {
             ReleaseMappedDib();
         }
