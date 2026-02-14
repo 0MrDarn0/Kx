@@ -118,9 +118,4 @@
 	  </Content>
 	</ItemGroup>
 
-
-	<ItemGroup>
-	  <Folder Include="Plugins\" />
-	</ItemGroup>
-
 </Project>

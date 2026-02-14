@@ -1,10 +1,9 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Core.Configuration;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace KUpdater.Core;
+namespace KUpdater.Core.Configuration;
 
 public static class ConfigLoader {
     public static AppConfig Load(string path) {

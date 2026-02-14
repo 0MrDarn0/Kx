@@ -163,7 +163,7 @@ public sealed class TrayIcon : IDisposable {
         } else if (_statusIcons.TryGetValue("default", out var fallback)) {
             _notifyIcon.Icon = fallback;
         } else {
-            // fallback auf SystemIcons.Application
+            // Fallback auf SystemIcons.Application
             _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
         }
     }
@@ -244,7 +244,7 @@ public class TrayMenuBuilder {
 /// </summary>
 /// <remarks>
 /// It is recommended to always register a "default" state,
-/// which will be used as fallback if no other state matches.
+/// which will be used as Fallback if no other state matches.
 /// </remarks>
 public class StatusIconBuilder {
     private readonly Dictionary<string, System.Drawing.Icon> _icons = [];

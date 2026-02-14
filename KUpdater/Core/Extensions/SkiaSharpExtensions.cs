@@ -3,7 +3,7 @@
 using System.Drawing.Imaging;
 using SkiaSharp;
 
-namespace KUpdater.Extensions;
+namespace KUpdater.Core.Extensions;
 
 public static class SkiaSharpExtensions {
 

@@ -2,8 +2,8 @@
 
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Extensions;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Extensions;
+using KUpdater.Core.Localization;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -34,14 +34,14 @@ public class CheckVersionStep(string rootDirectory) : IUpdateStep {
 
         if (!needsUpdate) {
             eventManager.NotifyAll(new StatusEvent(
-                Localization.Translate("status.up_to_date", ctx.CurrentVersion)
+                LanguageService.Translate("status.up_to_date", ctx.CurrentVersion)
             ));
             // Pipeline hier abbrechen
             throw new OperationCanceledException("No update required");
         }
 
         eventManager.NotifyAll(new StatusEvent(
-            Localization.Translate("status.update_required", ctx.CurrentVersion, ctx.Metadata.Version)
+            LanguageService.Translate("status.update_required", ctx.CurrentVersion, ctx.Metadata.Version)
         ));
 
         eventManager.NotifyAll(new UpdateRequired());

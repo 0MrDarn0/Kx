@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core.Attributes;
-using KUpdater.Extensions;
+using KUpdater.Core.Extensions;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 using SkiaSharp;
@@ -136,7 +136,7 @@ public class Button : ControlBase {
             provider?.LoadControlStateResources(SkinKey, Id, _stateBitmaps);
         }
         catch {
-            // swallow resource load errors; renderer will draw fallback
+            // swallow resource load errors; renderer will draw Fallback
         }
     }
 

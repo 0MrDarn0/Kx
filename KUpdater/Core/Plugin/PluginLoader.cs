@@ -3,7 +3,7 @@
 using System.Reflection;
 using KUpdater.Abstractions.Plugin;
 
-namespace KUpdater;
+namespace KUpdater.Core.Plugin;
 
 public static class PluginLoader {
     public static T Load<T>(string name) where T : IPlugin {

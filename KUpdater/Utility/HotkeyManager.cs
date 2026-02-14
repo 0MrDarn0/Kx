@@ -3,7 +3,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using KUpdater.Interop;
+using KUpdater.Core.Interop;
 
 namespace KUpdater.Utility;
 

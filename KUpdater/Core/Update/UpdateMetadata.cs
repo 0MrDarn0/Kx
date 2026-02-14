@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-namespace KUpdater.Core;
+namespace KUpdater.Core.Update;
 
 public class UpdateMetadata {
     public string Version { get; set; } = "";

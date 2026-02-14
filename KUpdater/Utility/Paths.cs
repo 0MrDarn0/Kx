@@ -3,37 +3,18 @@
 namespace KUpdater.Utility;
 
 public static class Paths {
-    // Basisverzeichnis der Anwendung (neben kUpdater.exe)
-    public static readonly string Base = AppContext.BaseDirectory;
+    public static readonly string BaseDirectory = AppContext.BaseDirectory;
+    public static string Combine(string path1, string path2) => Path.Combine(path1, path2);
 
-    // Hauptordner
-    public static readonly string AppFolder   = Path.Combine(Base, "kUpdater");
-    public static readonly string LuaFolder   = Path.Combine(AppFolder, "Lua");
-    public static readonly string ResFolder   = Path.Combine(AppFolder, "Resources");
-    public static readonly string CfgFolder   = Path.Combine(AppFolder, "Configs");
+    public static readonly string BaseFolder  = Combine(BaseDirectory, "kUpdater");
+    public static readonly string CfgFolder   = Combine(BaseFolder, "Configs");
+    public static readonly string LangFolder  = Combine(BaseFolder, "Languages");
+    public static readonly string ResFolder   = Combine(BaseFolder, "Resources");
+    public static readonly string LuaFolder   = Combine(BaseFolder, "Lua");
+    public static readonly string LuaSkins    = Combine(LuaFolder, "skins");
 
-    // Unterordner von Lua
-    public static readonly string LuaSkins   = Path.Combine(LuaFolder, "skins");
-    public static readonly string LuaLang     = Path.Combine(LuaFolder, "languages");
-
-    // Hilfsmethoden für Dateien
-    public static string LuaScript(string fileName)
-        => Path.Combine(LuaFolder, fileName);
-
-    public static string LuaSkin(string fileName)
-        => Path.Combine(LuaSkins, fileName);
-
-    public static string LuaLanguage(string langCode)
-        => Path.Combine(LuaLang, $"lang_{langCode}.lua");
-
-    public static string LuaDefaultLanguage
-        => Path.Combine(LuaLang, "lang_en.lua");
-
-    public static string Resource(string fileName)
-        => Path.Combine(ResFolder, fileName);
-
-    public static string BaseFolder(string fileName)
-        => Path.Combine(Base, fileName);
-    public static string Config(string fileName)
-        => Path.Combine(CfgFolder, fileName);
+    public static string GetConfig(string fileName) => Combine(CfgFolder, fileName);
+    public static string GetResource(string fileName) => Combine(ResFolder, fileName);
+    public static string GetLang(string langCode) => Combine(LangFolder, $"lang_{langCode}.yaml");
+    public static string GetLuaScript(string fileName) => Combine(LuaFolder, fileName);
 }

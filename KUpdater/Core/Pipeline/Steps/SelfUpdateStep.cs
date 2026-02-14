@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -19,7 +19,7 @@ public class SelfUpdateStep(string rootDirectory) : IUpdateStep {
         // Prüfen ob neue Version und Bootstrapper vorhanden sind
         if (File.Exists(newExe) && File.Exists(bootstrapper)) {
             eventManager.NotifyAll(new StatusEvent(
-                Localization.Translate("status.selfupdate_started")));
+                LanguageService.Translate("status.selfupdate_started")));
 
             try {
                 // Pfad der aktuell laufenden EXE holen
@@ -37,7 +37,7 @@ public class SelfUpdateStep(string rootDirectory) : IUpdateStep {
             }
             catch (Exception ex) {
                 eventManager.NotifyAll(new StatusEvent(
-                    Localization.Translate("status.selfupdate_failed", ex.Message)));
+                    LanguageService.Translate("status.selfupdate_failed", ex.Message)));
             }
         }
 

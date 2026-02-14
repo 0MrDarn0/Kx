@@ -3,13 +3,13 @@
 using KUpdater.Utility;
 using SkiaSharp;
 
-namespace KUpdater.Extensions;
+namespace KUpdater.Core.Extensions;
 
 public static class ResourceProviderExtensions {
     private static readonly string[] States = ["normal", "hover", "click"];
 
     /// <summary>
-    /// Erzeugt eine standardisierte Resource-ID für Control-States:
+    /// Erzeugt eine standardisierte GetResource-ID für Control-States:
     /// Beispiel: MakeControlStateId("Default:Buttons", "btn_exit", "normal") -> "Default:Buttons:btn_exit_normal.png"
     /// (Konvention: skin:group:...:control_state.png)
     /// </summary>
@@ -37,7 +37,7 @@ public static class ResourceProviderExtensions {
                         stateBitmaps[state] = sk;
                 }
                 catch {
-                    // provider errors ignored -> fallback folgt
+                    // provider errors ignored -> Fallback folgt
                 }
             }
 

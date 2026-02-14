@@ -21,6 +21,15 @@ public class CSharpUiEngine : IUiEngine {
     public void BuildUi() {
         var ctx = (WindowContext)_context;
 
+        var titleLabel = new Label(
+            id: "lb_title",
+            boundsFunc: () => new Rectangle(35, 0, 200, 40),
+            text: "KUpdater",
+            font: new Font("Chiller", 40, FontStyle.Italic),
+            color: Color.Orange
+        );
+        ctx.Controls.Add(titleLabel);
+
         var button = new Button(
         id: "btn_default",
         boundsFunc: () => new Rectangle(50, 50, 140, 40),

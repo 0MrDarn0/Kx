@@ -2,7 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Drawing.Imaging;
-using KUpdater.Extensions;
+using KUpdater.Core.Extensions;
 using SkiaSharp;
 
 namespace KUpdater.Utility;

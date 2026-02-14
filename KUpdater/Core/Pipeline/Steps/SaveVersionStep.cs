@@ -2,7 +2,7 @@
 
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -16,7 +16,7 @@ public class SaveVersionStep(string rootDirectory) : IUpdateStep {
         File.WriteAllText(_localVersionFile, ctx.Metadata.Version);
 
         eventManager.NotifyAll(new StatusEvent(
-            Localization.Translate("status.update_applied")
+            LanguageService.Translate("status.update_applied")
         ));
 
         await Task.CompletedTask;

@@ -3,7 +3,8 @@
 using System.Reflection;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
+using KUpdater.Core.Update;
 
 namespace KUpdater.Core.Pipeline;
 
@@ -54,7 +55,7 @@ public class UpdaterPipelineRunner {
         }
         catch (Exception ex) {
             _eventManager.NotifyAll(new StatusEvent(
-                Localization.Translate("status.update_failed", ex.Message)
+                LanguageService.Translate("status.update_failed", ex.Message)
             ));
         }
     }

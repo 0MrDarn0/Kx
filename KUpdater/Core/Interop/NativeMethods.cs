@@ -2,7 +2,7 @@
 
 using System.Runtime.InteropServices;
 
-namespace KUpdater.Interop;
+namespace KUpdater.Core.Interop;
 
 internal static class NativeMethods {
     public const int ULW_ALPHA = 0x00000002;

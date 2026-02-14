@@ -3,7 +3,8 @@
 using System.Text.Json;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
+using KUpdater.Core.Update;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -17,7 +18,7 @@ public class LoadMetadataStep(IUpdateSource source, string baseUrl) : IUpdateSte
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         // Status-Event
-        eventManager.NotifyAll(new StatusEvent(Localization.Translate("status.waiting")));
+        eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.waiting")));
 
         // Metadaten laden
         var json = await _source.GetMetadataJsonAsync(_metadataUrl);

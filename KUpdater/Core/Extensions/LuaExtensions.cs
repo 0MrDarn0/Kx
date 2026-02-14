@@ -2,7 +2,7 @@
 
 using MoonSharp.Interpreter;
 
-namespace KUpdater.Extensions;
+namespace KUpdater.Core.Extensions;
 
 public static class LuaExtensions {
 
@@ -18,7 +18,7 @@ public static class LuaExtensions {
         }
     }
 
-    // 🔹 Typensicheres Casten eines DynValue zu T mit fallback value
+    // 🔹 Typensicheres Casten eines DynValue zu T mit Fallback value
     public static T As<T>(this DynValue val, T fallback) => val.As<T>() ?? fallback;
 
     public static bool IsTruthy(this DynValue val) => !val.IsNil() && !(val.Type == DataType.Boolean && val.Boolean == false);

@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using KUpdater.Core;
-using KUpdater.Interop;
+using KUpdater.Core.Interop;
 using KUpdater.UI.Interface;
 using SkiaSharp;
 
@@ -594,7 +594,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
             }
             catch (Exception ex) {
                 Interlocked.Exchange(ref _invokePending, 0);
-                Debug.WriteLine($"BeginInvoke failed (fallback): {ex}");
+                Debug.WriteLine($"BeginInvoke failed (Fallback): {ex}");
             }
         }
 

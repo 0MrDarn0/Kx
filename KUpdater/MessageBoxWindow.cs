@@ -1,10 +1,11 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
+using KUpdater.UI;
 using KUpdater.UI.Interface;
 using KUpdater.UI.Rendering;
 
-namespace KUpdater.UI;
+namespace KUpdater;
 
 public enum MessageBoxResult {
     None,

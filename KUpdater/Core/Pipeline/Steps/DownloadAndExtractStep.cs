@@ -3,8 +3,9 @@
 using System.IO.Compression;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Extensions;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Extensions;
+using KUpdater.Core.Localization;
+using KUpdater.Core.Update;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -24,7 +25,7 @@ public class DownloadAndExtractStep : IUpdateStep {
 
         try {
             // Download
-            eventManager.NotifyAll(new StatusEvent(Localization.Translate("status.downloading_pkg")));
+            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.downloading_pkg")));
             await using (var stream = await _source.GetPackageStreamAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false))
             await using (var fs = new FileStream(tempZip, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
                 byte[] buffer = new byte[UpdaterConstants.BufferSize];
@@ -42,7 +43,7 @@ public class DownloadAndExtractStep : IUpdateStep {
             }
 
             // Extract
-            eventManager.NotifyAll(new StatusEvent(Localization.Translate("status.extracting_files")));
+            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.extracting_files")));
 
             using (var archive = ZipFile.OpenRead(tempZip)) {
                 int count = archive.Entries.Count;
@@ -61,7 +62,7 @@ public class DownloadAndExtractStep : IUpdateStep {
                     var normalizedEntry = entry.FullName.Replace('/', Path.DirectorySeparatorChar);
                     var destinationPath = Path.GetFullPath(Path.Combine(rootFullPath, normalizedEntry));
                     if (!destinationPath.StartsWith(rootFullPath, StringComparison.OrdinalIgnoreCase)) {
-                        throw new InvalidDataException(Localization.Translate("error.invalid_entry_path", entry.FullName));
+                        throw new InvalidDataException(LanguageService.Translate("error.invalid_entry_path", entry.FullName));
                     }
 
                     var destDir = Path.GetDirectoryName(destinationPath);
@@ -80,7 +81,7 @@ public class DownloadAndExtractStep : IUpdateStep {
                         if (!fileInfo.VerifySha256(metaFile.Sha256)) {
                             try { File.Delete(tempDest); }
                             catch { }
-                            throw new InvalidDataException(Localization.Translate("error.hash_mismatch", entry.FullName));
+                            throw new InvalidDataException(LanguageService.Translate("error.hash_mismatch", entry.FullName));
                         }
                     }
 
@@ -94,7 +95,7 @@ public class DownloadAndExtractStep : IUpdateStep {
                 }
             }
 
-            eventManager.NotifyAll(new StatusEvent(Localization.Translate("status.update_complete")));
+            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.update_complete")));
         }
         finally {
             try {

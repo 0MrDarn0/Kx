@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using KUpdater.Core.Attributes;
-using KUpdater.Extensions;
+using KUpdater.Core.Extensions;
 using KUpdater.UI;
 using KUpdater.UI.Control;
 using KUpdater.Utility;
@@ -21,7 +21,7 @@ public abstract class Lua : IDisposable {
     private bool _disposed;
 
     public Lua(string path) {
-        string scriptPath = Paths.LuaScript(path);
+        string scriptPath = Paths.GetLuaScript(path);
         if (!File.Exists(scriptPath))
             throw new FileNotFoundException($"Lua script not found: {scriptPath}");
 
@@ -56,7 +56,7 @@ public abstract class Lua : IDisposable {
                 Debug.WriteLine($"{pair.Key.ToPrintString()} : {pair.Value.Type}");
 
         }));
-        SetGlobal("exe_directory", Paths.Base);
+        SetGlobal("exe_directory", Paths.BaseDirectory);
     }
 
     private static void ConfigureModulePaths(string luaRoot) {
@@ -78,28 +78,6 @@ public abstract class Lua : IDisposable {
         paths.Add(Path.Combine(luaRoot, "?", "init.lua"));
 
         loader.ModulePaths = [.. paths];
-    }
-
-    protected void LoadLanguage(string langCode) {
-        var langPath = Paths.LuaLanguage(langCode);
-        var fallbackPath = Paths.LuaDefaultLanguage;
-        var langTable = Script.DoString(File.ReadAllText(langPath)).Table;
-        var fallbackTable = Script.DoString(File.ReadAllText(fallbackPath)).Table;
-        SetGlobal("L", langTable);
-        SetGlobal("L_Fallback", fallbackTable);
-        SetGlobal("T", (Func<string, string>)(key => {
-            string? Lookup(Table table) {
-                var node = DynValue.NewTable(table);
-                foreach (var part in key.Split('.')) {
-                    if (!node.IsTable())
-                        return null;
-                    node = node.Table.Get(part);
-                }
-                return node.AsString();
-            }
-            return Lookup(langTable) ?? Lookup(fallbackTable) ?? $"[MISSING:{key}]";
-        }));
-        Localization.Initialize(Script);
     }
 
     public void SetGlobal(string name, string[] values) {
@@ -384,7 +362,7 @@ public abstract class Lua : IDisposable {
                 return true;
             }
 
-            // Lua Closure → Func<Rectangle> (non-blocking, reentrancy-guard, cached fallback)
+            // Lua Closure → Func<Rectangle> (non-blocking, reentrancy-guard, cached Fallback)
             if (targetType == typeof(Func<Rectangle>) && argVal is Closure boundsClosure) {
                 var script = boundsClosure.OwnerScript; // kann null sein
                 Rectangle last = Rectangle.Empty;
@@ -408,7 +386,7 @@ public abstract class Lua : IDisposable {
                                 return last;
                             }
                         } else {
-                            // Versuche non-blocking die Lua-VM zu bekommen. Wenn nicht möglich, fallback auf last.
+                            // Versuche non-blocking die Lua-VM zu bekommen. Wenn nicht möglich, Fallback auf last.
                             bool gotLock = false;
                             try {
                                 gotLock = System.Threading.Monitor.TryEnter(script);

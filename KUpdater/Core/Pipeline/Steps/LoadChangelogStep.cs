@@ -2,7 +2,8 @@
 
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
+using KUpdater.Core.Update;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -23,7 +24,7 @@ public class LoadChangelogStep(IUpdateSource source, string baseUrl) : IUpdateSt
         }
         catch (Exception ex) {
             eventManager.NotifyAll(new StatusEvent(
-                Localization.Translate("status.changelog_failed", ex.Message)
+                LanguageService.Translate("status.changelog_failed", ex.Message)
             ));
         }
     }

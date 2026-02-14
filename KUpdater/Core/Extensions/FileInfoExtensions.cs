@@ -2,7 +2,7 @@
 
 using System.Security.Cryptography;
 
-namespace KUpdater.Extensions;
+namespace KUpdater.Core.Extensions;
 
 public static class FileInfoExtensions {
     /// <summary>
