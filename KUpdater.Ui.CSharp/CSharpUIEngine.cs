@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
 using System.Drawing;
@@ -19,6 +19,7 @@ public class CSharpUiEngine : IUiEngine {
     }
 
     public void BuildUi() {
+        Debug.WriteLine("CSharpUiEngine void BuildUi()");
         var ctx = (WindowContext)_context;
 
         var titleLabel = new Label(

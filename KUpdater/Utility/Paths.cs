@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 namespace KUpdater.Utility;
 
@@ -12,9 +12,11 @@ public static class Paths {
     public static readonly string ResFolder   = Combine(BaseFolder, "Resources");
     public static readonly string LuaFolder   = Combine(BaseFolder, "Lua");
     public static readonly string LuaSkins    = Combine(LuaFolder, "skins");
+    public static readonly string PluginFolder  = Combine(BaseFolder, "Plugins");
 
     public static string GetConfig(string fileName) => Combine(CfgFolder, fileName);
     public static string GetResource(string fileName) => Combine(ResFolder, fileName);
     public static string GetLang(string langCode) => Combine(LangFolder, $"lang_{langCode}.yaml");
     public static string GetLuaScript(string fileName) => Combine(LuaFolder, fileName);
+    public static string GetPlugin(string fileName) => Combine(PluginFolder, fileName);
 }
