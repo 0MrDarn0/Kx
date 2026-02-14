@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
-using KUpdater.Scripting.Skin;
 using KUpdater.UI.Interface;
 using KUpdater.UI.Rendering;
 
@@ -35,11 +34,9 @@ public class MessageBoxWindow : IDisposable {
 
         _ctx = new WindowContext(backend, backend, backend);
 
-        var skin = new MessageBoxSkin(_ctx, title, message, _options) {
-            Owner = this
-        };
-        _ctx.SetSkin(skin);
-
+        var frameConfig = new FrameConfig();
+        var frame = FrameLoader.Load(frameConfig, _ctx.Resources);
+        _ctx.SetFrame(frame);
 
         var renderer = new Renderer(_ctx);
         _ctx.SetRenderer(renderer);

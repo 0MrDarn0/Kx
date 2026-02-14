@@ -1,12 +1,13 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
+using KUpdater.Abstractions.UI;
 using KUpdater.Core;
+using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
 using KUpdater.Interop;
 using KUpdater.Scripting.Runtime;
-using KUpdater.Scripting.Skin;
 using KUpdater.UI.Interface;
 using KUpdater.UI.Rendering;
 using KUpdater.Utility;
@@ -22,10 +23,12 @@ public class Window : IDisposable {
     private readonly TrayIcon? _trayIcon;
     public HotkeyManager? _hotkeyManager;
     private int _toggleDebugOverlayHotkeyId;
+    private readonly AppConfig _config;
 
-    public Window(IWindowBackend backend) {
+    public Window(IWindowBackend backend, AppConfig config) {
         Instance = this;
         _backend = backend;
+        _config = config;
 
         _ctx = new WindowContext(
             backend,
@@ -33,11 +36,19 @@ public class Window : IDisposable {
             backend,
             eventManager: new EventManager());
 
-        var skin = new MainSkin(_ctx);
-        _ctx.SetSkin(skin);
+        var frameConfig = new FrameConfig();
+        var frame = FrameLoader.Load(frameConfig, _ctx.Resources);
+        _ctx.SetFrame(frame);
+
 
         var renderer = new Renderer(_ctx);
         _ctx.SetRenderer(renderer);
+
+        IUiEngine engine;
+        try { engine = PluginLoader.Load<IUiEngine>(_config.Ui.Engine); }
+        catch { engine = PluginLoader.Load<IUiEngine>("CSharp"); }
+        engine.Initialize(_ctx);
+        engine.BuildUi();
 
         var pipeline = new UpdaterPipelineRunner(
             _ctx.Events,
@@ -108,15 +119,6 @@ public class Window : IDisposable {
 
     private void HotkeyManager_HotkeyPressed(object? sender, HotkeyEventArgs e) {
         if (e.Id == _toggleDebugOverlayHotkeyId) {
-
-
-            //var msg = new MessageBoxWindow(new WinFormsBackend(), "Exit?", "Are you sure?", new MessageBoxOptions{ Buttons=["Yes", "No"] });
-            //var result = msg.ShowDialog();
-
-            //if (result == MessageBoxResult.No) {
-            //    Application.Exit();
-            //}
-
         }
     }
 

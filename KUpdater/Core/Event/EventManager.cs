@@ -3,9 +3,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Reflection;
-using KUpdater.Scripting.Skin;
-using MoonSharp.Interpreter;
 
 namespace KUpdater.Core.Event {
     /// <summary>
@@ -14,14 +11,10 @@ namespace KUpdater.Core.Event {
     /// Bietet außerdem Registrierung von Lua‑Funktionen per DynValue.
     /// </summary>
     public class EventManager : IEventManager {
-
-        private ISkin? _skin;
         private readonly ConcurrentDictionary<Type, ImmutableArray<Delegate>> _listeners = new();
         private volatile ImmutableDictionary<string, Type> _eventTypes = ImmutableDictionary.Create<string, Type>(StringComparer.Ordinal);
 
-        public EventManager(ISkin? skin = null) {
-            _skin = skin;
-
+        public EventManager() {
             var builder = _eventTypes.ToBuilder();
             builder[nameof(StatusEvent)] = typeof(StatusEvent);
             builder[nameof(ProgressEvent)] = typeof(ProgressEvent);
@@ -32,8 +25,6 @@ namespace KUpdater.Core.Event {
             builder[nameof(MainWindow_OnFormClosed)] = typeof(MainWindow_OnFormClosed);
             _eventTypes = builder.ToImmutable();
         }
-
-        public void SetSkin(ISkin skin) => _skin = skin;
 
         #region Registrierung Sync / Async
 
@@ -51,65 +42,6 @@ namespace KUpdater.Core.Event {
 
         public void UnregisterAsync<T>(AsyncAction<T> listener) {
             RemoveListener(typeof(T), listener);
-        }
-
-        #endregion
-
-        #region Lua Registrierung
-
-        /// <summary>
-        /// Registriert eine Lua Funktion (DynValue) für ein Event per Eventname.
-        /// Jede Registrierung erzeugt eine eigene Closure, damit mehrere Lua-Handler koexistieren.
-        /// </summary>
-        public void Register(string eventName, DynValue luaFunc) {
-            ArgumentNullException.ThrowIfNull(luaFunc);
-
-            if (!TryGetEventType(eventName, out var type))
-                throw new ArgumentException($"Unknown event type {eventName}", nameof(eventName));
-
-            var method = typeof(EventManager).GetMethod(nameof(RegisterLuaGeneric), BindingFlags.NonPublic | BindingFlags.Instance)!;
-            var generic = method.MakeGenericMethod(type!);
-            generic.Invoke(this, [luaFunc]);
-        }
-
-        public bool TryRegisterLua(string eventName, DynValue luaFunc) {
-            if (luaFunc == null)
-                return false;
-
-            if (!TryGetEventType(eventName, out var type) || type == null)
-                return false;
-
-            try {
-                var method = typeof(EventManager).GetMethod(nameof(RegisterLuaGeneric), BindingFlags.NonPublic | BindingFlags.Instance);
-                if (method == null)
-                    return false;
-
-                var generic = method.MakeGenericMethod(type);
-                generic.Invoke(this, [luaFunc]);
-
-                return true;
-            }
-            catch {
-                // Fehler in Lua oder Reflection → false zurückgeben
-                return false;
-            }
-        }
-
-        // Generic helper, erzeugt eine Closure die die DynValue referenziert
-        private void RegisterLuaGeneric<T>(DynValue luaFunc) {
-            if (_skin == null)
-                throw new InvalidOperationException("Lua runtime not set");
-
-            void action(T ev) {
-                try {
-                    ((SkinBase)_skin)?.SafeInvokeDyn(luaFunc, ev!);
-                }
-                catch (Exception ex) {
-                    Console.Error.WriteLine($"Lua listener for {typeof(T).Name} threw: {ex}");
-                }
-            }
-
-            Register((Action<T>)action);
         }
 
         #endregion

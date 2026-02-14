@@ -1,16 +1,17 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Abstractions.Plugin;
+using KUpdater.Abstractions.UI;
 using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
 using KUpdater.Scripting.Runtime;
-using KUpdater.Scripting.Skin;
 using KUpdater.UI;
 using KUpdater.UI.Interface;
 using KUpdater.Utility;
 
 namespace KUpdater.Core;
 
-public sealed class WindowContext : IDisposable {
+public sealed class WindowContext : IDisposable, IUiContext, IPluginContext {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
     public IWindowBackend Backend { get; }
@@ -18,10 +19,15 @@ public sealed class WindowContext : IDisposable {
     public IResourceProvider Resources { get; }
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
-
-    public ISkin Skin { get; private set; } = null!;
+    public FrameResources Frame { get; private set; } = null!;
     public IRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
+    object IPluginContext.Services => this;
+    object IUiContext.Backend => Backend;
+    object IUiContext.Events => Events;
+    object IUiContext.Controls => Controls;
+
+
 
     public WindowContext(
         IRenderTarget target,
@@ -39,9 +45,8 @@ public sealed class WindowContext : IDisposable {
         UIContextProvider.Initialize(this);
     }
 
-    public void SetSkin(ISkin skin) {
-        Skin = skin;
-        Events.SetSkin(skin);
+    public void SetFrame(FrameResources frame) {
+        Frame = frame;
     }
 
     public void SetRenderer(IRenderer renderer) {
@@ -54,7 +59,6 @@ public sealed class WindowContext : IDisposable {
 
     public void Dispose() {
         Renderer?.Dispose();
-        Skin?.Dispose();
         Controls.Dispose();
         Resources.Dispose();
         UIContextProvider.Clear();

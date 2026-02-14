@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
+using KUpdater.Core;
 using KUpdater.Interop;
 using KUpdater.UI;
-
+using KUpdater.Utility;
 namespace KUpdater;
 
 internal static class Program {
@@ -20,9 +21,11 @@ internal static class Program {
             return;
         }
 
+        var config = ConfigLoader.Load(Paths.Config("app.yaml"));
+
         var backend = new WinFormsBackend();
         backend.HandleCreated += (_, _) => {
-            var window = new Window(backend);
+            var window = new Window(backend, config);
             backend.Shown += (_, _) => window.OnShown();
             backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
         };

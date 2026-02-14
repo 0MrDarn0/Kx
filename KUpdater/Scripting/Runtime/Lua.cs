@@ -80,6 +80,28 @@ public abstract class Lua : IDisposable {
         loader.ModulePaths = [.. paths];
     }
 
+    protected void LoadLanguage(string langCode) {
+        var langPath = Paths.LuaLanguage(langCode);
+        var fallbackPath = Paths.LuaDefaultLanguage;
+        var langTable = Script.DoString(File.ReadAllText(langPath)).Table;
+        var fallbackTable = Script.DoString(File.ReadAllText(fallbackPath)).Table;
+        SetGlobal("L", langTable);
+        SetGlobal("L_Fallback", fallbackTable);
+        SetGlobal("T", (Func<string, string>)(key => {
+            string? Lookup(Table table) {
+                var node = DynValue.NewTable(table);
+                foreach (var part in key.Split('.')) {
+                    if (!node.IsTable())
+                        return null;
+                    node = node.Table.Get(part);
+                }
+                return node.AsString();
+            }
+            return Lookup(langTable) ?? Lookup(fallbackTable) ?? $"[MISSING:{key}]";
+        }));
+        Localization.Initialize(Script);
+    }
+
     public void SetGlobal(string name, string[] values) {
         lock (_script) {
             var tbl = new Table(_script);
