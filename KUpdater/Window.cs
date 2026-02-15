@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
 using KUpdater.Abstractions.UI;
@@ -50,7 +51,7 @@ public class Window : IDisposable {
 
         IUiEngine engine;
         try { engine = PluginLoader.Load<IUiEngine>(_config.Ui.Engine); }
-        catch { engine = PluginLoader.Load<IUiEngine>("CSharp"); }
+        catch { engine = PluginLoader.Load<IUiEngine>("DefaultUI"); }
         engine.Initialize(_ctx);
         engine.BuildUi();
 

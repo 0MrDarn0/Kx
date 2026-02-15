@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Reflection;
 using System.Runtime.Loader;
@@ -8,27 +9,18 @@ namespace KUpdater.Core.Plugin;
 public sealed class PluginLoadContext : AssemblyLoadContext {
     private readonly AssemblyDependencyResolver _resolver;
 
-    public string PluginPath { get; }
-
-    public PluginLoadContext(string pluginPath)
+    public PluginLoadContext(string mainAssemblyPath)
         : base(isCollectible: true) {
-        PluginPath = pluginPath;
-        _resolver = new AssemblyDependencyResolver(pluginPath);
+        _resolver = new AssemblyDependencyResolver(mainAssemblyPath);
     }
 
     protected override Assembly? Load(AssemblyName assemblyName) {
-        string? path = _resolver.ResolveAssemblyToPath(assemblyName);
-        if (path != null)
-            return LoadFromAssemblyPath(path);
-
-        return null;
+        var path = _resolver.ResolveAssemblyToPath(assemblyName);
+        return path != null ? LoadFromAssemblyPath(path) : null;
     }
 
     protected override IntPtr LoadUnmanagedDll(string unmanagedDllName) {
-        string? path = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
-        if (path != null)
-            return LoadUnmanagedDllFromPath(path);
-
-        return IntPtr.Zero;
+        var path = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+        return path != null ? LoadUnmanagedDllFromPath(path) : IntPtr.Zero;
     }
 }

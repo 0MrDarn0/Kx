@@ -1,0 +1,7 @@
+name: DefaultUI
+version: 1.0.0
+apiVersion: 1.0
+entryType: KUpdater.Plugins.DefaultUI.DefaultUiEngine
+description: "Standard C# UI Engine for KUpdater"
+author: "Christian Schnuck"
+dependencies: []

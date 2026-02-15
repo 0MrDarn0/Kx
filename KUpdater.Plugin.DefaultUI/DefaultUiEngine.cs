@@ -1,4 +1,5 @@
-// Copyright (c) 2026 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
 using System.Drawing;
@@ -7,21 +8,20 @@ using KUpdater.Abstractions.UI;
 using KUpdater.Core;
 using KUpdater.UI.Control;
 
-namespace KUpdater.UI.CSharp;
+namespace KUpdater.Plugins.DefaultUI;
 
-public class CSharpUiEngine : IUiEngine {
-    private IPluginContext _context = null!;
+public sealed class DefaultUiEngine : IUiEngine, IPlugin {
+    public string Name => "DefaultUI";
 
-    public string Name => "CSharp";
+    private WindowContext? _ctx;
 
     public void Initialize(IPluginContext context) {
-        _context = context;
+        _ctx = (WindowContext)context.Services;
+
     }
 
     public void BuildUi() {
-        Debug.WriteLine("CSharpUiEngine void BuildUi()");
-        var ctx = (WindowContext)_context;
-
+        Debug.WriteLine("[DefaultUiEngine] Initialized");
         var titleLabel = new Label(
             id: "lb_title",
             boundsFunc: () => new Rectangle(35, 0, 200, 40),
@@ -29,7 +29,7 @@ public class CSharpUiEngine : IUiEngine {
             font: new Font("Chiller", 40, FontStyle.Italic),
             color: Color.Orange
         );
-        ctx.Controls.Add(titleLabel);
+        _ctx?.Controls.Add(titleLabel);
 
         var button = new Button(
         id: "btn_default",
@@ -44,6 +44,10 @@ public class CSharpUiEngine : IUiEngine {
         }
     );
 
-        ctx.Controls.Add(button);
+        _ctx?.Controls.Add(button);
+    }
+
+    public void Dispose() {
+        Debug.WriteLine("[DefaultUiEngine] Disposed");
     }
 }

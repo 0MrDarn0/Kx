@@ -4,28 +4,22 @@
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PlatformTarget>x64</PlatformTarget>
-    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
-    <ProjectReference Include="..\KUpdater\KUpdater.csproj" />
-  </ItemGroup>
-
-	
+	<ItemGroup>
+		<ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
+		<ProjectReference Include="..\KUpdater\KUpdater.csproj" />
+	</ItemGroup>
 	<Target Name="CopyToHostPlugins" AfterTargets="Build">
 		<PropertyGroup>
 			<HostOutputDir>
-				$(SolutionDir)KUpdater\bin\$(Configuration)\net10.0-windows10.0.19041.0\win-x64\kUpdater\Plugins\
+				$(SolutionDir)KUpdater\bin\$(Configuration)\net10.0-windows10.0.19041.0\win-x64\kUpdater\Plugins\DefaultUI\
 			</HostOutputDir>
 		</PropertyGroup>
 
 		<MakeDir Directories="$(HostOutputDir)" />
 
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(HostOutputDir)" />
+		<Copy SourceFiles="plugin.yaml" DestinationFolder="$(HostOutputDir)" />
 	</Target>
-
-
 
 </Project>

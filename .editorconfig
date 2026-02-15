@@ -23,7 +23,7 @@ indent_style = space
 indent_size = 4
 
 # Datei-Header für alle C#-Dateien (einzeilig, VS unterstützt nur eine Zeile)
-file_header_template = Copyright (c) 2026 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+file_header_template = Copyright (c) 2026 Christian Schnuck\nLicensed under the GPL-3.0 (see LICENSE.txt)
 
 
 ###########################################################
