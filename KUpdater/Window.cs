@@ -2,20 +2,19 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Abstractions.UI;
 using KUpdater.Backend;
 using KUpdater.Core;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Pipeline;
-using KUpdater.Core.Plugin;
 using KUpdater.Core.Update;
 using KUpdater.Scripting.Runtime;
 using KUpdater.UI;
 using KUpdater.UI.Interface;
 using KUpdater.UI.Rendering;
 using KUpdater.Utility;
+using Label = KUpdater.UI.Control.Label;
 
 namespace KUpdater;
 
@@ -49,11 +48,35 @@ public class Window : IDisposable {
         var renderer = new Renderer(_ctx);
         _ctx.SetRenderer(renderer);
 
-        IUiEngine engine;
-        try { engine = PluginLoader.Load<IUiEngine>(_config.Ui.Engine); }
-        catch { engine = PluginLoader.Load<IUiEngine>("DefaultUI"); }
-        engine.Initialize(_ctx);
-        engine.BuildUi();
+        //IUiEngine engine;
+        //try { engine = PluginLoader.Load<IUiEngine>(_config.Ui.Engine); }
+        //catch { engine = PluginLoader.Load<IUiEngine>("DefaultUI"); }
+        //engine.Initialize(_ctx);
+        //engine.BuildMainWindow();
+
+        var titleLabel = new Label(
+            id: "lb_title",
+            boundsFunc: () => new Rectangle(35, 0, 200, 40),
+            text: "KUpdater",
+            font: new Font("Chiller", 40, FontStyle.Italic),
+            color: Color.Orange
+        );
+        _ctx.Controls.Add(titleLabel);
+
+        //var button = new Button(
+        //    id: "btn_default",
+        //    boundsFunc: () => new Rectangle(50, 50, 140, 40),
+        //    text: "Update",
+        //    font: new Font("Arial", 12),
+        //    color: Color.White,
+        //    skinKey: "KalOnline:Buttons",
+        //    onClick: () =>
+        //    {
+        //        Debug.WriteLine("Update clicked!");
+        //    }
+        //);
+
+        //_ctx.Controls.Add(button);
 
         var pipeline = new UpdaterPipelineRunner(
             _ctx.Events,
@@ -75,17 +98,20 @@ public class Window : IDisposable {
             .StatusIcons(status => status
                 .Item("default", Paths.GetResource("Default/app.ico")))
             .Menu(menu => menu
-                .Exit((s, e) => Application.Exit())
-                .Item("GridOverlay", (s, e) => {
+                .Item("Toggle ContentRect", (s, e) => {
+                    _ctx.Renderer.ToggleContentRectDebug();
+                    _ctx.Renderer.RequestRender();
+                })
+                .Item("Toggle GridOverlay", (s, e) => {
                     _ctx.Renderer.ToggleDebugOverlay();
                     _ctx.Renderer.RequestRender();
                 })
-                .Item("PerfOverlay", (s, e) => {
+                .Item("Toggle PerfOverlay", (s, e) => {
                     _ctx.Renderer.TogglePerfOverlay();
                     _ctx.Renderer.RequestRender();
-                }
-                ));
-
+                })
+                .Exit((s, e) => Application.Exit())
+                );
         HookHotkeys();
     }
 

@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
 using System.Drawing.Imaging;
@@ -61,6 +62,10 @@ public unsafe class Renderer : IRenderer, IDisposable {
     public void TogglePerfOverlay() => _showPerfOverlay = !_showPerfOverlay;
     public void SetPerfOverlay(bool enabled) => _showPerfOverlay = enabled;
 
+    private bool _showContentRectDebug = false;
+    public void ToggleContentRectDebug() => _showContentRectDebug = !_showContentRectDebug;
+
+
     private bool _disposed;
 
     public Renderer(WindowContext ctx) {
@@ -110,6 +115,24 @@ public unsafe class Renderer : IRenderer, IDisposable {
             deviceWidth = 1;
         if (deviceHeight <= 0)
             deviceHeight = 1;
+    }
+
+    public SKRect GetContentRect(Size size) {
+        var f = _ctx.Frame;
+
+        // Seitenbreiten/-höhen aus den Center-Bitmaps
+        float leftWidth = f.LeftCenter?.Width ?? 0f;
+        float rightWidth = f.RightCenter?.Width ?? 0f;
+        float topHeight = f.TopCenter?.Height ?? 0f;
+        float bottomHeight = f.BottomCenter?.Height ?? 0f;
+
+        // FillRect-Berechnung exakt wie in DrawWindowFrame
+        float fillLeft = Math.Max(0f, leftWidth - f.FillPosOffset);
+        float fillTop = Math.Max(0f, topHeight - f.FillPosOffset);
+        float fillRight = fillLeft + Math.Max(0f, size.Width - leftWidth * 2 + f.FillWidthOffset);
+        float fillBottom = fillTop + Math.Max(0f, size.Height - topHeight - bottomHeight + f.FillHeightOffset);
+
+        return new SKRect(fillLeft, fillTop, fillRight, fillBottom);
     }
 
     private void RecordFrameTimestamp() {
@@ -278,23 +301,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
                 try {
                     using var surface = SKSurface.Create(_bgRenderBitmap.Info, _bgRenderBitmap.GetPixels(), _bgRenderBitmap.RowBytes);
                     var canvas = surface.Canvas;
-                    canvas.Clear(SKColors.Transparent);
-
-                    DrawWindowFrame(canvas, new Size(width, height));
-                    _ctx.Controls.Draw(canvas);
-
-                    lock (_missingRects) {
-                        foreach (var r in _missingRects)
-                            DrawMissingImageError(canvas, r);
-                        _missingRects.Clear();
-                    }
-
-                    if (_showDebugRasterOverlay)
-                        DrawDebugRasterOverlay(canvas, new Size(width, height));
-                    if (_showPerfOverlay)
-                        DrawPerformanceOverlay(canvas, new Size(width, height));
-
-                    RecordFrameTimestamp();
+                    Draw(canvas, new Size(width, height));
                 }
                 catch (Exception ex) {
                     Debug.WriteLine($"Background draw error: {ex}");
@@ -713,6 +720,30 @@ public unsafe class Renderer : IRenderer, IDisposable {
         }
     }
 
+    public void Draw(SKCanvas canvas, Size size) {
+        canvas.Clear(SKColors.Transparent);
+
+        var contentRect = GetContentRect(size);
+
+        DrawWindowFrame(canvas, size);
+        _ctx.Controls.Draw(canvas);
+
+        lock (_missingRects) {
+            foreach (var r in _missingRects)
+                DrawMissingImageError(canvas, r);
+            _missingRects.Clear();
+        }
+
+        if (_showDebugRasterOverlay)
+            DrawDebugRasterOverlay(canvas, size);
+        if (_showPerfOverlay)
+            DrawPerformanceOverlay(canvas, size);
+        if (_showContentRectDebug)
+            DrawContentRectDebug(canvas, size);
+
+
+        RecordFrameTimestamp();
+    }
     public void DrawWindowFrame(SKCanvas canvas, Size size) {
         var frame = _ctx.Frame;
         if (frame == null)
@@ -985,6 +1016,21 @@ public unsafe class Renderer : IRenderer, IDisposable {
         float baselineY = -(metrics.Descent + metrics.Ascent) / 2f;
         canvas.DrawText("MISSING IMAGE", 0, baselineY, SKTextAlign.Center, font, textPaint);
         canvas.Restore();
+    }
+    private void DrawContentRectDebug(SKCanvas canvas, Size size) {
+        var rect = GetContentRect(size);
+
+        using var paint = new SKPaint {
+            Color = new SKColor(255, 0, 0, 200),
+            IsStroke = true,
+            StrokeWidth = 3,
+            IsAntialias = true
+        };
+
+        // 1px nach innen, damit der Rahmen nicht vom Frame überdeckt wird
+        rect.Inflate(-1, -1);
+
+        canvas.DrawRect(rect, paint);
     }
 
     public void Dispose() {

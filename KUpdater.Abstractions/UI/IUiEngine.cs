@@ -6,5 +6,5 @@ using KUpdater.Abstractions.Plugin;
 namespace KUpdater.Abstractions.UI;
 
 public interface IUiEngine : IPlugin {
-    void BuildUi();
+    void BuildMainWindow();
 }
