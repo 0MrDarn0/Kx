@@ -2,6 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core.Extensions;
+using KUpdater.UI.Binding;
+using KUpdater.UI.Manager;
 using KUpdater.Utility;
 using MoonSharp.Interpreter;
 using SkiaSharp;

@@ -1,8 +1,11 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.UI.Interface;
 
-namespace KUpdater.UI.Control;
+// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+
+using KUpdater.Backend.BackendAbstractions;
+
+namespace KUpdater.UI.Binding;
 
 public sealed class Property<T>(IUiThreadInvoker ui, T initialValue = default!, Action? onChanged = null) {
     private readonly IUiThreadInvoker _ui = ui;

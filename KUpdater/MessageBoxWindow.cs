@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
-using KUpdater.UI;
-using KUpdater.UI.Interface;
 using KUpdater.UI.Rendering;
+using KUpdater.UI.Themes;
 
 namespace KUpdater;
 

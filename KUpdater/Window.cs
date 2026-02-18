@@ -2,21 +2,17 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Backend;
+using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Pipeline;
 using KUpdater.Core.Update;
-using KUpdater.Scripting.Runtime;
 using KUpdater.UI;
-using KUpdater.UI.Control;
-using KUpdater.UI.Interface;
+using KUpdater.UI.Markup;
 using KUpdater.UI.Rendering;
 using KUpdater.Utility;
-using Button = KUpdater.UI.Control.Button;
-using Label = KUpdater.UI.Control.Label;
 
 namespace KUpdater;
 
@@ -42,57 +38,10 @@ public class Window : IDisposable {
             backend,
             eventManager: new EventManager());
 
-        var frameConfig = new FrameConfig();
-        var frame = FrameLoader.Load(frameConfig, _ctx.Resources);
-        _ctx.SetFrame(frame);
-
+        WindowBuilder.Build(_ctx, Paths.GetConfig("frame.yaml"));
 
         var renderer = new Renderer(_ctx);
         _ctx.SetRenderer(renderer);
-
-        //IUiEngine engine;
-        //try { engine = PluginLoader.Load<IUiEngine>(_config.Ui.Engine); }
-        //catch { engine = PluginLoader.Load<IUiEngine>("DefaultUI"); }
-        //engine.Initialize(_ctx);
-        //engine.BuildMainWindow();
-
-        var titleLabel = new Label(
-            id: "lb_title",
-            boundsFunc: () => new Rectangle(35, 0, 200, 40),
-            text: "KUpdater",
-            font: new Font("Chiller", 40, FontStyle.Italic),
-            color: Color.Orange
-            ) { Layer = ControlLayer.Frame };
-
-        _ctx.Controls.Add(titleLabel);
-
-        var button = new Button(
-            id: "btn_exit",
-            boundsFunc: () => {
-                int x = _backend.Width - 34;
-                int y = 16;
-                return new Rectangle(x, y, 17, 17);
-            },
-            text: "",
-            font: new Font("Arial", 12),
-            color: Color.White,
-            skinKey: "KalOnline:Buttons",
-            onClick: () => _backend.CloseWindow()
-        ){ Layer = ControlLayer.Frame };
-
-        _ctx.Controls.Add(button);
-
-        var btn = new Button(
-            "btn_default",
-            () => new Rectangle(0, 0, 150, 40),
-            "Click me",
-            new Font("Arial", 14),
-            Color.White,
-            "KalOnline:Buttons",
-            () => Debug.WriteLine("Clicked!")
-        );
-
-        _ctx.ContentRoot.Children.Add(btn);
 
 
         var pipeline = new UpdaterPipelineRunner(
@@ -104,10 +53,6 @@ public class Window : IDisposable {
         _ctx.SetPipeline(pipeline);
 
         _interaction = new WindowInteraction(_backend, _ctx);
-
-        LuaHost.OnNotify += (level, message) => {
-            _backend.BeginInvoke(() => new MessageBoxWindow(new WinFormsBackend(), level, message, new MessageBoxOptions { Buttons = ["Ok"] }).ShowDialog());
-        };
 
         _trayIcon = new TrayIcon()
             .Name("kUpdater")

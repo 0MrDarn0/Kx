@@ -3,12 +3,15 @@
 
 using KUpdater.Abstractions.Plugin;
 using KUpdater.Abstractions.UI;
+using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
 using KUpdater.Scripting.Runtime;
 using KUpdater.UI;
 using KUpdater.UI.Control;
-using KUpdater.UI.Interface;
+using KUpdater.UI.Manager;
+using KUpdater.UI.Rendering;
+using KUpdater.UI.Themes;
 using KUpdater.Utility;
 
 namespace KUpdater.Core;

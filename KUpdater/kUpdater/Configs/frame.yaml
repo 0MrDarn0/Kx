@@ -1,0 +1,51 @@
+frame:
+  topLeft: "KalOnline:Frame:top_left.png"
+  topCenter: "KalOnline:Frame:top_center.png"
+  topRight: "KalOnline:Frame:top_right.png"
+
+  rightCenter: "KalOnline:Frame:right_center.png"
+  bottomRight: "KalOnline:Frame:bottom_right.png"
+  bottomCenter: "KalOnline:Frame:bottom_center.png"
+  bottomLeft: "KalOnline:Frame:bottom_left.png"
+  leftCenter: "KalOnline:Frame:left_center.png"
+
+  fillBitmap: "KalOnline:Frame:fill_bitmap.bmp"
+  fillColor: "#101010"
+
+  topWidthOffset: 7
+  bottomWidthOffset: 15
+  leftHeightOffset: 5
+  rightHeightOffset: 5
+  fillPosOffset: 5
+  fillWidthOffset: 12
+  fillHeightOffset: 9
+
+controls:
+  - type: Label
+    id: title
+    text: "KUpdater"
+    layer: Frame
+    color: "#FFA500"
+    font:
+      name: "Chiller"
+      size: 40
+      style: "Italic"
+    bounds:
+      x: 35
+      y: 0
+      width: 200
+      height: 40
+
+  - type: Button
+    id: btn_exit
+    text: ""
+    color: "#FFA500"
+    layer: Frame
+    skinKey: "KalOnline:Buttons"
+    onClick: closeWindow
+    bounds:
+      x: -34
+      y: 16
+      width: 17
+      height: 17
+

@@ -2,6 +2,8 @@
 
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Extensions;
+using KUpdater.UI.Binding;
+using KUpdater.UI.Manager;
 using MoonSharp.Interpreter;
 using SkiaSharp;
 

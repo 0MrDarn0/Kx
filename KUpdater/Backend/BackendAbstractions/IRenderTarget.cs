@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
 
-namespace KUpdater.UI.Interface;
+namespace KUpdater.Backend.BackendAbstractions;
 
 public interface IRenderTarget {
     IntPtr Handle { get; }

@@ -1,10 +1,11 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.ComponentModel;
+using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core.Interop;
-using KUpdater.UI.Interface;
 using KUpdater.Utility;
-namespace KUpdater.Backend;
+namespace KUpdater.Backend.WinForms;
 
 public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBackend {
     // IRenderTarget

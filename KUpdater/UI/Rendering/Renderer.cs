@@ -6,7 +6,6 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using KUpdater.Core;
 using KUpdater.Core.Interop;
-using KUpdater.UI.Interface;
 using SkiaSharp;
 
 namespace KUpdater.UI.Rendering;

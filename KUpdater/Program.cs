@@ -1,7 +1,8 @@
-// Copyright (c) 2026 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Backend;
+using KUpdater.Backend.WinForms;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Localization;
@@ -24,7 +25,7 @@ internal static class Program {
         }
 
         LanguageLoader.Load("en");
-        var config = ConfigLoader.Load(Paths.GetConfig("app.yaml"));
+        var config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
 
         var backend = new WinFormsBackend();
         backend.HandleCreated += (_, _) => {

@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
-using KUpdater.UI.Interface;
+using KUpdater.UI.Binding;
 using SkiaSharp;
 
 namespace KUpdater.UI.Control;

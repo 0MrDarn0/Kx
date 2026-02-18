@@ -128,4 +128,9 @@
 	  </Content>
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <Folder Include="UI\Layout\" />
+	</ItemGroup>
+
 </Project>

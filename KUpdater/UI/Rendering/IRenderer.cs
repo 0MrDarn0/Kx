@@ -3,7 +3,7 @@
 
 using SkiaSharp;
 
-namespace KUpdater.UI.Interface;
+namespace KUpdater.UI.Rendering;
 
 public interface IRenderer : IDisposable {
     void ToggleDebugOverlay();
