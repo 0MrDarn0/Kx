@@ -23,7 +23,9 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public IResourceProvider Resources { get; }
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
-    public FrameResource Frame { get; private set; } = null!;
+
+    private readonly object _frameLock = new();
+    public FrameResource? Frame { get; private set; }
     public IWindowRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
     public ContentRoot ContentRoot { get; private set; }
@@ -48,7 +50,11 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     }
 
     public void SetFrame(FrameResource frame) {
-        Frame = frame;
+        ArgumentNullException.ThrowIfNull(frame);
+        lock (_frameLock) {
+            (Frame as IDisposable)?.Dispose();
+            Frame = frame;
+        }
     }
 
     public void SetRenderer(IWindowRenderer renderer) {
@@ -62,6 +68,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public void Dispose() {
         Renderer?.Dispose();
         Controls.Dispose();
+        (Frame as IDisposable)?.Dispose();
         Resources.Dispose();
         UIContextProvider.Clear();
     }

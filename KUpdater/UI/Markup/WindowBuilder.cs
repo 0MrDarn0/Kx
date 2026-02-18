@@ -10,7 +10,7 @@ namespace KUpdater.UI.Markup;
 public static class WindowBuilder {
     public static void Build(WindowContext ctx, string yamlPath) {
         var config = ConfigLoader.Load<WindowConfig>(yamlPath);
-        var frameResources = FrameLoader.Load(config.Frame, ctx.Resources);
+        var frameResources = FrameResource.FromConfig(config.Frame, ctx.Resources);
         ctx.SetFrame(frameResources);
 
         foreach (var c in config.Controls) {

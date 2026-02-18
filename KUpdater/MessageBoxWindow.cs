@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
@@ -36,7 +37,7 @@ public class MessageBoxWindow : IDisposable {
         _ctx = new WindowContext(backend, backend, backend);
 
         var frameConfig = new FrameConfig();
-        var frame = FrameLoader.Load(frameConfig, _ctx.Resources);
+        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources);
         _ctx.SetFrame(frame);
 
         var renderer = new LayeredWindowRenderer(_ctx);
