@@ -34,7 +34,6 @@ public class Button : ControlBase {
         set => _skinKey.Value = value;
     }
 
-    // OnClick kann aus Lua gesetzt werden; marshallen wir ebenfalls auf UI-Thread
     private readonly Property<Action?> _onClick;
     public Action? OnClick {
         get => _onClick.Value;
@@ -71,20 +70,16 @@ public class Button : ControlBase {
         _ownsFont = ownsFont;
         _resourceProvider = resourceProvider;
 
-        // Property values: onChanged triggers a render for visual properties
         _text = new Property<string>(_ui, text, () => Invalidate());
         _font = new Property<Font>(_ui, font, () => { InitResources(); Invalidate(); });
         _color = new Property<Color>(_ui, color, () => { UpdatePaintColor(); Invalidate(); });
         _skinKey = new Property<string>(_ui, skinKey, () => { LoadStateBitmaps(); Invalidate(); });
-
-        // OnClick does not need to trigger a render; keep null onChanged
         _onClick = new Property<Action?>(_ui, onClick, null);
 
         InitResources();
     }
 
     private void InitResources() {
-        // Dispose previous resources if reinitializing
         try { _skPaint?.Dispose(); }
         catch { }
         try { _skFont?.Dispose(); }
@@ -92,7 +87,6 @@ public class Button : ControlBase {
         try { _typeface?.Dispose(); }
         catch { }
 
-        // Load bitmaps for current skin key
         LoadStateBitmaps();
 
         SKFontStyleWeight weight = Font.Style.HasFlag(FontStyle.Bold) ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
@@ -111,7 +105,6 @@ public class Button : ControlBase {
     }
 
     private void LoadStateBitmaps() {
-        // Clear existing bitmaps
         foreach (var bmp in _stateBitmaps.Values) {
             try { bmp.Dispose(); }
             catch { }
@@ -123,7 +116,6 @@ public class Button : ControlBase {
             provider?.LoadControlStateResources(SkinKey, Id, _stateBitmaps);
         }
         catch {
-            // swallow resource load errors; renderer will draw Fallback
         }
     }
 
@@ -167,7 +159,6 @@ public class Button : ControlBase {
     public override bool OnMouseUp(Point p) {
         bool prevPressed = IsPressed;
         if (IsPressed && Bounds.Contains(p)) {
-            // Invoke OnClick on UI thread (Property ensures marshaling)
             var handler = OnClick;
             try { handler?.Invoke(); }
             catch { }

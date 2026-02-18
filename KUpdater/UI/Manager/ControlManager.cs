@@ -7,133 +7,139 @@ using SkiaSharp;
 namespace KUpdater.UI;
 
 public class ControlManager : IDisposable {
-    private readonly List<IControl> _frameControls = [];
-    private readonly List<IControl> _contentControls = [];
-    private readonly List<IControl> _overlayControls = [];
+    private readonly List<IControl> _controls = new();
 
-    private IEnumerable<IControl> AllControls() {
-        foreach (var c in _frameControls)
-            yield return c;
-        foreach (var c in _contentControls)
-            yield return c;
-        foreach (var c in _overlayControls)
-            yield return c;
-    }
+    public float DpiScale { get; private set; } = 1f;
+
+    public IControl? FocusedControl { get; private set; }
+    public IControl? ModalControl { get; private set; }
 
     public void Add(IControl control) {
-        switch (control.Layer) {
-            case ControlLayer.Frame:
-            _frameControls.Add(control);
-            break;
-
-            case ControlLayer.Content:
-            _contentControls.Add(control);
-            break;
-
-            case ControlLayer.Overlay:
-            _overlayControls.Add(control);
-            break;
-        }
+        _controls.Add(control);
+        SortControls();
     }
 
-    private bool HitTest(List<IControl> list, Point p, Func<IControl, bool> action) {
-        bool needsRedraw = false;
+    public void Remove(IControl control) {
+        _controls.Remove(control);
+        control.Dispose();
+    }
 
-        foreach (var c in list.ToList())
+    private void SortControls() {
+        _controls.Sort((a, b) => {
+            int layer = a.Layer.CompareTo(b.Layer);
+            if (layer != 0)
+                return layer;
+            return a.ZIndex.CompareTo(b.ZIndex);
+        });
+    }
+
+    public void BringToFront(IControl c) {
+        c.ZIndex = _controls.Max(x => x.ZIndex) + 1;
+        SortControls();
+    }
+
+    public void SendToBack(IControl c) {
+        c.ZIndex = _controls.Min(x => x.ZIndex) - 1;
+        SortControls();
+    }
+
+    public void SetFocus(IControl c) {
+        if (FocusedControl == c)
+            return;
+
+        if (FocusedControl is ControlBase old)
+            old.OnFocusLost();
+
+        FocusedControl = c;
+
+        if (c is ControlBase cb)
+            cb.OnFocusGained();
+    }
+
+    public void ClearFocus() {
+        if (FocusedControl is ControlBase old)
+            old.OnFocusLost();
+
+        FocusedControl = null;
+    }
+
+    public void ShowModal(IControl c) {
+        ModalControl = c;
+        BringToFront(c);
+    }
+
+    public void CloseModal() {
+        ModalControl = null;
+    }
+
+    public void SetDpiScale(float scale) {
+        DpiScale = scale;
+
+        foreach (var c in _controls)
+            if (c is ControlBase cb)
+                cb.SetDpiScale(scale);
+    }
+
+    public void Render(SKCanvas canvas) {
+        foreach (var c in _controls)
+            if (c.Visible)
+                c.Draw(canvas);
+    }
+
+    private bool HitTest(Point p, Func<IControl, bool> action) {
+        foreach (var c in _controls.OrderByDescending(x => x.Layer).ThenByDescending(x => x.ZIndex))
             if (c.Visible && c.Bounds.Contains(p) && action(c))
-                needsRedraw = true;
+                return true;
 
-        return needsRedraw;
-    }
-
-
-    public void DisposeAndClearAll() {
-        foreach (var c in AllControls())
-            c.Dispose();
-
-        _frameControls.Clear();
-        _contentControls.Clear();
-        _overlayControls.Clear();
-    }
-
-    public void DisposeAndClear<T>() where T : class, IControl {
-        foreach (var c in AllControls().OfType<T>())
-            c.Dispose();
-
-        _frameControls.RemoveAll(c => c is T);
-        _contentControls.RemoveAll(c => c is T);
-        _overlayControls.RemoveAll(c => c is T);
-    }
-
-    public T? FindById<T>(string id) where T : class, IControl {
-        return AllControls().OfType<T>().FirstOrDefault(c => c.Id == id);
-    }
-
-    public void Update<T>(string id, Action<T> callback) where T : class, IControl {
-        var c = FindById<T>(id);
-        if (c != null)
-            callback(c);
-    }
-
-    public bool TryUpdate<T>(string id, Action<T> callback) where T : class, IControl {
-        var c = FindById<T>(id);
-        if (c == null)
-            return false;
-
-        callback(c);
-        return true;
-    }
-
-    public void DrawFrameControls(SKCanvas canvas) {
-        foreach (var c in _frameControls)
-            if (c.Visible)
-                c.Draw(canvas);
-    }
-
-    public void DrawContentControls(SKCanvas canvas) {
-        foreach (var c in _contentControls)
-            if (c.Visible)
-                c.Draw(canvas);
-    }
-
-    public void DrawOverlayControls(SKCanvas canvas) {
-        foreach (var c in _overlayControls)
-            if (c.Visible)
-                c.Draw(canvas);
+        return false;
     }
 
     public bool MouseDown(Point p) {
-        if (HitTest(_overlayControls, p, (c) => c.OnMouseDown(p)))
-            return true;
-        if (HitTest(_frameControls, p, (c) => c.OnMouseDown(p)))
-            return true;
-        return HitTest(_contentControls, p, (c) => c.OnMouseDown(p));
+        if (ModalControl != null)
+            return ModalControl.OnMouseDown(p);
+
+        return HitTest(p, c => c.OnMouseDown(p));
     }
 
     public bool MouseUp(Point p) {
-        if (HitTest(_overlayControls, p, (c) => c.OnMouseUp(p)))
-            return true;
-        if (HitTest(_frameControls, p, (c) => c.OnMouseUp(p)))
-            return true;
-        return HitTest(_contentControls, p, (c) => c.OnMouseUp(p));
+        if (ModalControl != null)
+            return ModalControl.OnMouseUp(p);
+
+        return HitTest(p, c => c.OnMouseUp(p));
     }
 
     public bool MouseMove(Point p) {
-        if (HitTest(_overlayControls, p, (c) => c.OnMouseMove(p)))
-            return true;
-        if (HitTest(_frameControls, p, (c) => c.OnMouseMove(p)))
-            return true;
-        return HitTest(_contentControls, p, (c) => c.OnMouseMove(p));
+        if (ModalControl != null)
+            return ModalControl.OnMouseMove(p);
+
+        return HitTest(p, c => c.OnMouseMove(p));
     }
 
     public bool MouseWheel(int delta, Point p) {
-        if (HitTest(_overlayControls, p, (c) => c.OnMouseWheel(delta, p)))
-            return true;
-        if (HitTest(_frameControls, p, (c) => c.OnMouseWheel(delta, p)))
-            return true;
-        return HitTest(_contentControls, p, (c) => c.OnMouseWheel(delta, p));
+        if (ModalControl != null)
+            return ModalControl.OnMouseWheel(delta, p);
+
+        return HitTest(p, c => c.OnMouseWheel(delta, p));
     }
 
+    public bool KeyDown(Keys key) {
+        if (FocusedControl != null)
+            return FocusedControl.OnKeyDown(key);
 
-    public void Dispose() => DisposeAndClearAll();
+        return false;
+    }
+
+    public bool KeyUp(Keys key) {
+        if (FocusedControl != null)
+            return FocusedControl.OnKeyUp(key);
+
+        return false;
+    }
+
+    public void Dispose() {
+        foreach (var c in _controls)
+            c.Dispose();
+
+        _controls.Clear();
+    }
 }

@@ -818,9 +818,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
         DrawWindowFrame(canvas, size);
 
         try {
-            _ctx.Controls.DrawFrameControls(canvas);
-            _ctx.ContentRoot.Draw(canvas);
-            _ctx.Controls.DrawOverlayControls(canvas);
+            _ctx.Controls.Render(canvas);
         }
         catch (Exception ex) {
             Debug.WriteLine($"UI render error: {ex}");

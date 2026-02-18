@@ -64,18 +64,12 @@
 	
 	<ItemGroup>
 	  <Compile Remove="kUpdater\Lua\**" />
-	  <Compile Remove="Scripting\Api\**" />
-	  <Compile Remove="Scripting\Runtime\**" />
-	  <Compile Remove="Scripting\Security\**" />
+	  <Compile Remove="Scripting\**" />
 	  <Content Remove="kUpdater\Lua\**" />
 	  <EmbeddedResource Remove="kUpdater\Lua\**" />
-	  <EmbeddedResource Remove="Scripting\Api\**" />
-	  <EmbeddedResource Remove="Scripting\Runtime\**" />
-	  <EmbeddedResource Remove="Scripting\Security\**" />
+	  <EmbeddedResource Remove="Scripting\**" />
 	  <None Remove="kUpdater\Lua\**" />
-	  <None Remove="Scripting\Api\**" />
-	  <None Remove="Scripting\Runtime\**" />
-	  <None Remove="Scripting\Security\**" />
+	  <None Remove="Scripting\**" />
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -145,7 +139,6 @@
 
 
 	<ItemGroup>
-	  <Folder Include="Scripting\" />
 	  <Folder Include="UI\Layout\" />
 	</ItemGroup>
 
