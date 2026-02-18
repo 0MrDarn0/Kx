@@ -51,7 +51,7 @@ public abstract class ControlBase : IControl, IDisposable {
         _initializing = false;
     }
 
-    public abstract void Draw(SKCanvas canvas);
+    public virtual void Draw(SKCanvas canvas) { }
 
     public virtual bool OnMouseMove(Point p) => false;
     public virtual bool OnMouseDown(Point p) => false;

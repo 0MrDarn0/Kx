@@ -139,11 +139,6 @@
 
 
 	<ItemGroup>
-	  <Folder Include="UI\Layout\" />
-	</ItemGroup>
-
-
-	<ItemGroup>
 	  <ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
 	</ItemGroup>
 

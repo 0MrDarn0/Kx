@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.UI.Control;
+using KUpdater.UI.Layout;
 using SkiaSharp;
 
 namespace KUpdater.UI;
@@ -31,6 +32,13 @@ public class ControlManager : IDisposable {
                 return layer;
             return a.ZIndex.CompareTo(b.ZIndex);
         });
+    }
+    public void LayoutAll() {
+        foreach (var c in _controls.OfType<UIElement>())
+            c.Measure(DpiScale);
+
+        foreach (var c in _controls.OfType<UIElement>())
+            c.Arrange(c.Bounds, DpiScale);
     }
 
     public void BringToFront(IControl c) {

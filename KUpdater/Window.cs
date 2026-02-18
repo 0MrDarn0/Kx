@@ -5,10 +5,14 @@ using System.Diagnostics;
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
 using KUpdater.Core.Event;
+using KUpdater.Core.Extensions;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Pipeline;
 using KUpdater.Core.Update;
 using KUpdater.UI;
+using KUpdater.UI.Control;
+using KUpdater.UI.Layout;
+using KUpdater.UI.Layout.Grid;
 using KUpdater.UI.Markup;
 using KUpdater.UI.Rendering;
 using KUpdater.Utility;
@@ -36,6 +40,38 @@ public class Window : IDisposable {
             eventManager: new EventManager());
 
         WindowBuilder.Build(_ctx, Paths.GetConfig("frame.yaml"));
+
+        var grid = new Grid(_ctx, "grid", () => _ctx.ContentBounds());
+
+        grid.Columns.Add(new ColumnDefinition { Width = GridLength.Pixel(150) });
+        grid.Columns.Add(new ColumnDefinition { Width = GridLength.Star(1) });
+
+        grid.Rows.Add(new RowDefinition { Height = GridLength.Pixel(50) });
+        grid.Rows.Add(new RowDefinition { Height = GridLength.Star(1) });
+
+        var header = new TestLabel(_ctx, "header", "HEADER", 20) {
+            GridRow = 0,
+            GridColumn = 0,
+            GridColumnSpan = 2
+        };
+
+        var sidebar = new TestLabel(_ctx, "sidebar", "SIDEBAR", 20) {
+            GridRow = 1,
+            GridColumn = 0
+        };
+
+        var content = new TestLabel(_ctx, "content", "CONTENT", 20) {
+            GridRow = 1,
+            GridColumn = 1
+        };
+
+        grid.Children.Add(header);
+        grid.Children.Add(sidebar);
+        grid.Children.Add(content);
+
+        _ctx.Controls.Add(grid);
+
+
 
         var renderer = new LayeredWindowRenderer(_ctx);
         _ctx.SetRenderer(renderer);
@@ -67,6 +103,9 @@ public class Window : IDisposable {
                 })
                 .Item("Toggle PerfOverlay", (s, e) => {
                     _ctx.Renderer.TogglePerfOverlay();
+                    _ctx.Renderer.RequestRender();
+                }).Item("Toggle DebugOverlay", (s, e) => {
+                    DebugOverlay.Enabled = !DebugOverlay.Enabled;
                     _ctx.Renderer.RequestRender();
                 })
                 .Exit((s, e) => Application.Exit())

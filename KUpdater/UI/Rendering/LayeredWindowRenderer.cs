@@ -818,6 +818,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
         DrawWindowFrame(canvas, size);
 
         try {
+            _ctx.Controls.LayoutAll();
             _ctx.Controls.Render(canvas);
         }
         catch (Exception ex) {
