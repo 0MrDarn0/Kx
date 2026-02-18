@@ -3,9 +3,10 @@
 
 using KUpdater.Abstractions.Plugin;
 using KUpdater.Backend.BackendAbstractions;
+using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
+using KUpdater.Core.Localization;
 using KUpdater.Core.Pipeline;
-using KUpdater.Scripting.Runtime;
 using KUpdater.UI;
 using KUpdater.UI.Control;
 using KUpdater.UI.Manager;
@@ -19,7 +20,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
     public IWindowBackend Backend { get; }
-    public BaseConfig Config { get; }
+    public AppConfig Config { get; }
     public IResourceProvider Resources { get; }
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
@@ -39,13 +40,14 @@ public sealed class WindowContext : IDisposable, IPluginContext {
         Target = target;
         UiThread = uiThread;
         Backend = backend;
-        Config = new LuaConfig<BaseConfig>("base.lua", "Base").Load();
+        Config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
         Resources = new FileResourceProvider(Paths.ResFolder);
         Controls = new ControlManager();
         Events = eventManager ?? new EventManager();
         ContentRoot = new ContentRoot(this);
         Controls.Add(ContentRoot);
 
+        LanguageLoader.Load(Config.Ui.Language);
         UIContextProvider.Initialize(this);
     }
 

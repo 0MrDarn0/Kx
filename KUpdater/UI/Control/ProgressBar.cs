@@ -1,16 +1,14 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Core.Attributes;
 using KUpdater.Core.Extensions;
 using KUpdater.UI.Binding;
 using KUpdater.UI.Manager;
 using KUpdater.Utility;
-using MoonSharp.Interpreter;
 using SkiaSharp;
 
 namespace KUpdater.UI.Control;
 
-[ExposeToLua]
 public class ProgressBar : ControlBase {
     // progress value (0..1)
     private readonly Property<float> _progress;
@@ -97,18 +95,6 @@ public class ProgressBar : ControlBase {
 
         // Initialize text resources
         InitTextResources();
-    }
-
-    public ProgressBar(
-        string id,
-        Table bounds,
-        Font font,
-        Color textColor,
-        Color fillColor,
-        Color borderColor,
-        Color backgroundColor,
-        bool ownsFont = true)
-        : this(id, bounds.ToBoundsFunc(), font, textColor, fillColor, borderColor, backgroundColor, ownsFont) {
     }
 
     private void InitTextResources() {

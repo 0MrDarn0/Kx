@@ -63,6 +63,26 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+	  <Compile Remove="kUpdater\Lua\**" />
+	  <Compile Remove="Scripting\Api\**" />
+	  <Compile Remove="Scripting\Runtime\**" />
+	  <Compile Remove="Scripting\Security\**" />
+	  <Content Remove="kUpdater\Lua\**" />
+	  <EmbeddedResource Remove="kUpdater\Lua\**" />
+	  <EmbeddedResource Remove="Scripting\Api\**" />
+	  <EmbeddedResource Remove="Scripting\Runtime\**" />
+	  <EmbeddedResource Remove="Scripting\Security\**" />
+	  <None Remove="kUpdater\Lua\**" />
+	  <None Remove="Scripting\Api\**" />
+	  <None Remove="Scripting\Runtime\**" />
+	  <None Remove="Scripting\Security\**" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Compile Remove="Core\Extensions\LuaExtensions.cs" />
+	</ItemGroup>
+	
+	<ItemGroup>
     <None Update="kUpdater\Resources\main_bc_default.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -108,7 +128,6 @@
   </ItemGroup>
 	
 	<ItemGroup>
-	  <PackageReference Include="MoonSharp" Version="2.0.0" />
 	  <PackageReference Include="SkiaSharp" Version="3.119.3-preview.1.1" />
 	  <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="3.119.3-preview.1.1" />
 	  <PackageReference Include="YamlDotNet" Version="16.3.0" />
@@ -126,6 +145,7 @@
 
 
 	<ItemGroup>
+	  <Folder Include="Scripting\" />
 	  <Folder Include="UI\Layout\" />
 	</ItemGroup>
 

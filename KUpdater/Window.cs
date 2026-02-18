@@ -4,7 +4,6 @@
 using System.Diagnostics;
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
-using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Pipeline;
@@ -25,12 +24,10 @@ public class Window : IDisposable {
     private readonly TrayIcon? _trayIcon;
     public HotkeyManager? _hotkeyManager;
     private int _toggleDebugOverlayHotkeyId;
-    private readonly AppConfig _config;
 
-    public Window(IWindowBackend backend, AppConfig config) {
+    public Window(IWindowBackend backend) {
         Instance = this;
         _backend = backend;
-        _config = config;
 
         _ctx = new WindowContext(
             backend,
@@ -47,7 +44,7 @@ public class Window : IDisposable {
         var pipeline = new UpdaterPipelineRunner(
             _ctx.Events,
             new HttpUpdateSource(),
-            _ctx.Config.Url,
+            _ctx.Config.Updater.Url,
             AppDomain.CurrentDomain.BaseDirectory);
 
         _ctx.SetPipeline(pipeline);

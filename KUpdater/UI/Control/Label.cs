@@ -4,7 +4,6 @@
 using KUpdater.Core.Extensions;
 using KUpdater.UI.Binding;
 using KUpdater.UI.Manager;
-using MoonSharp.Interpreter;
 using SkiaSharp;
 
 namespace KUpdater.UI.Control;
@@ -55,17 +54,6 @@ public class Label : ControlBase {
         _color = new Property<Color>(_ui, color, () => { UpdatePaintColor(); Invalidate(); });
 
         InitResources();
-    }
-
-    public Label(
-        string id,
-        Table bounds,
-        string text,
-        Font font,
-        Color color,
-        bool ownsFont = true,
-        TextFormatFlags flags = TextFormatFlags.Default)
-        : this(id, bounds.ToBoundsFunc(), text, font, color, ownsFont, flags) {
     }
 
     private void InitResources() {

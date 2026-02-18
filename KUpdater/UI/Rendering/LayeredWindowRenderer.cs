@@ -10,7 +10,7 @@ using SkiaSharp;
 
 namespace KUpdater.UI.Rendering;
 
-public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
+public unsafe class LayeredWindowRenderer : IWindowRenderer {
     private readonly WindowContext _ctx;
 
     // Steuerflags

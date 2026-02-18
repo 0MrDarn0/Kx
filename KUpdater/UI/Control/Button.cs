@@ -5,7 +5,6 @@ using KUpdater.Core.Extensions;
 using KUpdater.UI.Binding;
 using KUpdater.UI.Manager;
 using KUpdater.Utility;
-using MoonSharp.Interpreter;
 using SkiaSharp;
 
 namespace KUpdater.UI.Control;
@@ -82,19 +81,6 @@ public class Button : ControlBase {
         _onClick = new Property<Action?>(_ui, onClick, null);
 
         InitResources();
-    }
-
-    public Button(
-        string id,
-        Table bounds,
-        string text,
-        Font font,
-        Color color,
-        string themeKey,
-        Action? onClick,
-        IResourceProvider? resourceProvider = null,
-        bool ownsFont = true)
-        : this(id, bounds.ToBoundsFunc(), text, font, color, themeKey, onClick, resourceProvider, ownsFont) {
     }
 
     private void InitResources() {

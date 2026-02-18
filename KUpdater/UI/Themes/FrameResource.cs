@@ -68,6 +68,7 @@ public sealed class FrameResource : IDisposable {
         return fr;
     }
 
+
     // ---------------------------------------------------------
     // 1) Placeholder‑Bitmap erzeugen
     // ---------------------------------------------------------

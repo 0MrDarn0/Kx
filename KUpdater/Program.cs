@@ -3,10 +3,7 @@
 
 using System.Diagnostics;
 using KUpdater.Backend.WinForms;
-using KUpdater.Core.Configuration;
 using KUpdater.Core.Interop;
-using KUpdater.Core.Localization;
-using KUpdater.Utility;
 
 namespace KUpdater;
 
@@ -24,13 +21,9 @@ internal static class Program {
             return;
         }
 
-
-        var config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
-        LanguageLoader.Load(config.Ui.Language);
-
         var backend = new WinFormsBackend();
         backend.HandleCreated += (_, _) => {
-            var window = new Window(backend, config);
+            var window = new Window(backend);
             backend.Shown += (_, _) => window.OnShown();
             backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
         };

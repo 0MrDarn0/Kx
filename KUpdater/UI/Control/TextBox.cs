@@ -1,15 +1,13 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Core.Attributes;
 using KUpdater.Core.Extensions;
 using KUpdater.UI.Binding;
 using KUpdater.UI.Manager;
-using MoonSharp.Interpreter;
 using SkiaSharp;
 
 namespace KUpdater.UI.Control;
 
-[ExposeToLua]
 public class TextBox : ControlBase {
     private readonly Property<string> _text;
     public string Text {
@@ -89,20 +87,6 @@ public class TextBox : ControlBase {
         _backColor = new Property<Color>(_ui, backColor, () => { UpdatePaintColors(); Invalidate(); });
 
         InitResources();
-    }
-
-    public TextBox(
-        string id,
-        Table bounds,
-        string text,
-        Font font,
-        Color foreColor,
-        Color backColor,
-        bool multiline = true,
-        bool readOnly = false,
-        Color? scrollBarColor = null,
-        bool ownsFont = true)
-        : this(id, bounds.ToBoundsFunc(), text, font, foreColor, backColor, multiline, readOnly, scrollBarColor, ownsFont) {
     }
 
     private void InitResources() {
