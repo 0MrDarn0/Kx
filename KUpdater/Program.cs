@@ -24,8 +24,9 @@ internal static class Program {
             return;
         }
 
-        LanguageLoader.Load("en");
+
         var config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
+        LanguageLoader.Load(config.Ui.Language);
 
         var backend = new WinFormsBackend();
         backend.HandleCreated += (_, _) => {

@@ -1,0 +1,7 @@
+name: TemplatePlugin
+version: 1.0.0
+apiVersion: 1.0
+entryType: KUpdater.Plugins.Template.TemplatePlugin
+description: "Minimal example plugin for KUpdater"
+author: "Christian Schnuck"
+dependencies: []

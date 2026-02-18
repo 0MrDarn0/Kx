@@ -113,10 +113,6 @@
 	  <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="3.119.3-preview.1.1" />
 	  <PackageReference Include="YamlDotNet" Version="16.3.0" />
 	</ItemGroup>
-	
-	<ItemGroup>
-	  <ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
-	</ItemGroup>
 
 
 	<ItemGroup>
@@ -131,6 +127,11 @@
 
 	<ItemGroup>
 	  <Folder Include="UI\Layout\" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
 	</ItemGroup>
 
 </Project>
