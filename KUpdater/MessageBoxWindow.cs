@@ -37,7 +37,7 @@ public class MessageBoxWindow : IDisposable {
         _ctx = new WindowContext(backend, backend, backend);
 
         var frameConfig = new FrameConfig();
-        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources);
+        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, (_ctx.Target.DeviceDpi / 96f));
         _ctx.SetFrame(frame);
 
         var renderer = new LayeredWindowRenderer(_ctx);

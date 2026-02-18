@@ -10,7 +10,8 @@ frame:
   leftCenter: "KalOnline:Frame:left_center.png"
 
   fillBitmap: "KalOnline:Frame:fill_bitmap.bmp"
-  fillColor: "#101010"
+  fillColor: "#282828"
+  useFillColor: false
 
   topWidthOffset: 7
   bottomWidthOffset: 15

@@ -40,14 +40,11 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     private int _dibHeight;
     private readonly object _dibLock = new();
 
-    private readonly SKPaint _fillPaint = new() { IsAntialias = true };
-
     // Fallback-Hilfspuffer
     private byte[]? _zeroRowBuffer;
     private int _zeroRowBufferSize;
 
     // Debug / Overlay
-    private readonly List<SKRect> _missingRects = new();
     private readonly object _perfLock = new();
     private readonly Queue<long> _frameTimestamps = new();
     private const int FrameHistory = 60;
@@ -58,6 +55,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
 
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
+    private float DpiScale => Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
 
     private bool _disposed;
 
@@ -116,9 +114,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             try { _uiSurface?.Dispose(); }
             catch { }
             try { _uiPresentBitmap?.Dispose(); }
-            catch { }
-
-            try { _fillPaint.Dispose(); }
             catch { }
         }
 
@@ -842,122 +837,226 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     }
 
     private void DrawWindowFrame(SKCanvas canvas, Size size) {
-        var frame = _ctx.Frame;
-        if (frame == null)
+        var f = _ctx.Frame;
+        if (f == null)
             return;
 
-        int width = size.Width;
-        int height = size.Height;
+        // Falls Bitmaps nicht exsitieren, platzhalter erstellen
+        f.AutoGenerateMissingParts(size.Width, size.Height);
+
+        int w = size.Width;
+        int h = size.Height;
 
         canvas.Clear(SKColors.Transparent);
 
-        if (frame.TopLeft != null)
-            canvas.DrawBitmap(frame.TopLeft, new SKPoint(0, 0));
+        // Ecken
+        canvas.DrawBitmap(f.TopLeft!, new SKPoint(0, 0));
+        canvas.DrawBitmap(f.TopRight!, new SKPoint(w - f.TopRight!.Width, 0));
+        canvas.DrawBitmap(f.BottomLeft!, new SKPoint(0, h - f.BottomLeft!.Height));
+        canvas.DrawBitmap(f.BottomRight!, new SKPoint(w - f.BottomRight!.Width, h - f.BottomRight!.Height));
 
-        if (frame.TopRight != null)
-            canvas.DrawBitmap(frame.TopRight, new SKPoint(width - frame.TopRight.Width, 0));
-
-        if (frame.BottomLeft != null)
-            canvas.DrawBitmap(frame.BottomLeft, new SKPoint(0, height - frame.BottomLeft.Height));
-
-        if (frame.BottomRight != null)
-            canvas.DrawBitmap(frame.BottomRight, new SKPoint(width - frame.BottomRight.Width, height - frame.BottomRight.Height));
-
-        if (frame.TopCenter != null) {
-            float left = frame.TopLeft?.Width ?? 0f;
-            float right = left + (width - (frame.TopLeft?.Width ?? 0f) - (frame.TopRight?.Width ?? 0f) + frame.TopWidthOffset);
-            float bottom = frame.TopCenter.Height;
+        // Top Center
+        {
+            float left = f.TopLeft!.Width;
+            float right = w - f.TopRight!.Width + f.TopWidthOffset;
+            float bottom = f.TopCenter!.Height;
             if (right > left)
-                canvas.DrawBitmap(frame.TopCenter, new SKRect(left, 0, right, bottom));
+                canvas.DrawBitmap(f.TopCenter!, new SKRect(left, 0, right, bottom));
         }
 
-        if (frame.BottomCenter != null) {
-            float left = frame.BottomLeft?.Width ?? 0f;
-            float top = height - frame.BottomCenter.Height;
-            float right = left + (width - (frame.BottomLeft?.Width ?? 0f) - (frame.BottomRight?.Width ?? 0f) + frame.BottomWidthOffset);
-            float bottom = top + frame.BottomCenter.Height;
+        // Bottom Center
+        {
+            float left = f.BottomLeft!.Width;
+            float top = h - f.BottomCenter!.Height;
+            float right = w - f.BottomRight!.Width + f.BottomWidthOffset;
+            float bottom = top + f.BottomCenter!.Height;
             if (right > left)
-                canvas.DrawBitmap(frame.BottomCenter, new SKRect(left, top, right, bottom));
+                canvas.DrawBitmap(f.BottomCenter!, new SKRect(left, top, right, bottom));
         }
 
-        if (frame.LeftCenter != null) {
-            float top = frame.TopLeft?.Height ?? 0f;
-            float bottom = top + (height - (frame.TopLeft?.Height ?? 0f) - (frame.BottomLeft?.Height ?? 0f) + frame.LeftHeightOffset);
+        // Left Center
+        {
+            float top = f.TopLeft!.Height;
+            float bottom = h - f.BottomLeft!.Height + f.LeftHeightOffset;
             if (bottom > top)
-                canvas.DrawBitmap(frame.LeftCenter, new SKRect(0, top, frame.LeftCenter.Width, bottom));
+                canvas.DrawBitmap(f.LeftCenter!, new SKRect(0, top, f.LeftCenter!.Width, bottom));
         }
 
-        if (frame.RightCenter != null) {
-            float left = width - frame.RightCenter.Width;
-            float top = frame.TopRight?.Height ?? 0f;
-            float bottom = top + (height - (frame.TopRight?.Height ?? 0f) - (frame.BottomRight?.Height ?? 0f) + frame.RightHeightOffset);
+        // Right Center
+        {
+            float left = w - f.RightCenter!.Width;
+            float top = f.TopRight!.Height;
+            float bottom = h - f.BottomRight!.Height + f.RightHeightOffset;
             if (bottom > top)
-                canvas.DrawBitmap(frame.RightCenter, new SKRect(left, top, left + frame.RightCenter.Width, bottom));
+                canvas.DrawBitmap(f.RightCenter!, new SKRect(left, top, left + f.RightCenter!.Width, bottom));
         }
 
-        float leftW = frame.LeftCenter?.Width ?? 0f;
-        float topH = frame.TopCenter?.Height ?? 0f;
-        float bottomH = frame.BottomCenter?.Height ?? 0f;
-
-        float fillLeft = Math.Max(0f, leftW - frame.FillPosOffset);
-        float fillTop = Math.Max(0f, topH - frame.FillPosOffset);
-        float fillRight = fillLeft + Math.Max(0f, width - leftW * 2 + frame.FillWidthOffset);
-        float fillBottom = fillTop + Math.Max(0f, height - topH - bottomH + frame.FillHeightOffset);
-
-        if (fillRight > fillLeft && fillBottom > fillTop) {
-            var fillRect = new SKRect(fillLeft, fillTop, fillRight, fillBottom);
-            if (frame.FillBitmap != null) {
-                canvas.DrawBitmap(frame.FillBitmap, fillRect);
+        // Fill Content Area
+        {
+            var rect = GetContentRect(size);
+            if (f.UseFillColor) {
+                using var paint = new SKPaint {
+                    IsAntialias = true,
+                    Color = f.FillColor
+                };
+                canvas.DrawRect(rect, paint);
             } else {
-                _fillPaint.Color = frame.FillColor;
-                canvas.DrawRect(fillRect, _fillPaint);
+                canvas.DrawBitmap(f.FillBitmap, rect);
             }
         }
     }
 
     private void DrawDebugRaster(SKCanvas canvas, Size size) {
-        using var p = new SKPaint {
-            Color = new SKColor(255, 0, 0, 40),
+        float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
+
+        int width = size.Width;
+        int height = size.Height;
+
+        int basNumberSpacing = 80;
+        int numberSpacing = Math.Max(8, (int)(basNumberSpacing * scale));
+
+        int baseRasterSpacing = 25;
+        int rasterSpacing = Math.Max(8, (int)(baseRasterSpacing * scale));
+        float mouseMarkerSize = 4f;
+
+        using var linePaint = new SKPaint {
+            Color = new SKColor(0xFF, 0xFF, 0xFF, 0x28),
             StrokeWidth = 1,
-            IsStroke = true
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
         };
 
-        for (int x = 0; x < size.Width; x += 20)
-            canvas.DrawLine(x, 0, x, size.Height, p);
+        using var axisPaint = new SKPaint {
+            Color = new SKColor(0xFF, 0xFF, 0x00, 0xFF),
+            StrokeWidth = 2,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke
+        };
 
-        for (int y = 0; y < size.Height; y += 20)
-            canvas.DrawLine(0, y, size.Width, y, p);
-    }
-
-    private void DrawPerfOverlay(SKCanvas canvas, Size size) {
-        long now = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
-
-        long fps;
-        lock (_perfLock) {
-            while (_frameTimestamps.Count > 0 && now - _frameTimestamps.Peek() > 1000)
-                _frameTimestamps.Dequeue();
-            fps = _frameTimestamps.Count;
-        }
-
-        using var paint = new SKPaint {
-            Color = SKColors.Lime,
-            TextSize = 16,
+        using var textPaint = new SKPaint {
+            Color = new SKColor(0, 255, 100, 220),
             IsAntialias = true
         };
 
-        canvas.DrawText($"FPS: {fps}", 10, 20, paint);
-        canvas.DrawText($"Render: {LastRenderDurationMs} ms", 10, 40, paint);
+        float fontSize = Math.Max(7f, 12f * scale);
+        using var font = new SKFont(SKTypeface.Default, fontSize);
+
+        for (int x = 0; x < width; x += rasterSpacing)
+            canvas.DrawLine(x, 0, x, height, linePaint);
+
+        for (int y = 0; y < height; y += rasterSpacing)
+            canvas.DrawLine(0, y, width, y, linePaint);
+
+        canvas.DrawLine(0, 0, width, 0, axisPaint);
+        canvas.DrawLine(0, 0, 0, height, axisPaint);
+
+        var metrics = font.Metrics;
+        float baselineOffset = -(metrics.Descent + metrics.Ascent) / 2f;
+
+        for (int x = 0; x < width; x += numberSpacing) {
+            string sx = x.ToString();
+            canvas.DrawText(sx, x + 2, 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
+        }
+
+        for (int y = 0; y < height; y += numberSpacing) {
+            string sy = y.ToString();
+            canvas.DrawText(sy, 2, y + 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
+        }
+
+        try {
+            var cursorScreen = System.Windows.Forms.Cursor.Position;
+            int cursorX = cursorScreen.X - _ctx.Target.Left;
+            int cursorY = cursorScreen.Y - _ctx.Target.Top;
+            if (cursorX >= 0 && cursorX < width && cursorY >= 0 && cursorY < height) {
+                using var cursorPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true };
+                canvas.DrawCircle(cursorX, cursorY, mouseMarkerSize * scale, cursorPaint);
+                string pos = $"{cursorX},{cursorY}";
+                canvas.DrawText(pos, cursorX + 8f * scale, cursorY - 8f * scale, SKTextAlign.Left, font, textPaint);
+                RequestRender();
+            }
+        }
+        catch { /* ignore */ }
+    }
+
+    private void DrawPerfOverlay(SKCanvas canvas, Size size) {
+        if (!_showPerfOverlay)
+            return;
+
+        long nowMs = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
+        double fps = 0;
+        int frameCount = 0;
+        lock (_perfLock) {
+            frameCount = _frameTimestamps.Count;
+            if (frameCount >= 2) {
+                long first = _frameTimestamps.Peek();
+                long last = _frameTimestamps.Last();
+                double span = Math.Max(1, last - first);
+                fps = (frameCount - 1) * 1000.0 / span;
+            }
+        }
+
+        long lastRenderMs = LastRenderDurationMs;
+        int lastPresentErr = LastPresentError;
+        long workingSet = Process.GetCurrentProcess().WorkingSet64 / 1024;
+        int threadCount = Process.GetCurrentProcess().Threads.Count;
+        int bufW = _bgRenderBitmap?.Width ?? 0;
+        int bufH = _bgRenderBitmap?.Height ?? 0;
+
+        using var bgPaint = new SKPaint { Color = new SKColor(0, 0, 0, 140), IsAntialias = true, Style = SKPaintStyle.Fill };
+        using var textPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true };
+        using var titlePaint = new SKPaint { Color = SKColors.White, IsAntialias = true };
+
+        using var textFont = new SKFont(SKTypeface.FromFamilyName("Consolas"), 12);
+        using var titleFont = new SKFont(SKTypeface.FromFamilyName("Consolas"), 13);
+
+        float padding = 48f;
+        float lineHeight = 16f;
+        float boxWidth = 260f;
+        float boxHeight = padding * 2 + lineHeight * 7;
+
+        var rect = new SKRect(padding, padding, padding + boxWidth, padding + boxHeight);
+        canvas.DrawRoundRect(rect, 6, 6, bgPaint);
+
+        float x = rect.Left + padding;
+        float y = rect.Top + padding + lineHeight;
+
+        void DrawLine(string label, string value) {
+            canvas.DrawText(label, x, y, SKTextAlign.Left, titleFont, titlePaint);
+            canvas.DrawText(value, x + 120, y, SKTextAlign.Left, textFont, textPaint);
+            y += lineHeight;
+        }
+
+
+        DrawLine("FPS", fps > 0 ? $"{fps:F1}" : "—");
+        DrawLine("Last Render ms", $"{lastRenderMs} ms");
+        DrawLine("Last Present Err", lastPresentErr == 0 ? "OK" : lastPresentErr.ToString());
+        DrawLine("RenderBuffer", $"{bufW}x{bufH}");
+        DrawLine("Process Mem", $"{workingSet} KB");
+        DrawLine("Threads", threadCount.ToString());
+        DrawLine("Time", DateTime.Now.ToString("HH:mm:ss"));
+
+        float barMax = boxWidth - 2 * padding;
+        float barY = rect.Bottom - padding - 6;
+        float normalized = Math.Min(1f, lastRenderMs / 50f);
+        using var barBg = new SKPaint { Color = new SKColor(255, 255, 255, 30), IsAntialias = true };
+        using var barFill = new SKPaint { Color = normalized < 0.5 ? SKColors.Lime : SKColors.OrangeRed, IsAntialias = true };
+        canvas.DrawRect(x, barY, barMax, 6, barBg);
+        canvas.DrawRect(x, barY, barMax * normalized, 6, barFill);
     }
 
     private void DrawContentRectDebug(SKCanvas canvas, Size size) {
         var rect = GetContentRect(size);
 
-        using var p = new SKPaint {
-            Color = new SKColor(0, 255, 255, 80),
+        using var paint = new SKPaint {
+            Color = new SKColor(255, 0, 0, 200),
             IsStroke = true,
-            StrokeWidth = 2
+            StrokeWidth = 3,
+            IsAntialias = true
         };
 
-        canvas.DrawRect(rect, p);
+        // 1px nach innen, damit der Rahmen nicht vom Frame überdeckt wird
+        rect.Inflate(-1, -1);
+
+        canvas.DrawRect(rect, paint);
     }
 }
