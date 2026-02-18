@@ -2,7 +2,6 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Abstractions.Plugin;
-using KUpdater.Abstractions.UI;
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
@@ -16,7 +15,7 @@ using KUpdater.Utility;
 
 namespace KUpdater.Core;
 
-public sealed class WindowContext : IDisposable, IUiContext, IPluginContext {
+public sealed class WindowContext : IDisposable, IPluginContext {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
     public IWindowBackend Backend { get; }
@@ -27,12 +26,8 @@ public sealed class WindowContext : IDisposable, IUiContext, IPluginContext {
     public FrameResources Frame { get; private set; } = null!;
     public IRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
-    object IPluginContext.Services => this;
-    object IUiContext.Backend => Backend;
-    object IUiContext.Events => Events;
-    object IUiContext.Controls => Controls;
     public ContentRoot ContentRoot { get; private set; }
-
+    object IPluginContext.Services => this;
 
     public WindowContext(
         IRenderTarget target,
