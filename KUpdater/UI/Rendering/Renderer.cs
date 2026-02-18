@@ -723,10 +723,7 @@ public unsafe class Renderer : IRenderer, IDisposable {
     public void Draw(SKCanvas canvas, Size size) {
         canvas.Clear(SKColors.Transparent);
 
-        var contentRect = GetContentRect(size);
-
         DrawWindowFrame(canvas, size);
-        _ctx.Controls.Draw(canvas);
 
         lock (_missingRects) {
             foreach (var r in _missingRects)
@@ -734,13 +731,18 @@ public unsafe class Renderer : IRenderer, IDisposable {
             _missingRects.Clear();
         }
 
+        _ctx.Controls.DrawFrameControls(canvas);
+        _ctx.ContentRoot.Draw(canvas);
+        _ctx.Controls.DrawOverlayControls(canvas);
+
         if (_showDebugRasterOverlay)
             DrawDebugRasterOverlay(canvas, size);
+
         if (_showPerfOverlay)
             DrawPerformanceOverlay(canvas, size);
+
         if (_showContentRectDebug)
             DrawContentRectDebug(canvas, size);
-
 
         RecordFrameTimestamp();
     }

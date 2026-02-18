@@ -7,6 +7,7 @@ using KUpdater.Core.Event;
 using KUpdater.Core.Pipeline;
 using KUpdater.Scripting.Runtime;
 using KUpdater.UI;
+using KUpdater.UI.Control;
 using KUpdater.UI.Interface;
 using KUpdater.Utility;
 
@@ -27,7 +28,7 @@ public sealed class WindowContext : IDisposable, IUiContext, IPluginContext {
     object IUiContext.Backend => Backend;
     object IUiContext.Events => Events;
     object IUiContext.Controls => Controls;
-
+    public ContentRoot ContentRoot { get; private set; }
 
 
     public WindowContext(
@@ -42,6 +43,8 @@ public sealed class WindowContext : IDisposable, IUiContext, IPluginContext {
         Resources = new FileResourceProvider(Paths.ResFolder);
         Controls = new ControlManager();
         Events = eventManager ?? new EventManager();
+        ContentRoot = new ContentRoot(this);
+        Controls.Add(ContentRoot);
 
         UIContextProvider.Initialize(this);
     }

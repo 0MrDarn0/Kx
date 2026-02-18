@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.UI.Control;
 using SkiaSharp;
@@ -6,79 +7,133 @@ using SkiaSharp;
 namespace KUpdater.UI;
 
 public class ControlManager : IDisposable {
-    private readonly List<IControl> _controls = [];
-    public void Add(IControl control) => _controls.Add(control);
+    private readonly List<IControl> _frameControls = [];
+    private readonly List<IControl> _contentControls = [];
+    private readonly List<IControl> _overlayControls = [];
+
+    private IEnumerable<IControl> AllControls() {
+        foreach (var c in _frameControls)
+            yield return c;
+        foreach (var c in _contentControls)
+            yield return c;
+        foreach (var c in _overlayControls)
+            yield return c;
+    }
+
+    public void Add(IControl control) {
+        switch (control.Layer) {
+            case ControlLayer.Frame:
+            _frameControls.Add(control);
+            break;
+
+            case ControlLayer.Content:
+            _contentControls.Add(control);
+            break;
+
+            case ControlLayer.Overlay:
+            _overlayControls.Add(control);
+            break;
+        }
+    }
+
+    private bool HitTest(List<IControl> list, Point p, Func<IControl, bool> action) {
+        bool needsRedraw = false;
+
+        foreach (var c in list.ToList())
+            if (c.Visible && c.Bounds.Contains(p) && action(c))
+                needsRedraw = true;
+
+        return needsRedraw;
+    }
+
 
     public void DisposeAndClearAll() {
-        int count = _controls.Count;
-        foreach (var control in _controls)
-            control.Dispose();
-        _controls.Clear();
+        foreach (var c in AllControls())
+            c.Dispose();
+
+        _frameControls.Clear();
+        _contentControls.Clear();
+        _overlayControls.Clear();
     }
 
     public void DisposeAndClear<T>() where T : class, IControl {
-        int count = _controls.Count(control => control is T);
-        foreach (var control in _controls.OfType<T>())
-            control.Dispose();
-        _controls.RemoveAll(control => control is T);
+        foreach (var c in AllControls().OfType<T>())
+            c.Dispose();
+
+        _frameControls.RemoveAll(c => c is T);
+        _contentControls.RemoveAll(c => c is T);
+        _overlayControls.RemoveAll(c => c is T);
     }
 
-    public T? FindById<T>(string id) where T : class, IControl
-       => _controls.OfType<T>()
-        .FirstOrDefault(control => control.Id == id);
+    public T? FindById<T>(string id) where T : class, IControl {
+        return AllControls().OfType<T>().FirstOrDefault(c => c.Id == id);
+    }
 
     public void Update<T>(string id, Action<T> callback) where T : class, IControl {
-        var control = FindById<T>(id);
-        if (control != null)
-            callback(control);
+        var c = FindById<T>(id);
+        if (c != null)
+            callback(c);
     }
 
     public bool TryUpdate<T>(string id, Action<T> callback) where T : class, IControl {
-        var control = FindById<T>(id);
-        if (control == null)
+        var c = FindById<T>(id);
+        if (c == null)
             return false;
 
-        callback(control);
+        callback(c);
         return true;
     }
 
-    public void Draw(SKCanvas canvas) {
-        foreach (var control in _controls)
-            if (control.Visible)
-                control.Draw(canvas);
+    public void DrawFrameControls(SKCanvas canvas) {
+        foreach (var c in _frameControls)
+            if (c.Visible)
+                c.Draw(canvas);
     }
 
-    public bool MouseMove(Point point) {
-        bool needsRedraw = false;
-        foreach (var control in _controls.ToList())
-            if (control.Visible && control.OnMouseMove(point))
-                needsRedraw = true;
-        return needsRedraw;
+    public void DrawContentControls(SKCanvas canvas) {
+        foreach (var c in _contentControls)
+            if (c.Visible)
+                c.Draw(canvas);
     }
 
-    public bool MouseDown(Point point) {
-        bool needsRedraw = false;
-        foreach (var control in _controls.ToList())
-            if (control.Visible && control.OnMouseDown(point))
-                needsRedraw = true;
-        return needsRedraw;
+    public void DrawOverlayControls(SKCanvas canvas) {
+        foreach (var c in _overlayControls)
+            if (c.Visible)
+                c.Draw(canvas);
     }
 
-    public bool MouseUp(Point point) {
-        bool needsRedraw = false;
-        foreach (var control in _controls.ToList())
-            if (control.Visible && control.OnMouseUp(point))
-                needsRedraw = true;
-        return needsRedraw;
+    public bool MouseDown(Point p) {
+        if (HitTest(_overlayControls, p, (c) => c.OnMouseDown(p)))
+            return true;
+        if (HitTest(_frameControls, p, (c) => c.OnMouseDown(p)))
+            return true;
+        return HitTest(_contentControls, p, (c) => c.OnMouseDown(p));
     }
 
-    public bool MouseWheel(int delta, Point point) {
-        bool needsRedraw = false;
-        foreach (var control in _controls.ToList())
-            if (control.Visible && control.Bounds.Contains(point) && control.OnMouseWheel(delta, point))
-                needsRedraw = true;
-        return needsRedraw;
+    public bool MouseUp(Point p) {
+        if (HitTest(_overlayControls, p, (c) => c.OnMouseUp(p)))
+            return true;
+        if (HitTest(_frameControls, p, (c) => c.OnMouseUp(p)))
+            return true;
+        return HitTest(_contentControls, p, (c) => c.OnMouseUp(p));
     }
+
+    public bool MouseMove(Point p) {
+        if (HitTest(_overlayControls, p, (c) => c.OnMouseMove(p)))
+            return true;
+        if (HitTest(_frameControls, p, (c) => c.OnMouseMove(p)))
+            return true;
+        return HitTest(_contentControls, p, (c) => c.OnMouseMove(p));
+    }
+
+    public bool MouseWheel(int delta, Point p) {
+        if (HitTest(_overlayControls, p, (c) => c.OnMouseWheel(delta, p)))
+            return true;
+        if (HitTest(_frameControls, p, (c) => c.OnMouseWheel(delta, p)))
+            return true;
+        return HitTest(_contentControls, p, (c) => c.OnMouseWheel(delta, p));
+    }
+
 
     public void Dispose() => DisposeAndClearAll();
 }

@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Drawing.Imaging;
 using SkiaSharp;
@@ -6,6 +7,15 @@ using SkiaSharp;
 namespace KUpdater.Core.Extensions;
 
 public static class SkiaSharpExtensions {
+
+    public static Rectangle ToRectangle(this SKRect rect) {
+        return Rectangle.FromLTRB(
+            (int)Math.Floor(rect.Left),
+            (int)Math.Floor(rect.Top),
+            (int)Math.Ceiling(rect.Right),
+            (int)Math.Ceiling(rect.Bottom)
+        );
+    }
 
     public static SKColor ToSKColor(this System.Drawing.Color color)
        => new(color.R, color.G, color.B, color.A);

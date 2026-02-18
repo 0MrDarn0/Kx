@@ -1,13 +1,12 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Core.Attributes;
 using KUpdater.Core.Extensions;
 using MoonSharp.Interpreter;
 using SkiaSharp;
 
 namespace KUpdater.UI.Control;
 
-[ExposeToLua]
 public class Label : ControlBase {
     private readonly Property<string> _text;
     public string Text {

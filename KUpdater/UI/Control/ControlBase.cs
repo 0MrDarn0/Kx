@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
 using KUpdater.UI.Interface;
@@ -11,6 +12,7 @@ public abstract class ControlBase : IControl, IDisposable {
     protected readonly WindowContext _ctx;
     protected readonly IUiThreadInvoker _ui;
     protected readonly Func<Rectangle> _boundsFunc;
+    public ControlLayer Layer { get; set; } = ControlLayer.Content;
 
     protected bool _initializing = true;
     private bool _disposed;

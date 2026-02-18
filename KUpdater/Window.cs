@@ -11,9 +11,11 @@ using KUpdater.Core.Pipeline;
 using KUpdater.Core.Update;
 using KUpdater.Scripting.Runtime;
 using KUpdater.UI;
+using KUpdater.UI.Control;
 using KUpdater.UI.Interface;
 using KUpdater.UI.Rendering;
 using KUpdater.Utility;
+using Button = KUpdater.UI.Control.Button;
 using Label = KUpdater.UI.Control.Label;
 
 namespace KUpdater;
@@ -60,23 +62,38 @@ public class Window : IDisposable {
             text: "KUpdater",
             font: new Font("Chiller", 40, FontStyle.Italic),
             color: Color.Orange
-        );
+            ) { Layer = ControlLayer.Frame };
+
         _ctx.Controls.Add(titleLabel);
 
-        //var button = new Button(
-        //    id: "btn_default",
-        //    boundsFunc: () => new Rectangle(50, 50, 140, 40),
-        //    text: "Update",
-        //    font: new Font("Arial", 12),
-        //    color: Color.White,
-        //    skinKey: "KalOnline:Buttons",
-        //    onClick: () =>
-        //    {
-        //        Debug.WriteLine("Update clicked!");
-        //    }
-        //);
+        var button = new Button(
+            id: "btn_exit",
+            boundsFunc: () => {
+                int x = _backend.Width - 34;
+                int y = 16;
+                return new Rectangle(x, y, 17, 17);
+            },
+            text: "",
+            font: new Font("Arial", 12),
+            color: Color.White,
+            skinKey: "KalOnline:Buttons",
+            onClick: () => _backend.CloseWindow()
+        ){ Layer = ControlLayer.Frame };
 
-        //_ctx.Controls.Add(button);
+        _ctx.Controls.Add(button);
+
+        var btn = new Button(
+            "btn_default",
+            () => new Rectangle(0, 0, 150, 40),
+            "Click me",
+            new Font("Arial", 14),
+            Color.White,
+            "KalOnline:Buttons",
+            () => Debug.WriteLine("Clicked!")
+        );
+
+        _ctx.ContentRoot.Children.Add(btn);
+
 
         var pipeline = new UpdaterPipelineRunner(
             _ctx.Events,
