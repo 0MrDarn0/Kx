@@ -23,7 +23,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public IResourceProvider Resources { get; }
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
-    public FrameResources Frame { get; private set; } = null!;
+    public FrameResource Frame { get; private set; } = null!;
     public IRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
     public ContentRoot ContentRoot { get; private set; }
@@ -47,7 +47,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
         UIContextProvider.Initialize(this);
     }
 
-    public void SetFrame(FrameResources frame) {
+    public void SetFrame(FrameResource frame) {
         Frame = frame;
     }
 

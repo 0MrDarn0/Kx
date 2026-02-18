@@ -7,8 +7,8 @@ using SkiaSharp;
 namespace KUpdater.UI.Themes;
 
 public static class FrameLoader {
-    public static FrameResources Load(FrameConfig cfg, IResourceProvider provider) {
-        return new FrameResources {
+    public static FrameResource Load(FrameConfig cfg, IResourceProvider provider) {
+        return new FrameResource {
             TopLeft = provider.TryGetSkiaBitmap(cfg.TopLeft),
             TopCenter = provider.TryGetSkiaBitmap(cfg.TopCenter),
             TopRight = provider.TryGetSkiaBitmap(cfg.TopRight),

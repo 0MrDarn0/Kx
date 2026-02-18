@@ -5,7 +5,7 @@ using SkiaSharp;
 
 namespace KUpdater.UI.Themes;
 
-public class FrameResources {
+public class FrameResource {
     public SKBitmap? TopLeft { get; init; }
     public SKBitmap? TopCenter { get; init; }
     public SKBitmap? TopRight { get; init; }
