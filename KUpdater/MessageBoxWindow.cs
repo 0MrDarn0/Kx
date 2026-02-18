@@ -39,7 +39,7 @@ public class MessageBoxWindow : IDisposable {
         var frame = FrameLoader.Load(frameConfig, _ctx.Resources);
         _ctx.SetFrame(frame);
 
-        var renderer = new Renderer(_ctx);
+        var renderer = new LayeredWindowRenderer(_ctx);
         _ctx.SetRenderer(renderer);
 
         _interaction = new WindowInteraction(_backend, _ctx, _options.AllowResizing);

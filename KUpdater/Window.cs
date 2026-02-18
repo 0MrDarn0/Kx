@@ -40,7 +40,7 @@ public class Window : IDisposable {
 
         WindowBuilder.Build(_ctx, Paths.GetConfig("frame.yaml"));
 
-        var renderer = new Renderer(_ctx);
+        var renderer = new LayeredWindowRenderer(_ctx);
         _ctx.SetRenderer(renderer);
 
 

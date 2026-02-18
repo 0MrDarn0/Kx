@@ -5,14 +5,13 @@ using SkiaSharp;
 
 namespace KUpdater.UI.Rendering;
 
-public interface IRenderer : IDisposable {
+public interface IWindowRenderer : IDisposable {
     void ToggleDebugOverlay();
     void RequestRender();
     void Resize(int width, int height);
     void TogglePerfOverlay();
     void ToggleContentRectDebug();
     SKRect GetContentRect(Size size);
-
     long LastRenderDurationMs { get; }
     int LastPresentError { get; }
 }

@@ -24,7 +24,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public ControlManager Controls { get; }
     public IEventManager Events { get; }
     public FrameResource Frame { get; private set; } = null!;
-    public IRenderer Renderer { get; private set; } = null!;
+    public IWindowRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
     public ContentRoot ContentRoot { get; private set; }
     object IPluginContext.Services => this;
@@ -51,7 +51,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
         Frame = frame;
     }
 
-    public void SetRenderer(IRenderer renderer) {
+    public void SetRenderer(IWindowRenderer renderer) {
         Renderer = renderer;
     }
 

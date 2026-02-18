@@ -59,6 +59,6 @@ public abstract class ControlBase : IControl, IDisposable {
     }
 
     // Hilfsmethode für abgeleitete Klassen um Render anzufordern
-    //protected void Invalidate() => _ctx.Renderer.RequestRender();
+    //protected void Invalidate() => _ctx.LayeredWindowRenderer.RequestRender();
     protected void Invalidate() { if (!_initializing) _ctx.Renderer.RequestRender(); }
 }
