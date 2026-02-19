@@ -27,7 +27,10 @@ public abstract class UIElement : Visual, IDockable {
     public int GridRowSpan { get; set; } = 1;
     public int GridColumnSpan { get; set; } = 1;
 
+    private readonly WindowContext _ctx;
+
     protected UIElement(WindowContext ctx, string id) : base(ctx, id) {
+        _ctx = ctx;
         _bounds = new Property<Rectangle>(ctx.UiThread, Rectangle.Empty, () => Invalidate());
     }
 
@@ -209,7 +212,5 @@ public abstract class UIElement : Visual, IDockable {
 
         return candidate;
     }
-
-
     protected abstract void OnDraw(SKCanvas canvas);
 }

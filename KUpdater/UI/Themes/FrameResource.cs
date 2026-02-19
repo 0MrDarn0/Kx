@@ -68,6 +68,22 @@ public sealed class FrameResource : IDisposable {
         return fr;
     }
 
+    public SKRect GetContentRect(Size size) {
+        float width = Math.Max(0f, size.Width);
+        float height = Math.Max(0f, size.Height);
+
+        float leftWidth = LeftCenter?.Width ?? 0f;
+        float rightWidth = RightCenter?.Width ?? 0f;
+        float topHeight = TopCenter?.Height ?? 0f;
+        float bottomHeight = BottomCenter?.Height ?? 0f;
+
+        float fillLeft = Math.Max(0f, leftWidth - FillPosOffset);
+        float fillTop = Math.Max(0f, topHeight - FillPosOffset);
+        float fillRight = fillLeft + Math.Max(0f, width - leftWidth * 2 + FillWidthOffset);
+        float fillBottom = fillTop + Math.Max(0f, height - topHeight - bottomHeight + FillHeightOffset);
+
+        return new SKRect(fillLeft, fillTop, fillRight, fillBottom);
+    }
 
     // ---------------------------------------------------------
     // 1) Placeholder‑Bitmap erzeugen

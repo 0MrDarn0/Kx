@@ -64,10 +64,8 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
     }
 
     public void ToggleDebugOverlay() => _showDebugRasterOverlay = !_showDebugRasterOverlay;
-    public void SetDebugOverlay(bool enabled) => _showDebugRasterOverlay = enabled;
 
     public void TogglePerfOverlay() => _showPerfOverlay = !_showPerfOverlay;
-    public void SetPerfOverlay(bool enabled) => _showPerfOverlay = enabled;
 
     public void ToggleContentRectDebug() => _showContentRectDebug = !_showContentRectDebug;
 
@@ -155,22 +153,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
             deviceWidth = 1;
         if (deviceHeight <= 0)
             deviceHeight = 1;
-    }
-
-    public SKRect GetContentRect(Size size) {
-        var f = _ctx.Frame;
-
-        float leftWidth = f.LeftCenter?.Width ?? 0f;
-        float rightWidth = f.RightCenter?.Width ?? 0f;
-        float topHeight = f.TopCenter?.Height ?? 0f;
-        float bottomHeight = f.BottomCenter?.Height ?? 0f;
-
-        float fillLeft = Math.Max(0f, leftWidth - f.FillPosOffset);
-        float fillTop = Math.Max(0f, topHeight - f.FillPosOffset);
-        float fillRight = fillLeft + Math.Max(0f, size.Width - leftWidth * 2 + f.FillWidthOffset);
-        float fillBottom = fillTop + Math.Max(0f, size.Height - topHeight - bottomHeight + f.FillHeightOffset);
-
-        return new SKRect(fillLeft, fillTop, fillRight, fillBottom);
     }
 
     private void RecordFrameTimestamp() {
@@ -817,7 +799,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
         DrawWindowFrame(canvas, size);
 
         try {
-            _ctx.UIElementManager.LayoutAll(_ctx.Renderer.GetContentRect(size), new SKRect(0, 0, size.Width, size.Height));
+            _ctx.UIElementManager.LayoutAll(_ctx.Frame!.GetContentRect(size), new SKRect(0, 0, size.Width, size.Height));
             _ctx.UIElementManager.Render(canvas);
         }
         catch (Exception ex) {
@@ -891,7 +873,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
 
         // Fill Content Area
         {
-            var rect = GetContentRect(size);
+            var rect = _ctx.Frame!.GetContentRect(size);
             if (f.UseFillColor) {
                 using var paint = new SKPaint {
                     IsAntialias = true,
@@ -1043,7 +1025,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer {
     }
 
     private void DrawContentRectDebug(SKCanvas canvas, Size size) {
-        var rect = GetContentRect(size);
+        var rect = _ctx.Frame!.GetContentRect(size);
 
         using var paint = new SKPaint {
             Color = new SKColor(255, 0, 0, 200),
