@@ -13,17 +13,17 @@ public static class WindowBuilder {
         var frameResources = FrameResource.FromConfig(config.Frame, ctx.Resources, (ctx.Target.DeviceDpi / 96f));
         ctx.SetFrame(frameResources);
 
-        foreach (var c in config.Controls) {
-            var control = ControlFactory.Create(c, ctx);
-            switch (c.Layer) {
-                case "Content":
-                ctx.ContentRoot.Children.Add(control);
-                break;
+        //foreach (var c in config.Elements) {
+        //    var control = ControlFactory.Create(c, ctx);
+        //    switch (c.Layer) {
+        //        case "Content":
+        //        ctx.ContentRoot.Children.Add(control);
+        //        break;
 
-                default:
-                ctx.Controls.Add(control);
-                break;
-            }
-        }
+        //        default:
+        //        ctx.UIElementManager.Add(control);
+        //        break;
+        //    }
+        // }
     }
 }

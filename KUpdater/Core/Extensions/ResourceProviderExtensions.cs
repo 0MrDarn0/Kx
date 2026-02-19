@@ -9,7 +9,7 @@ public static class ResourceProviderExtensions {
     private static readonly string[] States = ["normal", "hover", "click"];
 
     /// <summary>
-    /// Erzeugt eine standardisierte GetResource-ID für Control-States:
+    /// Erzeugt eine standardisierte GetResource-ID für Visual-States:
     /// Beispiel: MakeControlStateId("Default:Buttons", "btn_exit", "normal") -> "Default:Buttons:btn_exit_normal.png"
     /// (Konvention: skin:group:...:control_state.png)
     /// </summary>
@@ -20,7 +20,7 @@ public static class ResourceProviderExtensions {
     }
 
     /// <summary>
-    /// Lädt Bild- und Skia-Ressourcen für Control-States.
+    /// Lädt Bild- und Skia-Ressourcen für Visual-States.
     /// Provider-first, dann Filesystem-Fallback (ResFolder). IDs im Format "theme:group:file.png" werden
     /// für den Filesystem-Fallback in Pfadsegmente aufgeteilt.
     /// </summary>

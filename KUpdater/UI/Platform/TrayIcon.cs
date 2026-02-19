@@ -1,6 +1,7 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-namespace KUpdater.UI;
+namespace KUpdater.UI.Platform;
 
 /// <summary>
 /// Provides a fluent API for creating and managing a system tray icon.
@@ -65,21 +66,35 @@ public sealed class TrayIcon : IDisposable {
         buildAction(builder);
 
         var menu = new ContextMenuStrip();
-        foreach (var item in builder.Build()) {
-            if (item.IsSeparator) {
-                menu.Items.Add(new ToolStripSeparator());
-            } else {
-                var menuItem = new ToolStripMenuItem(item.Label);
-                if (item.Handler != null) {
-                    menuItem.Click += item.Handler;
+
+        // Rekursiver Helfer zum Erzeugen von ToolStripItems aus MenuEntry
+        ToolStripItem CreateItem(TrayMenuBuilder.MenuEntry entry) {
+            if (entry.IsSeparator)
+                return new ToolStripSeparator();
+
+            var menuItem = new ToolStripMenuItem(entry.Label);
+            if (entry.Handler != null)
+                menuItem.Click += entry.Handler;
+
+            if (entry.SubItems != null && entry.SubItems.Count > 0) {
+                foreach (var sub in entry.SubItems) {
+                    var child = CreateItem(sub);
+                    menuItem.DropDownItems.Add(child);
                 }
-                menu.Items.Add(menuItem);
             }
+
+            return menuItem;
+        }
+
+        foreach (var entry in builder.Build()) {
+            var item = CreateItem(entry);
+            menu.Items.Add(item);
         }
 
         _notifyIcon.ContextMenuStrip = menu;
         return this;
     }
+
 
     /// <summary>
     /// Configures symbolic status icons using a fluent <see cref="StatusIconBuilder"/>.
@@ -206,13 +221,38 @@ public sealed class TrayIcon : IDisposable {
 /// Provides methods to add items, separators, and a standard Exit entry.
 /// </summary>
 public class TrayMenuBuilder {
-    private readonly List<(string Label, EventHandler? Handler, bool IsSeparator)> _items = [];
+    // interne Repräsentation eines Menüeintrags (kann Subitems enthalten)
+    internal class MenuEntry {
+        public string Label { get; }
+        public EventHandler? Handler { get; }
+        public bool IsSeparator { get; }
+        public List<MenuEntry>? SubItems { get; }
+
+        public MenuEntry(string label, EventHandler? handler, bool isSeparator, List<MenuEntry>? subItems = null) {
+            Label = label;
+            Handler = handler;
+            IsSeparator = isSeparator;
+            SubItems = subItems;
+        }
+    }
+
+    internal readonly List<MenuEntry> _items = new();
 
     /// <summary>
     /// Adds a clickable menu item with a direct event handler.
     /// </summary>
     public TrayMenuBuilder Item(string label, EventHandler onClick) {
-        _items.Add((label, onClick, false));
+        _items.Add(new MenuEntry(label, onClick, false));
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a submenu. The provided builder action is used to populate the submenu.
+    /// </summary>
+    public TrayMenuBuilder Item(string label, Action<TrayMenuBuilder> submenuBuilder) {
+        var sub = new TrayMenuBuilder();
+        submenuBuilder(sub);
+        _items.Add(new MenuEntry(label, null, false, new List<MenuEntry>(sub._items)));
         return this;
     }
 
@@ -220,23 +260,21 @@ public class TrayMenuBuilder {
     /// Adds a visual separator line to the menu.
     /// </summary>
     public TrayMenuBuilder Separator() {
-        _items.Add(("", null, true));
+        _items.Add(new MenuEntry(string.Empty, null, true));
         return this;
     }
 
     /// <summary>
     /// Adds a standard "Exit" menu item with a click handler.
     /// </summary>
-    /// <param name="onClick">Handler invoked when Exit is clicked.</param>
-    /// <param name="label">Optional label text (default: "Exit").</param>
     public TrayMenuBuilder Exit(EventHandler onClick, string label = "Exit") {
-        _items.Add((label, onClick, false));
+        _items.Add(new MenuEntry(label, onClick, false));
         return this;
     }
 
-    internal IReadOnlyList<(string Label, EventHandler? Handler, bool IsSeparator)> Build()
-        => _items;
+    internal IReadOnlyList<MenuEntry> Build() => _items;
 }
+
 
 /// <summary>
 /// Fluent builder for symbolic status icons.

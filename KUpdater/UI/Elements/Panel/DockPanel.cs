@@ -2,22 +2,33 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
+using KUpdater.Core.Extensions;
+using KUpdater.UI.Layout;
 
-namespace KUpdater.UI.Layout;
+namespace KUpdater.UI.Elements.Panel;
 
 public class DockPanel : Panel {
-    public DockPanel(WindowContext ctx, string id, Func<Rectangle> boundsFunc)
-        : base(ctx, id, boundsFunc) { }
+    public DockPanel(WindowContext ctx, string id) : base(ctx, id) { }
 
     public override void Measure(float dpi) {
-        foreach (var child in Children)
-            child.Measure(dpi);
+        int width = 0;
+        int height = 0;
 
-        DesiredSize = Bounds.Size;
+        foreach (var child in Children) {
+            child.Measure(dpi);
+            width = Math.Max(width, child.DesiredSize.Width);
+            height = Math.Max(height, child.DesiredSize.Height);
+        }
+
+        DesiredSize = new Size(width, height)
+            .AddPadding(Padding, dpi)
+            .AddMargin(Margin, dpi);
     }
 
     public override void Arrange(Rectangle finalRect, float dpi) {
+        finalRect = finalRect.ApplyMargin(Margin, dpi);
         LayoutRect = finalRect;
+        _bounds.Value = finalRect;
 
         int left = finalRect.Left;
         int top = finalRect.Top;

@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
@@ -8,7 +9,6 @@ namespace KUpdater.Core.Event {
     /// <summary>
     /// Thread‑sicherer EventManager.
     /// Unterstützt synchrone Action<T> und asynchrone AsyncAction<T> Listener.
-    /// Bietet außerdem Registrierung von Lua‑Funktionen per DynValue.
     /// </summary>
     public class EventManager : IEventManager {
         private readonly ConcurrentDictionary<Type, ImmutableArray<Delegate>> _listeners = new();

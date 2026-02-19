@@ -2,26 +2,39 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Core;
+using KUpdater.Core.Extensions;
+using KUpdater.UI.Layout;
 using SkiaSharp;
 
-namespace KUpdater.UI.Layout.Grid;
+namespace KUpdater.UI.Elements.Panel;
 
 public class Grid : Panel {
-    public List<RowDefinition> Rows { get; } = new();
-    public List<ColumnDefinition> Columns { get; } = new();
+    public List<RowDefinition> Rows { get; } = [];
+    public List<ColumnDefinition> Columns { get; } = [];
 
-    public Grid(WindowContext ctx, string id, Func<Rectangle> boundsFunc)
-        : base(ctx, id, boundsFunc) { }
+    public Grid(WindowContext ctx, string id) : base(ctx, id) { }
 
     public override void Measure(float dpi) {
-        foreach (var child in Children)
-            child.Measure(dpi);
+        int maxWidth = 0;
+        int maxHeight = 0;
 
-        DesiredSize = Bounds.Size;
+        foreach (var child in Children) {
+            child.Measure(dpi);
+            maxWidth = Math.Max(maxWidth, child.DesiredSize.Width);
+            maxHeight = Math.Max(maxHeight, child.DesiredSize.Height);
+        }
+
+        DesiredSize = new Size(maxWidth, maxHeight)
+            .AddPadding(Padding, dpi)
+            .AddMargin(Margin, dpi);
     }
 
+
     public override void Arrange(Rectangle finalRect, float dpi) {
+        base.Arrange(finalRect, dpi);
+        finalRect = finalRect.ApplyMargin(Margin, dpi);
         LayoutRect = finalRect;
+        _bounds.Value = finalRect;
 
         float totalStarWidth = 0;
         float totalStarHeight = 0;

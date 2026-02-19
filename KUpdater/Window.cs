@@ -4,17 +4,17 @@
 using System.Diagnostics;
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core;
+using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
-using KUpdater.Core.Extensions;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Pipeline;
 using KUpdater.Core.Update;
-using KUpdater.UI;
-using KUpdater.UI.Control;
+using KUpdater.UI.Elements.Panel;
 using KUpdater.UI.Layout;
-using KUpdater.UI.Layout.Grid;
 using KUpdater.UI.Markup;
+using KUpdater.UI.Platform;
 using KUpdater.UI.Rendering;
+using KUpdater.UI.Themes;
 using KUpdater.Utility;
 
 namespace KUpdater;
@@ -39,9 +39,12 @@ public class Window : IDisposable {
             backend,
             eventManager: new EventManager());
 
-        WindowBuilder.Build(_ctx, Paths.GetConfig("frame.yaml"));
+        var config = ConfigLoader.Load<WindowConfig>(Paths.GetConfig("frame.yaml"));
+        var frameResources = FrameResource.FromConfig(config.Frame, _ctx.Resources, (_ctx.Target.DeviceDpi / 96f));
+        _ctx.SetFrame(frameResources);
 
-        var grid = new Grid(_ctx, "grid", () => _ctx.ContentBounds());
+
+        var grid = new Grid(_ctx, "grid");
 
         grid.Columns.Add(new ColumnDefinition { Width = GridLength.Pixel(150) });
         grid.Columns.Add(new ColumnDefinition { Width = GridLength.Star(1) });
@@ -49,28 +52,39 @@ public class Window : IDisposable {
         grid.Rows.Add(new RowDefinition { Height = GridLength.Pixel(50) });
         grid.Rows.Add(new RowDefinition { Height = GridLength.Star(1) });
 
-        var header = new TestLabel(_ctx, "header", "HEADER", 20) {
+        var header = new UI.Elements.Label(_ctx, "header", "HEADER", 10) {
             GridRow = 0,
             GridColumn = 0,
             GridColumnSpan = 2
         };
 
-        var sidebar = new TestLabel(_ctx, "sidebar", "SIDEBAR", 20) {
+        var sidebar = new UI.Elements.Label(_ctx, "sidebar", "SIDEBAR", 10) {
             GridRow = 1,
             GridColumn = 0
         };
 
-        var content = new TestLabel(_ctx, "content", "CONTENT", 20) {
+        var content = new UI.Elements.Label(_ctx, "content", "CONTENT", 10) {
             GridRow = 1,
             GridColumn = 1
         };
 
-        grid.Children.Add(header);
-        grid.Children.Add(sidebar);
-        grid.Children.Add(content);
+        grid.AddChild(header);
+        grid.AddChild(sidebar);
+        grid.AddChild(content);
 
-        _ctx.Controls.Add(grid);
+        var btn_exit = new UI.Elements.Button(_ctx, "btn_exit", "X") {
+            GridRow = 1,
+            GridColumn = 1,
+            Padding = new Thickness(100),
+            Margin = new Thickness(100)
+        };
+        btn_exit.Click += () => {
+            Debug.WriteLine("OK gedrückt");
+        };
 
+
+        grid.AddChild(btn_exit);
+        _ctx.UIElementManager.Add(grid);
 
 
         var renderer = new LayeredWindowRenderer(_ctx);
@@ -93,23 +107,41 @@ public class Window : IDisposable {
             .StatusIcons(status => status
                 .Item("default", Paths.GetResource("Default/app.ico")))
             .Menu(menu => menu
-                .Item("Toggle ContentRect", (s, e) => {
-                    _ctx.Renderer.ToggleContentRectDebug();
-                    _ctx.Renderer.RequestRender();
-                })
-                .Item("Toggle GridOverlay", (s, e) => {
-                    _ctx.Renderer.ToggleDebugOverlay();
-                    _ctx.Renderer.RequestRender();
-                })
-                .Item("Toggle PerfOverlay", (s, e) => {
-                    _ctx.Renderer.TogglePerfOverlay();
-                    _ctx.Renderer.RequestRender();
-                }).Item("Toggle DebugOverlay", (s, e) => {
-                    DebugOverlay.Enabled = !DebugOverlay.Enabled;
-                    _ctx.Renderer.RequestRender();
-                })
+                .Item("Debug", debug => debug
+                    .Item("ContentRect", (s, e) => {
+                        _ctx.Renderer.ToggleContentRectDebug();
+                        _ctx.Renderer.RequestRender();
+                    })
+                    .Item("GridOverlay", (s, e) => {
+                        _ctx.Renderer.ToggleDebugOverlay();
+                        _ctx.Renderer.RequestRender();
+                    })
+                    .Item("PerfOverlay", (s, e) => {
+                        _ctx.Renderer.TogglePerfOverlay();
+                        _ctx.Renderer.RequestRender();
+                    })
+                    .Item("Toggle Bounds", (s, e) => {
+                        DebugOverlay.Toggle(DebugOverlay.OverlayType.Bounds);
+                        _ctx.Renderer.RequestRender();
+                    })
+                    .Item("Toggle LayoutRect", (s, e) => {
+                        DebugOverlay.Toggle(DebugOverlay.OverlayType.LayoutRect);
+                        _ctx.Renderer.RequestRender();
+                    })
+                    .Item("Toggle Meta", (s, e) => {
+                        DebugOverlay.Toggle(DebugOverlay.OverlayType.Meta);
+                        _ctx.Renderer.RequestRender();
+                    })
+                    .Item("Toggle ParentChain", (s, e) => {
+                        DebugOverlay.Toggle(DebugOverlay.OverlayType.ParentChain);
+                        _ctx.Renderer.RequestRender();
+                    })
+                )
+                .Separator()
                 .Exit((s, e) => Application.Exit())
-                );
+            );
+
+
         HookHotkeys();
     }
 

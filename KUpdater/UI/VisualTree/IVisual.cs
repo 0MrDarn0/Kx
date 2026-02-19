@@ -3,30 +3,25 @@
 
 using SkiaSharp;
 
-namespace KUpdater.UI.Control;
+namespace KUpdater.UI.VisualTree;
 
-public interface IControl : IDisposable {
+public interface IVisual : IDisposable {
     string Id { get; }
-    ControlLayer Layer { get; }
+    VisualLayer Layer { get; }
     bool Visible { get; set; }
-    Rectangle Bounds { get; }
-
     int ZIndex { get; set; }
-
     void OnDpiChanged(float scale);
-
     bool CanFocus { get; }
     bool IsFocused { get; }
     void OnFocusGained();
     void OnFocusLost();
-
     bool OnKeyDown(Keys key);
     bool OnKeyUp(Keys key);
-
     void Draw(SKCanvas canvas);
-
     bool OnMouseMove(Point p);
     bool OnMouseDown(Point p);
     bool OnMouseUp(Point p);
     bool OnMouseWheel(int delta, Point p);
+    void Measure(float dpiScale);
+    void Arrange(Rectangle bounds, float dpiScale);
 }

@@ -7,8 +7,6 @@ using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Localization;
 using KUpdater.Core.Pipeline;
-using KUpdater.UI;
-using KUpdater.UI.Control;
 using KUpdater.UI.Manager;
 using KUpdater.UI.Rendering;
 using KUpdater.UI.Themes;
@@ -20,17 +18,16 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
     public IWindowBackend Backend { get; }
-    public AppConfig Config { get; }
     public IResourceProvider Resources { get; }
-    public ControlManager Controls { get; }
     public IEventManager Events { get; }
-
-    private readonly object _frameLock = new();
+    public AppConfig Config { get; }
+    public UIElementManager UIElementManager { get; } = new();
     public FrameResource? Frame { get; private set; }
     public IWindowRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
-    public ContentRoot ContentRoot { get; private set; }
     object IPluginContext.Services => this;
+    private readonly object _frameLock = new();
+    public float DpiScale { get; set; } = 1f;
 
     public WindowContext(
         IRenderTarget target,
@@ -40,13 +37,11 @@ public sealed class WindowContext : IDisposable, IPluginContext {
         Target = target;
         UiThread = uiThread;
         Backend = backend;
+        DpiScale = Math.Max(1f, Target.DeviceDpi / 96f);
         Config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
         Resources = new FileResourceProvider(Paths.ResFolder);
-        Controls = new ControlManager();
+        UIElementManager = new UIElementManager();
         Events = eventManager ?? new EventManager();
-        ContentRoot = new ContentRoot(this);
-        Controls.Add(ContentRoot);
-
         LanguageLoader.Load(Config.Ui.Language);
         UIContextProvider.Initialize(this);
     }
@@ -69,7 +64,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
 
     public void Dispose() {
         Renderer?.Dispose();
-        Controls.Dispose();
+        UIElementManager.Dispose();
         (Frame as IDisposable)?.Dispose();
         Resources.Dispose();
         UIContextProvider.Clear();

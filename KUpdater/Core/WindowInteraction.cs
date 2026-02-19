@@ -79,7 +79,7 @@ public class WindowInteraction {
                 : Cursors.Default;
         }
 
-        if (_ctx.Controls.MouseMove(e.Location))
+        if (_ctx.UIElementManager.MouseMove(e.Location))
             _ctx.Renderer.RequestRender();
     }
 
@@ -87,7 +87,7 @@ public class WindowInteraction {
         if (e.Button != MouseButtons.Left)
             return;
 
-        if (_ctx.Controls.MouseDown(e.Location)) {
+        if (_ctx.UIElementManager.MouseDown(e.Location)) {
             _ctx.Renderer.RequestRender();
             return;
         }
@@ -113,12 +113,12 @@ public class WindowInteraction {
         _isDragging = false;
         _isResizing = false;
 
-        if (_ctx.Controls.MouseUp(e.Location))
+        if (_ctx.UIElementManager.MouseUp(e.Location))
             _ctx.Renderer.RequestRender();
     }
 
     private void OnMouseWheel(MouseEventArgs e) {
-        if (_ctx.Controls.MouseWheel(e.Delta, e.Location))
+        if (_ctx.UIElementManager.MouseWheel(e.Delta, e.Location))
             _ctx.Renderer.RequestRender();
     }
 }

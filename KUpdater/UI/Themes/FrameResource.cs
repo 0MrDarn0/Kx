@@ -28,7 +28,7 @@ public sealed class FrameResource : IDisposable {
     public int FillWidthOffset { get; private set; }
     public int FillHeightOffset { get; private set; }
 
-    // NEW: Auto‑Generation Settings
+
     public bool AutoGenerateMissing { get; set; } = true;
     public SKColor PlaceholderColor { get; set; } = new SKColor(255, 0, 0, 80);
     public int DefaultCornerSize { get; set; } = 64;
