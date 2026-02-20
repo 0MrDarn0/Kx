@@ -4,6 +4,7 @@
 namespace KUpdater.Abstractions.Plugin;
 
 public interface IPluginContext {
+    string ApiVersion { get; }
     IServiceProvider Services { get; }
     T GetService<T>() where T : notnull;
 

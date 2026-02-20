@@ -32,16 +32,13 @@ internal static class Program {
             // === Plugin-System initialisieren ===
             var services = new ServiceCollection().BuildServiceProvider();
 
-            try {
-                var plugin = PluginLoader.Load<IPlugin>("TemplatePlugin");
+            var plugins = PluginLoader.LoadAll<IPlugin>();
+
+            foreach (var plugin in plugins) {
+                Debug.WriteLine($"Loading plugin: {plugin.Name}");
                 var logger = new HostPluginLogger(plugin.Name);
                 var context = new PluginContext(services, logger);
-
                 plugin.Initialize(context);
-                logger.Info("Plugin erfolgreich initialisiert");
-            }
-            catch (Exception ex) {
-                Console.WriteLine($"Plugin konnte nicht geladen werden: {ex}");
             }
             // ====================================
 

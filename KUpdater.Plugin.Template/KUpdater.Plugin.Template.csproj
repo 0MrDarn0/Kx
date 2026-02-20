@@ -7,6 +7,14 @@
 	<Platforms>x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="plugin.yaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="plugin.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
   </ItemGroup>
 </Project>

@@ -3,16 +3,19 @@
 
 using KUpdater.Abstractions.Plugin;
 
-namespace KUpdater.Plugins.Template;
+namespace KUpdater.Plugin.Template;
 
 public sealed class TemplatePlugin : IPlugin {
     public string Name => "TemplatePlugin";
 
     public void Initialize(IPluginContext context) {
-        context.Logger.Info("TemplatePlugin initialized");
+
+        if (context.ApiVersion.StartsWith("1.2")) {
+            context.Logger.Info($"Host ApiVersion: {context.ApiVersion}");
+        }
     }
 
     public void Dispose() {
-        // optional: context.Logger.Warn("Plugin disposed");
+
     }
 }
