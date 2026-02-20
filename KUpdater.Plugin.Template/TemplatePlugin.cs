@@ -9,10 +9,7 @@ public sealed class TemplatePlugin : IPlugin {
     public string Name => "TemplatePlugin";
 
     public void Initialize(IPluginContext context) {
-
-        if (context.ApiVersion.StartsWith("1.2")) {
-            context.Logger.Info($"Host ApiVersion: {context.ApiVersion}");
-        }
+        context.Logger.Info($"Host ApiVersion: {context.ApiVersion}");
     }
 
     public void Dispose() {

@@ -4,5 +4,5 @@
 namespace KUpdater.Core;
 
 public static class HostInfo {
-    public const string ApiVersion = "1.2";
+    public const string ApiVersion = "1.1";
 }

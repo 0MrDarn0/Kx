@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 18.0.11018.127
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KUpdater", "KUpdater\KUpdater.csproj", "{D466A973-2EE2-42F2-889D-CB6E6E2C0084}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B4D0B639-AF97-4E19-8496-1515976A9B60} = {B4D0B639-AF97-4E19-8496-1515976A9B60}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateBuilder", "UpdateBuilder\UpdateBuilder.csproj", "{10DECC93-B6E3-4984-B65D-907CDF00594B}"
 EndProject
