@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Plugin;
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
@@ -14,7 +13,7 @@ using KUpdater.Utility;
 
 namespace KUpdater.Core;
 
-public sealed class WindowContext : IDisposable, IPluginContext {
+public sealed class WindowContext : IDisposable {
     public IRenderTarget Target { get; }
     public IUiThreadInvoker UiThread { get; }
     public IWindowBackend Backend { get; }
@@ -25,7 +24,7 @@ public sealed class WindowContext : IDisposable, IPluginContext {
     public FrameResource? Frame { get; private set; }
     public IWindowRenderer Renderer { get; private set; } = null!;
     public UpdaterPipelineRunner? Pipeline { get; private set; }
-    object IPluginContext.Services => this;
+
     private readonly object _frameLock = new();
     public float DpiScale { get; set; } = 1f;
 

@@ -2,8 +2,12 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
+using KUpdater.Abstractions.Plugin;
 using KUpdater.Backend.WinForms;
 using KUpdater.Core.Interop;
+using KUpdater.Core.Logging;
+using KUpdater.Core.Plugin;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace KUpdater;
 
@@ -24,6 +28,23 @@ internal static class Program {
         var backend = new WinFormsBackend();
         backend.HandleCreated += (_, _) => {
             var window = new Window(backend);
+
+            // === Plugin-System initialisieren ===
+            var services = new ServiceCollection().BuildServiceProvider();
+
+            try {
+                var plugin = PluginLoader.Load<IPlugin>("TemplatePlugin");
+                var logger = new HostPluginLogger(plugin.Name);
+                var context = new PluginContext(services, logger);
+
+                plugin.Initialize(context);
+                logger.Info("Plugin erfolgreich initialisiert");
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"Plugin konnte nicht geladen werden: {ex}");
+            }
+            // ====================================
+
             backend.Shown += (_, _) => window.OnShown();
             backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
         };

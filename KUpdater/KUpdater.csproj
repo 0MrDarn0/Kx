@@ -1,18 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
 		<ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
-		<Platforms>AnyCPU;x64</Platforms>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
 		<SelfContained>true</SelfContained>
 		<PublishSingleFile>true</PublishSingleFile>
 		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
@@ -21,125 +18,27 @@
 		<TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
 		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
-
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <WarningLevel>8</WarningLevel>
-	</PropertyGroup>
-
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-	  <WarningLevel>8</WarningLevel>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <WarningLevel>8</WarningLevel>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-	  <WarningLevel>8</WarningLevel>
-	</PropertyGroup>
-
 	
 	<ItemGroup>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+		<PackageReference Include="SkiaSharp" Version="3.119.3-preview.1.1" />
+		<PackageReference Include="SkiaSharp.Views.WindowsForms" Version="3.119.3-preview.1.1" />
+		<PackageReference Include="YamlDotNet" Version="16.3.0" />
+		<ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
 
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-	
-	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+
 		<Content Include="kUpdater\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
-	
-	<ItemGroup>
-	  <Compile Remove="kUpdater\Lua\**" />
-	  <Compile Remove="Scripting\**" />
-	  <Content Remove="kUpdater\Lua\**" />
-	  <EmbeddedResource Remove="kUpdater\Lua\**" />
-	  <EmbeddedResource Remove="Scripting\**" />
-	  <None Remove="kUpdater\Lua\**" />
-	  <None Remove="Scripting\**" />
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Compile Remove="Core\Extensions\LuaExtensions.cs" />
-	</ItemGroup>
-	
-	<ItemGroup>
-    <None Update="kUpdater\Resources\main_bc_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_bl_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_br_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_lc_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_rc_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_tc_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_tl_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\main_tr_default.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\btn_default_click.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\btn_default_hover.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\btn_default_normal.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\btn_exit_click.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\btn_exit_hover.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="kUpdater\Resources\btn_exit_normal.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-	
-	<ItemGroup>
-	  <PackageReference Include="SkiaSharp" Version="3.119.3-preview.1.1" />
-	  <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="3.119.3-preview.1.1" />
-	  <PackageReference Include="YamlDotNet" Version="16.3.0" />
-	</ItemGroup>
-
-
-	<ItemGroup>
-	  <Content Update="kUpdater\Resources\icon.png">
-	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-	  </Content>
-	  <Content Update="kUpdater\Resources\logo.png">
-	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-	  </Content>
-	</ItemGroup>
-
-
-	<ItemGroup>
-	  <ProjectReference Include="..\KUpdater.Abstractions\KUpdater.Abstractions.csproj" />
-	</ItemGroup>
-
 </Project>
