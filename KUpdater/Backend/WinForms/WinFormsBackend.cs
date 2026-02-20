@@ -2,8 +2,10 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.ComponentModel;
+using System.Diagnostics;
 using KUpdater.Backend.BackendAbstractions;
 using KUpdater.Core.Interop;
+using KUpdater.Core.Localization;
 using KUpdater.Utility;
 namespace KUpdater.Backend.WinForms;
 
@@ -22,6 +24,9 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
     bool IUiThreadInvoker.InvokeRequired => base.InvokeRequired;
     void IUiThreadInvoker.BeginInvoke(Delegate d) => base.BeginInvoke(d);
     void IUiThreadInvoker.Invoke(Action action) => base.Invoke(action);
+
+    private System.Drawing.Icon? _appIcon;
+    private bool _iconMissingNotified;
 
     // IWindowBackend
     public event Action<int, int>? BackendResized;
@@ -67,6 +72,33 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
         base.WndProc(ref m);
     }
 
+    protected override void OnHandleCreated(EventArgs e) {
+        base.OnHandleCreated(e);
+        try {
+            var path = Paths.GetResource("Default\\app.ico");
+            if (File.Exists(path)) {
+                _appIcon = new Icon(path);
+                this.Icon = _appIcon;
+                NativeMethods.SendMessage(this.Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_BIG), _appIcon.Handle);
+                NativeMethods.SendMessage(this.Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_SMALL), _appIcon.Handle);
+                NativeMethods.SetClassLongPtr(this.Handle, NativeMethods.GCL_HICON, _appIcon.Handle);
+                NativeMethods.SetClassLongPtr(this.Handle, NativeMethods.GCL_HICONSM, _appIcon.Handle);
+            } else {
+                if (!_iconMissingNotified) {
+                    _iconMissingNotified = true;
+                    MessageBox.Show(this,
+                        LanguageService.Translate("dialog.app_icon_missing.message", path),
+                        LanguageService.Translate("dialog.app_icon_missing.title"),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            }
+        }
+        catch (Exception ex) {
+            Debug.WriteLine($"Fehler beim Laden des App-Icons: {ex}");
+        }
+    }
+
     protected override void OnResize(EventArgs e) {
         base.OnResize(e);
         BackendResized?.Invoke(Width, Height);
@@ -91,4 +123,17 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
         base.OnMouseWheel(e);
         BackendMouseWheel?.Invoke(e);
     }
+
+    protected override void Dispose(bool disposing) {
+        try {
+            if (disposing) {
+                _appIcon?.Dispose();
+                _appIcon = null;
+            }
+        }
+        finally {
+            base.Dispose(disposing);
+        }
+    }
+
 }

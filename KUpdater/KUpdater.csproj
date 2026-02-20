@@ -3,20 +3,20 @@
 		<OutputType>WinExe</OutputType>
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
-		<Nullable>enable</Nullable>
+		<TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
 		<UseWindowsForms>true</UseWindowsForms>
+		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
 		<ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
-		<PlatformTarget>x64</PlatformTarget>
-		<Platforms>x64</Platforms>
 		<SelfContained>true</SelfContained>
 		<PublishSingleFile>true</PublishSingleFile>
 		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ApplicationIcon>kUpdater\Resources\Default\app.ico</ApplicationIcon>
-		<TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
-		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
 	
 	<ItemGroup>

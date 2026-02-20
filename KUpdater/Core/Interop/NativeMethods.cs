@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Runtime.InteropServices;
 
@@ -47,6 +48,26 @@ internal static class NativeMethods {
 
     public const uint BI_RGB = 0u;
     public const int DIB_RGB_COLORS = 0;
+
+    public const int WM_SETICON = 0x0080;
+    public const int ICON_SMALL = 0;
+    public const int ICON_BIG = 1;
+    public const int GCL_HICON = -14;
+    public const int GCL_HICONSM = -34;
+
+    [DllImport("user32.dll", EntryPoint = "SetClassLong")]
+    private static extern uint SetClassLong32(IntPtr hWnd, int nIndex, uint dwNewLong);
+
+    [DllImport("user32.dll", EntryPoint = "SetClassLongPtr")]
+    private static extern IntPtr SetClassLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    public static IntPtr SetClassLongPtr(IntPtr hWnd, int nIndex, IntPtr hIcon) {
+        if (IntPtr.Size == 8)
+            return SetClassLongPtr64(hWnd, nIndex, hIcon);
+        else
+            return new IntPtr((int)SetClassLong32(hWnd, nIndex, (uint)hIcon.ToInt32()));
+    }
+
 
     // --- CreateFileMapping P/Invoke ---
     public const uint PAGE_READWRITE = 0x04;
@@ -121,5 +142,8 @@ internal static class NativeMethods {
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
 
 }

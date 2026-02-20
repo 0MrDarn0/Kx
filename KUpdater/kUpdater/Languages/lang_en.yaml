@@ -35,3 +35,7 @@ dialog:
   confirm_exit:
     title: "Exit Application"
     message: "Are you sure you want to quit?"
+  app_icon_missing:
+    title: "Icon missing"
+    message: "The application icon file was not found\n{0}"
+

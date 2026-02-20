@@ -31,7 +31,11 @@ error:
   unauthorized: "Du bist nicht berechtigt, diese Aktion auszuführen."
   hash_mismatch: "Hash stimmt nicht überein für {0}"
 
+
 dialog:
   confirm_exit:
     title: "Anwendung beenden"
     message: "Bist du sicher, dass du das Programm beenden möchtest?"
+  app_icon_missing:
+    title: "Icon fehlt"
+    message: "Die Anwendungs‑Icondatei wurde nicht gefunden \n {0}"
