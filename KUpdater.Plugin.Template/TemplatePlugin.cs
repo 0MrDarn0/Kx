@@ -10,6 +10,7 @@ public sealed class TemplatePlugin : IPlugin {
 
     public void Initialize(IPluginContext context) {
         context.Logger.Info($"Host ApiVersion: {context.ApiVersion}");
+
     }
 
     public void Dispose() {
