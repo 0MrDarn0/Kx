@@ -1,0 +1,1 @@
+.\tools\New-KUpdaterPlugin.ps1 -PluginName KPlugin

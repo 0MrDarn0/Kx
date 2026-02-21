@@ -20,7 +20,7 @@ public static class PluginLoader {
         var pluginRoot = Paths.PluginFolder;
 
         foreach (var folder in Directory.GetDirectories(pluginRoot)) {
-            var manifestPath = Path.Combine(folder, "plugin.yaml");
+            var manifestPath = Path.Combine(folder, "KPlugin.yaml");
             if (!File.Exists(manifestPath))
                 continue;
 
@@ -142,7 +142,7 @@ public static class PluginLoader {
         var dict = new Dictionary<string, PluginInfo>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var folder in Directory.GetDirectories(pluginRoot)) {
-            var manifestPath = Path.Combine(folder, "plugin.yaml");
+            var manifestPath = Path.Combine(folder, "KPlugin.yaml");
             if (!File.Exists(manifestPath))
                 continue;
 
