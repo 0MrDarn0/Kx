@@ -2,14 +2,14 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Abstractions.Plugin;
+using KUpdater.Abstractions.Logging;
 
 namespace KUpdater.Core.Logging;
 
-public sealed class HostPluginLogger : IPluginLogger {
+public sealed class Logger : ILogger {
     private readonly string _pluginName;
 
-    public HostPluginLogger(string pluginName) {
+    public Logger(string pluginName = "") {
         _pluginName = pluginName;
     }
 

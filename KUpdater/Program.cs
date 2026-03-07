@@ -36,7 +36,7 @@ internal static class Program {
 
             foreach (var plugin in plugins) {
                 Debug.WriteLine($"Loading plugin: {plugin.Name}");
-                var logger = new HostPluginLogger(plugin.Name);
+                var logger = new Logger(plugin.Name);
                 var context = new PluginContext(services, logger);
                 plugin.Initialize(context);
             }
