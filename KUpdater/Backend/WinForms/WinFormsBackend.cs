@@ -72,6 +72,13 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
     /// <summary>Backing‑Event für Mausradbewegungen.</summary>
     private event Action<WindowMouseEvent>? _mouseWheel;
 
+    /// <summary>Backing‑Event für zeigen.</summary>
+    private event Action? _shown;
+
+    /// <summary>Backing‑Event für schließen.</summary>
+    private event Action<bool>? _closed;
+
+
     // Explizite Implementierung der Abstractions‑Events (vermeidet Namenskonflikte)
 
     /// <summary>Abstractions‑Event: Fenstergröße geändert.</summary>
@@ -103,6 +110,17 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
         add => _mouseWheel += value;
         remove => _mouseWheel -= value;
     }
+
+    event Action? IWindowBackend.Shown {
+        add => _shown += value;
+        remove => _shown -= value;
+    }
+
+    event Action<bool>? IWindowBackend.Closed {
+        add => _closed += value;
+        remove => _closed -= value;
+    }
+
 
     /// <summary>Setzt die Fenstergröße (Client‑Bereich).</summary>
     public void SetSize(int width, int height) => Size = new Size(width, height);
@@ -223,6 +241,19 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
         };
         return new WindowMouseEvent(e.X, e.Y, btn, e.Delta, e.Clicks);
     }
+
+
+    protected override void OnShown(EventArgs e) {
+        base.OnShown(e);
+        _shown?.Invoke();
+    }
+
+    protected override void OnFormClosed(FormClosedEventArgs e) {
+        base.OnFormClosed(e);
+        bool userInitiated = e.CloseReason == CloseReason.UserClosing;
+        _closed?.Invoke(userInitiated);
+    }
+
 
     /// <summary>Räumt Ressourcen auf und entfernt Abonnenten der Abstractions‑Events.</summary>
     protected override void Dispose(bool disposing) {

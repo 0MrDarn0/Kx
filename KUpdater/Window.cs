@@ -79,7 +79,7 @@ public class Window : IDisposable {
             Margin = new Thickness(100)
         };
         btn_exit.Click += () => {
-            _logger?.Error("OK gedrückt");
+            _logger?.Info($"{btn_exit.Id} Clicked!");
         };
 
 
