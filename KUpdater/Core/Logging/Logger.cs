@@ -5,26 +5,11 @@ using KUpdater.Abstractions.Logging;
 
 namespace KUpdater.Core.Logging;
 
-public sealed class Logger : ILoggingService {
-
-    private readonly string _category;
-
-    public Logger(string category) {
-        _category = category;
-    }
-
-    private static string Format(LogLevel level, string category, string message) {
-        var ts = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-        return $"[{ts}] [{level}] [{category}] {message}";
-    }
-
+public sealed class Logger(string category, IEnumerable<ILogSink> sinks) : ILoggingService {
     public void Log(LogLevel level, string message, Exception? ex = null) {
-        var formatted = Format(level, _category, message);
-
-        System.Diagnostics.Debug.WriteLine(formatted);
-
-        if (ex != null)
-            System.Diagnostics.Debug.WriteLine(ex);
+        foreach (var sink in sinks) {
+            sink.Write(category, level, message, ex);
+        }
     }
 
     public void Trace(string message) => Log(LogLevel.Trace, message);

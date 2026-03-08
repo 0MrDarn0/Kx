@@ -8,7 +8,6 @@ namespace KUpdater.Core.DI;
 
 // Microsoft-DI Adapter
 public class MsDiContainer : IDependencyContainer {
-
     private readonly IServiceCollection _services = new ServiceCollection();
     private IServiceProvider? _provider;
 
@@ -23,6 +22,9 @@ public class MsDiContainer : IDependencyContainer {
 
     public object Get(Type type) =>
         _provider!.GetRequiredService(type);
+
+    public IEnumerable<T> GetAll<T>() where T : class
+        => _provider!.GetServices<T>();
 
     // Instanz mit DI + Parametern erzeugen
     public T Create<T>(params object[] args) where T : class =>

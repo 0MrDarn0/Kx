@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Diagnostics;
 using KUpdater.Abstractions.Backend;
+using KUpdater.Abstractions.Logging;
 using KUpdater.Core;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
@@ -25,11 +25,13 @@ public class Window : IDisposable {
     private readonly WindowContext _ctx;
     private readonly WindowInteraction _interaction;
     private readonly ITrayService? _trayService;
+    private readonly ILoggingService? _logger;
 
-    public Window(IWindowBackend backend, ITrayService? trayService = null) {
+    public Window(IWindowBackend backend, ITrayService? trayService = null, ILoggingService? loggingService = null) {
         Instance = this;
         _backend = backend;
         _trayService = trayService;
+        _logger = loggingService;
 
         _ctx = new WindowContext(
             target: backend,
@@ -77,7 +79,7 @@ public class Window : IDisposable {
             Margin = new Thickness(100)
         };
         btn_exit.Click += () => {
-            Debug.WriteLine("OK gedrückt");
+            _logger?.Error("OK gedrückt");
         };
 
 

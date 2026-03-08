@@ -9,4 +9,5 @@ namespace KUpdater.Abstractions.DI;
 public interface IServiceResolver {
     T Get<T>() where T : class;
     object Get(Type type);
+    IEnumerable<T> GetAll<T>() where T : class;
 }

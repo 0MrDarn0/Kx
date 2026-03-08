@@ -24,7 +24,7 @@ internal static class Program {
             AppInstance.BringExistingInstanceToFront(Process.GetCurrentProcess().ProcessName);
             return;
         }
-
+        // === Backend initialisieren ===
         var backend = new WinFormsBackend();
 
         backend.HandleCreated += (_, _) => {
@@ -32,19 +32,41 @@ internal static class Program {
             // === DI-Container initialisieren ===
             var container = new MsDiContainer();
 
-            // LoggerFactory und Logger Registrieren
-            container.Register<ILoggerFactory, LoggerFactory>(Lifetime.Singleton);
+            // Logging Sinks
+            container.RegisterFactory<ILogSink>(Lifetime.Singleton,
+                c => new AsyncLogSink(new DebugSink()));
+
+            container.RegisterFactory<ILogSink>(Lifetime.Singleton,
+                c => new AsyncLogSink(
+                    new DailyRollingFileSink(
+                        5 * 1024 * 1024,
+                        5,
+                        () => Paths.GetDailyLogFile()
+                    )
+                )
+            );
+
+
+            // LoggerFactory
+            container.RegisterFactory<ILoggerFactory>(
+                Lifetime.Singleton,
+                c => new LoggerFactory(c)
+            );
+
+            // System-Logger
             container.RegisterFactory<ILoggingService>(
-                Lifetime.Transient,
+                Lifetime.Singleton,
                 c => c.Get<ILoggerFactory>().CreateLogger("System")
             );
 
-            // TrayIcon, TrayIconService und haupt Fenster
+            // TrayIcon, TrayIconService
             container.Register(new TrayIcon());
             container.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
+
+            // Window
             container.RegisterFactory<Window>(
                 Lifetime.Transient,
-                c => new Window(backend, c.Get<ITrayService>())
+                c => new Window(backend, c.Get<ITrayService>(), c.Get<ILoggingService>())
             );
 
             container.Build();
@@ -52,8 +74,10 @@ internal static class Program {
 
             // === Plugin-System initialisieren ===
             var plugins = PluginLoader.LoadAll<IPlugin>();
+            var log = container.Get<ILoggingService>();
+
             foreach (var plugin in plugins) {
-                Debug.WriteLine($"Loading plugin: {plugin.Name}");
+                log.Info($"Loading plugin: {plugin.Name}");
                 plugin.Initialize(new PluginContext(container, plugin.Name));
             }
 
@@ -62,6 +86,7 @@ internal static class Program {
 
             backend.Shown += (_, _) => window.OnShown();
             backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
+
         };
 
         Application.Run(backend);
