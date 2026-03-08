@@ -24,11 +24,12 @@ public class Window : IDisposable {
     private readonly IWindowBackend _backend;
     private readonly WindowContext _ctx;
     private readonly WindowInteraction _interaction;
-    private readonly TrayIcon? _trayIcon;
+    private readonly ITrayService? _trayService;
 
-    public Window(IWindowBackend backend) {
+    public Window(IWindowBackend backend, ITrayService? trayService = null) {
         Instance = this;
         _backend = backend;
+        _trayService = trayService;
 
         _ctx = new WindowContext(
             backend,
@@ -98,46 +99,50 @@ public class Window : IDisposable {
 
         _interaction = new WindowInteraction(_backend, _ctx);
 
-        _trayIcon = new TrayIcon()
-            .Name("kUpdater")
-            .Icon(Paths.GetResource("Default/app.ico"))
-            .StatusIcons(status => status
-                .Item("default", Paths.GetResource("Default/app.ico")))
-            .Menu(menu => menu
-                .Item("Debug", debug => debug
-                    .Item("ContentRect", (s, e) => {
-                        _ctx.Renderer.ToggleContentRectDebug();
-                        _ctx.Renderer.RequestRender();
-                    })
-                    .Item("GridOverlay", (s, e) => {
-                        _ctx.Renderer.ToggleDebugOverlay();
-                        _ctx.Renderer.RequestRender();
-                    })
-                    .Item("PerfOverlay", (s, e) => {
-                        _ctx.Renderer.TogglePerfOverlay();
-                        _ctx.Renderer.RequestRender();
-                    })
-                    .Item("Toggle Bounds", (s, e) => {
-                        DebugOverlay.Toggle(DebugOverlay.OverlayType.Bounds);
-                        _ctx.Renderer.RequestRender();
-                    })
-                    .Item("Toggle LayoutRect", (s, e) => {
-                        DebugOverlay.Toggle(DebugOverlay.OverlayType.LayoutRect);
-                        _ctx.Renderer.RequestRender();
-                    })
-                    .Item("Toggle Meta", (s, e) => {
-                        DebugOverlay.Toggle(DebugOverlay.OverlayType.Meta);
-                        _ctx.Renderer.RequestRender();
-                    })
-                    .Item("Toggle ParentChain", (s, e) => {
-                        DebugOverlay.Toggle(DebugOverlay.OverlayType.ParentChain);
-                        _ctx.Renderer.RequestRender();
-                    })
-                )
-                .Separator()
-                .Exit((s, e) => Application.Exit())
-            );
+
+        // TrayService konfigurieren, falls vorhanden
+        _trayService?.Configure(t => t
+                    .Name("kUpdater")
+                    .Icon(Paths.GetResource("Default/app.ico"))
+                    .StatusIcons(status => status
+                        .Item("default", Paths.GetResource("Default/app.ico")))
+                    .Menu(menu => menu
+                        .Item("Debug", debug => debug
+                            .Item("ContentRect", (s, e) => {
+                                _ctx.Renderer.ToggleContentRectDebug();
+                                _ctx.Renderer.RequestRender();
+                            })
+                            .Item("GridOverlay", (s, e) => {
+                                _ctx.Renderer.ToggleDebugOverlay();
+                                _ctx.Renderer.RequestRender();
+                            })
+                            .Item("PerfOverlay", (s, e) => {
+                                _ctx.Renderer.TogglePerfOverlay();
+                                _ctx.Renderer.RequestRender();
+                            })
+                            .Item("Toggle Bounds", (s, e) => {
+                                DebugOverlay.Toggle(DebugOverlay.OverlayType.Bounds);
+                                _ctx.Renderer.RequestRender();
+                            })
+                            .Item("Toggle LayoutRect", (s, e) => {
+                                DebugOverlay.Toggle(DebugOverlay.OverlayType.LayoutRect);
+                                _ctx.Renderer.RequestRender();
+                            })
+                            .Item("Toggle Meta", (s, e) => {
+                                DebugOverlay.Toggle(DebugOverlay.OverlayType.Meta);
+                                _ctx.Renderer.RequestRender();
+                            })
+                            .Item("Toggle ParentChain", (s, e) => {
+                                DebugOverlay.Toggle(DebugOverlay.OverlayType.ParentChain);
+                                _ctx.Renderer.RequestRender();
+                            })
+                        )
+                        .Separator()
+                        .Exit((s, e) => Application.Exit())
+                    )
+                );
     }
+
 
     public async void OnShown() {
         _ctx.Events.NotifyAll(new MainWindow_OnShown());
@@ -148,7 +153,10 @@ public class Window : IDisposable {
 
     public void OnClosed(bool userClosing) {
         _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
-        _trayIcon?.Dispose();
+
+        // TrayService wird disposed, falls es nicht vom DI Container verwaltet wird.
+        _trayService?.Dispose();
+
         _ctx.Dispose();
         Instance = null;
     }

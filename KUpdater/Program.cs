@@ -7,6 +7,7 @@ using KUpdater.Backend.WinForms;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Logging;
 using KUpdater.Core.Plugin;
+using KUpdater.UI.Platform;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace KUpdater;
@@ -27,20 +28,34 @@ internal static class Program {
 
         var backend = new WinFormsBackend();
         backend.HandleCreated += (_, _) => {
-            var window = new Window(backend);
+            // DI Container aufbauen
+            var services = new ServiceCollection();
+
+            // TrayIcon Konfiguration (Builder) als Singleton bereitstellen
+            var trayConfig = new TrayIcon();
+
+            services.AddSingleton(trayConfig);
+
+            // TrayService registrieren
+            services.AddSingleton<ITrayService, TrayIconService>();
+
+            // Falls Window selbst DI benötigt, registriere es als Factory
+            services.AddTransient(sp => new Window(backend, sp.GetRequiredService<ITrayService>()));
+
+            var serviceProvider = services.BuildServiceProvider();
 
             // === Plugin-System initialisieren ===
-            var services = new ServiceCollection().BuildServiceProvider();
-
             var plugins = PluginLoader.LoadAll<IPlugin>();
-
             foreach (var plugin in plugins) {
                 Debug.WriteLine($"Loading plugin: {plugin.Name}");
                 var logger = new Logger(plugin.Name);
-                var context = new PluginContext(services, logger);
+                var context = new PluginContext(serviceProvider, logger);
                 plugin.Initialize(context);
             }
             // ====================================
+
+            // Window aus DI holen (erstellt mit backend + tray service)
+            var window = serviceProvider.GetRequiredService<Window>();
 
             backend.Shown += (_, _) => window.OnShown();
             backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
