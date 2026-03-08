@@ -7,8 +7,8 @@ using KUpdater.Abstractions.Plugin;
 
 namespace KUpdater.Core.Plugin;
 
-public sealed class PluginContext(IDependencyContainer services, ILogger logger) : IPluginContext {
+public sealed class PluginContext(IDependencyContainer services, string pluginName) : IPluginContext {
     public string ApiVersion => HostInfo.ApiVersion;
     public IDependencyContainer Services { get; } = services;
-    public ILogger Logger { get; } = logger;
+    public ILoggingService Logger { get; } = services.Get<ILoggerFactory>().CreateLogger(pluginName);
 }

@@ -9,5 +9,5 @@ namespace KUpdater.Abstractions.Plugin;
 public interface IPluginContext {
     string ApiVersion { get; }
     IDependencyContainer Services { get; }
-    ILogger Logger { get; }
+    ILoggingService Logger { get; }
 }

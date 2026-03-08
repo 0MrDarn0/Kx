@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using KUpdater.Abstractions.DI;
+using KUpdater.Abstractions.Logging;
 using KUpdater.Abstractions.Plugin;
 using KUpdater.Backend.WinForms;
 using KUpdater.Core.DI;
@@ -28,24 +29,24 @@ internal static class Program {
 
         backend.HandleCreated += (_, _) => {
 
-            // ============================================================
-            // DI-Container initialisieren
-            // ============================================================
+            // === DI-Container initialisieren ===
             var container = new MsDiContainer();
 
-            // TrayIcon als Singleton-Instanz
+            // LoggerFactory und Logger Registrieren
+            container.Register<ILoggerFactory, LoggerFactory>(Lifetime.Singleton);
+            container.RegisterFactory<ILoggingService>(
+                Lifetime.Transient,
+                c => c.Get<ILoggerFactory>().CreateLogger("System")
+            );
+
+            // TrayIcon, TrayIconService und haupt Fenster
             container.Register(new TrayIcon());
-
-            // TrayService als Singleton
             container.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
-
-            // Window als Transient (mit Factory, da Parameter)
             container.RegisterFactory<Window>(
                 Lifetime.Transient,
-                dc => new Window(backend, dc.Get<ITrayService>())
-                );
+                c => new Window(backend, c.Get<ITrayService>())
+            );
 
-            // Container final bauen
             container.Build();
 
 
@@ -53,11 +54,8 @@ internal static class Program {
             var plugins = PluginLoader.LoadAll<IPlugin>();
             foreach (var plugin in plugins) {
                 Debug.WriteLine($"Loading plugin: {plugin.Name}");
-                var logger = new Logger(plugin.Name);
-                var context = new PluginContext(container, logger);
-                plugin.Initialize(context);
+                plugin.Initialize(new PluginContext(container, plugin.Name));
             }
-            // ====================================
 
             // Window aus DI holen (erstellt mit backend + tray service)
             var window = container.Get<Window>();
