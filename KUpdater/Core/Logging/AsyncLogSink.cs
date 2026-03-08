@@ -2,11 +2,12 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Threading.Channels;
+using KUpdater.Abstractions.Lifecycle;
 using KUpdater.Abstractions.Logging;
 
 namespace KUpdater.Core.Logging;
 
-public sealed class AsyncLogSink : ILogSink, IAsyncDisposable {
+public sealed class AsyncLogSink : ILogSink, IAsyncDisposable, IShutdownAware {
 
     private readonly ILogSink _inner;
     private readonly Channel<LogEntry> _channel;
@@ -38,6 +39,10 @@ public sealed class AsyncLogSink : ILogSink, IAsyncDisposable {
             }
         }
         catch (OperationCanceledException) { }
+    }
+
+    public async ValueTask ShutdownAsync() {
+        await DisposeAsync();
     }
 
     public async ValueTask DisposeAsync() {

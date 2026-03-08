@@ -7,6 +7,7 @@ using KUpdater.Abstractions.Logging;
 using KUpdater.Abstractions.Plugin;
 using KUpdater.Backend.WinForms;
 using KUpdater.Core.DI;
+using KUpdater.Core.Lifecycle;
 using KUpdater.Core.Logging;
 using KUpdater.Core.Plugin;
 using KUpdater.UI.Platform;
@@ -32,11 +33,18 @@ internal static class Program {
             // === DI-Container initialisieren ===
             var container = new MsDiContainer();
 
+            // Shutdown-Routine
+            container.RegisterFactory<ShutdownManager>(
+                Lifetime.Singleton,
+                c => new ShutdownManager(c));
+
             // Logging Sinks
-            container.RegisterFactory<ILogSink>(Lifetime.Singleton,
+            container.RegisterFactory<ILogSink>(
+                Lifetime.Singleton,
                 c => new AsyncLogSink(new DebugSink()));
 
-            container.RegisterFactory<ILogSink>(Lifetime.Singleton,
+            container.RegisterFactory<ILogSink>(
+                Lifetime.Singleton,
                 c => new AsyncLogSink(
                     new DailyRollingFileSink(
                         5 * 1024 * 1024,
@@ -85,8 +93,12 @@ internal static class Program {
             var window = container.Get<Window>();
 
             backend.Shown += (_, _) => window.OnShown();
-            backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);
+            backend.FormClosed += async (_, e) => {
+                window.OnClosed(e.CloseReason == CloseReason.UserClosing);
 
+                var shutdownManager = container.Get<ShutdownManager>();
+                await shutdownManager.ShutdownAsync();
+            };
         };
 
         Application.Run(backend);
