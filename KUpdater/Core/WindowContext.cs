@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Backend.BackendAbstractions;
+using KUpdater.Abstractions.Backend;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Localization;

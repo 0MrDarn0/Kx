@@ -1,6 +1,8 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Backend.BackendAbstractions;
+using KUpdater.Abstractions.Backend;
+using KUpdater.Abstractions.Events;
 
 namespace KUpdater.Core;
 
@@ -27,18 +29,20 @@ public class WindowInteraction {
         _minClientHeight = minClientHeight;
         _allowResizing = allowResizing;
 
-        backend.BackendMouseMove += OnMouseMove;
-        backend.BackendMouseDown += OnMouseDown;
-        backend.BackendMouseUp += OnMouseUp;
-        backend.BackendMouseWheel += OnMouseWheel;
-        backend.BackendResized += OnResize;
+        backend.MouseMove += OnMouseMove;
+        backend.MouseDown += OnMouseDown;
+        backend.MouseUp += OnMouseUp;
+        backend.MouseWheel += OnMouseWheel;
+        backend.Resized += OnResize;
     }
 
-    private void OnResize(int w, int h) {
+    private void OnResize(WindowResizeEvent e) {
         _ctx.Renderer.RequestRender();
     }
 
-    private void OnMouseMove(MouseEventArgs e) {
+    private void OnMouseMove(WindowMouseEvent e) {
+        var location = new Point(e.X, e.Y);
+
         if (_isResizing) {
             Point delta = new(
                 Cursor.Position.X - _resizeStartCursor.X,
@@ -69,25 +73,27 @@ public class WindowInteraction {
 
         if (_allowResizing) {
             var resizeRect = new Rectangle(
-            _backend.Width - _resizeHitSize,
-            _backend.Height - _resizeHitSize,
-            _resizeHitSize,
-            _resizeHitSize);
+                _backend.Width - _resizeHitSize,
+                _backend.Height - _resizeHitSize,
+                _resizeHitSize,
+                _resizeHitSize);
 
-            _backend.Cursor = resizeRect.Contains(e.Location)
+            _backend.Cursor = resizeRect.Contains(location)
                 ? Cursors.SizeNWSE
                 : Cursors.Default;
         }
 
-        if (_ctx.UIElementManager.MouseMove(e.Location))
+        if (_ctx.UIElementManager.MouseMove(location))
             _ctx.Renderer.RequestRender();
     }
 
-    private void OnMouseDown(MouseEventArgs e) {
-        if (e.Button != MouseButtons.Left)
+    private void OnMouseDown(WindowMouseEvent e) {
+        if (e.Button != MouseButton.Left)
             return;
 
-        if (_ctx.UIElementManager.MouseDown(e.Location)) {
+        var location = new Point(e.X, e.Y);
+
+        if (_ctx.UIElementManager.MouseDown(location)) {
             _ctx.Renderer.RequestRender();
             return;
         }
@@ -98,7 +104,7 @@ public class WindowInteraction {
             _resizeHitSize,
             _resizeHitSize);
 
-        if (_allowResizing && resizeRect.Contains(e.Location)) {
+        if (_allowResizing && resizeRect.Contains(location)) {
             _isResizing = true;
             _resizeStartCursor = Cursor.Position;
             _resizeStartSize = new Size(_backend.Width, _backend.Height);
@@ -106,19 +112,21 @@ public class WindowInteraction {
         }
 
         _isDragging = true;
-        _dragStart = e.Location;
+        _dragStart = location;
     }
 
-    private void OnMouseUp(MouseEventArgs e) {
+    private void OnMouseUp(WindowMouseEvent e) {
         _isDragging = false;
         _isResizing = false;
 
-        if (_ctx.UIElementManager.MouseUp(e.Location))
+        var location = new Point(e.X, e.Y);
+        if (_ctx.UIElementManager.MouseUp(location))
             _ctx.Renderer.RequestRender();
     }
 
-    private void OnMouseWheel(MouseEventArgs e) {
-        if (_ctx.UIElementManager.MouseWheel(e.Delta, e.Location))
+    private void OnMouseWheel(WindowMouseEvent e) {
+        var location = new Point(e.X, e.Y);
+        if (_ctx.UIElementManager.MouseWheel(e.Delta, location))
             _ctx.Renderer.RequestRender();
     }
 }

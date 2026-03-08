@@ -1,6 +1,7 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-namespace KUpdater.Backend.BackendAbstractions;
+namespace KUpdater.Abstractions.Backend;
 
 public interface IRenderTarget {
     IntPtr Handle { get; }
@@ -9,9 +10,7 @@ public interface IRenderTarget {
 
     int Left { get; }
     int Top { get; }
-
     int Width { get; }
     int Height { get; }
-
     int DeviceDpi { get; }
 }

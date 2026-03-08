@@ -2,11 +2,10 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Backend.BackendAbstractions;
+using KUpdater.Abstractions.Backend;
 using KUpdater.Core;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
-using KUpdater.Core.Interop;
 using KUpdater.Core.Pipeline;
 using KUpdater.Core.Update;
 using KUpdater.UI.Elements.Panel;
@@ -26,8 +25,6 @@ public class Window : IDisposable {
     private readonly WindowContext _ctx;
     private readonly WindowInteraction _interaction;
     private readonly TrayIcon? _trayIcon;
-    public HotkeyManager? _hotkeyManager;
-    private int _toggleDebugOverlayHotkeyId;
 
     public Window(IWindowBackend backend) {
         Instance = this;
@@ -140,9 +137,6 @@ public class Window : IDisposable {
                 .Separator()
                 .Exit((s, e) => Application.Exit())
             );
-
-
-        HookHotkeys();
     }
 
     public async void OnShown() {
@@ -156,31 +150,7 @@ public class Window : IDisposable {
         _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
         _trayIcon?.Dispose();
         _ctx.Dispose();
-        _backend.HotkeySink = null;
-        _hotkeyManager?.Dispose();
         Instance = null;
-    }
-
-    private void HookHotkeys() {
-        _backend.BeginInvoke(() => {
-            _hotkeyManager = new HotkeyManager(_backend.Handle);
-            _backend.HotkeySink = _hotkeyManager;
-            _hotkeyManager.HotkeyPressed += HotkeyManager_HotkeyPressed;
-
-            try {
-                _toggleDebugOverlayHotkeyId = _hotkeyManager.Register(
-                    NativeMethods.MOD_CONTROL | NativeMethods.MOD_SHIFT | NativeMethods.MOD_NOREPEAT,
-                    Keys.Y);
-            }
-            catch (Exception ex) {
-                Debug.WriteLine($"Hotkey registration failed: {ex.Message}");
-            }
-        });
-    }
-
-    private void HotkeyManager_HotkeyPressed(object? sender, HotkeyEventArgs e) {
-        if (e.Id == _toggleDebugOverlayHotkeyId) {
-        }
     }
 
     public void Dispose() {
