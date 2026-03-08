@@ -2,13 +2,14 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
+using KUpdater.Abstractions.DI;
 using KUpdater.Abstractions.Plugin;
 using KUpdater.Backend.WinForms;
+using KUpdater.Core.DI;
 using KUpdater.Core.Logging;
 using KUpdater.Core.Plugin;
 using KUpdater.UI.Platform;
 using KUpdater.Utility;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace KUpdater;
 
@@ -24,33 +25,42 @@ internal static class Program {
         }
 
         var backend = new WinFormsBackend();
+
         backend.HandleCreated += (_, _) => {
-            // DI Container aufbauen
-            var services = new ServiceCollection();
 
-            // TrayIcon Konfiguration (Builder) als Singleton bereitstellen
-            services.AddSingleton(new TrayIcon());
+            // ============================================================
+            // DI-Container initialisieren
+            // ============================================================
+            var container = new MsDiContainer();
 
-            // TrayService registrieren
-            services.AddSingleton<ITrayService, TrayIconService>();
+            // TrayIcon als Singleton-Instanz
+            container.Register(new TrayIcon());
 
-            // Falls Window selbst DI benötigt, registriere es als Factory
-            services.AddTransient(sp => new Window(backend, sp.GetRequiredService<ITrayService>()));
+            // TrayService als Singleton
+            container.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
 
-            var serviceProvider = services.BuildServiceProvider();
+            // Window als Transient (mit Factory, da Parameter)
+            container.RegisterFactory<Window>(
+                Lifetime.Transient,
+                dc => new Window(backend, dc.Get<ITrayService>())
+                );
+
+            // Container final bauen
+            container.Build();
+
 
             // === Plugin-System initialisieren ===
             var plugins = PluginLoader.LoadAll<IPlugin>();
             foreach (var plugin in plugins) {
                 Debug.WriteLine($"Loading plugin: {plugin.Name}");
                 var logger = new Logger(plugin.Name);
-                var context = new PluginContext(serviceProvider, logger);
+                var context = new PluginContext(container, logger);
                 plugin.Initialize(context);
             }
             // ====================================
 
             // Window aus DI holen (erstellt mit backend + tray service)
-            var window = serviceProvider.GetRequiredService<Window>();
+            var window = container.Get<Window>();
 
             backend.Shown += (_, _) => window.OnShown();
             backend.FormClosed += (_, e) => window.OnClosed(e.CloseReason == CloseReason.UserClosing);

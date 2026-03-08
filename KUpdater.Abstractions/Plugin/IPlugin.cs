@@ -5,7 +5,6 @@ namespace KUpdater.Abstractions.Plugin;
 
 public interface IPlugin {
     string Name { get; }
-
     void Initialize(IPluginContext context);
     public void Dispose();
 }

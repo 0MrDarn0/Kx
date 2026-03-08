@@ -111,6 +111,7 @@ public class Button : UIElement {
             return false;
 
         _isPressed = true;
+        Invalidate();
         return true;
     }
 

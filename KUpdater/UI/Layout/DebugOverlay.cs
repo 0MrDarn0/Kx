@@ -3,6 +3,8 @@
 
 using SkiaSharp;
 
+namespace KUpdater.UI.Layout;
+
 public static partial class DebugOverlay {
     public enum OverlayType {
         Bounds,
@@ -36,12 +38,12 @@ public static partial class DebugOverlay {
     /// - If Enabled == true and the requested flag is off: turn all other flags off and turn the requested flag on (exclusive switch).
     /// </summary>
     public static void Toggle(OverlayType type) {
-        // Helper local functions to get/set flags by type
         static bool Get(OverlayType t) => t switch {
             OverlayType.Bounds => ShowBounds,
             OverlayType.LayoutRect => ShowLayoutRect,
             OverlayType.Meta => ShowMeta,
             OverlayType.ParentChain => ShowParentChain,
+            OverlayType.ContentRect => ShowOnlyHoveredElement,
             _ => false
         };
 
@@ -59,46 +61,41 @@ public static partial class DebugOverlay {
                 case OverlayType.ParentChain:
                 ShowParentChain = value;
                 break;
+                case OverlayType.ContentRect:
+                ShowOnlyHoveredElement = value;
+                break;
+                default:
+                break;
             }
         }
 
-        // All overlay types (expand if you add more)
-        var allTypes = new[] { OverlayType.Bounds, OverlayType.LayoutRect, OverlayType.Meta, OverlayType.ParentChain };
-
-        // Current state of requested flag
-        var current = Get(type);
-
+        // Wenn noch deaktiviert: aktiviere die gewünschte Flag und Enabled = true
         if (!Enabled) {
-            // If overlay globally disabled, enable requested flag and global Enabled
             Set(type, true);
             Enabled = true;
             return;
         }
 
-        // If enabled and requested flag already on -> turn it off
-        if (current) {
+        // Wenn bereits aktiviert und die Flag an ist: ausschalten und ggf. Enabled false setzen
+        if (Get(type)) {
             Set(type, false);
-
-            // If no flags remain true, disable global Enabled
-            bool anyOn = false;
-            foreach (var t in allTypes) {
-                if (Get(t)) { anyOn = true; break; }
-            }
-
-            if (!anyOn)
+            // Prüfe, ob noch Flags gesetzt sind
+            if (!ShowBounds && !ShowLayoutRect && !ShowMeta && !ShowParentChain && !ShowOnlyHoveredElement)
                 Enabled = false;
-
             return;
         }
 
-        // Enabled == true and requested flag is off -> make it exclusive:
-        // turn off all others, turn this one on
-        foreach (var t in allTypes)
-            Set(t, false);
+        // Enabled == true und die angefragte Flag ist aus: mache exklusive Umschaltung
+        ShowBounds = false;
+        ShowLayoutRect = false;
+        ShowMeta = false;
+        ShowParentChain = false;
+        ShowOnlyHoveredElement = false;
 
         Set(type, true);
         Enabled = true;
     }
+
 
     /// <summary>
     /// Convenience: get current value for a type (useful for menu checked state).
