@@ -3,7 +3,9 @@
 
 namespace KUpdater.Abstractions.Events;
 
-public enum FocusState {
-    Focused,
-    LostFocus
+/// <summary>
+/// Basisinterface für alle Event‑DTOs.
+/// </summary>
+public interface IEvent {
+    DateTime OccurredAt { get; }
 }

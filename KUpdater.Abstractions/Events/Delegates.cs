@@ -1,6 +1,7 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
-namespace KUpdater.Core.Event;
+namespace KUpdater.Abstractions.Events;
 
 /// <summary>
 /// Represents an asynchronous operation without parameters.

@@ -1,6 +1,8 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.IO.Compression;
+using KUpdater.Abstractions.Events;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
 using KUpdater.Core.Extensions;

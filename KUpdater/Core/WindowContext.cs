@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Abstractions.Backend;
+using KUpdater.Abstractions.Events;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Localization;

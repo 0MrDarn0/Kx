@@ -5,15 +5,51 @@ using KUpdater.Abstractions.Events;
 
 namespace KUpdater.Core.Event;
 
-public record StatusEvent(string Text) : IEvent;
-public record ProgressEvent(int Percent) : IEvent;
-public record ChangelogEvent(string Text) : IEvent;
-public record UpdateStepStarted(string StepName) : IEvent;
-public record UpdateStepCompleted(string StepName) : IEvent;
-public record UpdatePipelineStarted() : IEvent;
-public record UpdatePipelineCompleted() : IEvent;
-public record UpdateRequired() : IEvent;
-public record MainWindow_OnShown() : IEvent;
-public record MainWindow_OnFormClosed(bool IsUserInitiated) : IEvent;
-public record MainWindow_OnStateChanged(WindowState State) : IEvent;
-public record MainWindow_OnFocusChanged(FocusState State) : IEvent;
+public record StatusEvent(string Text) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+}
+
+public record ProgressEvent(int Percent) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record ChangelogEvent(string Text) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record UpdateStepStarted(string StepName) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record UpdateStepCompleted(string StepName) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record UpdatePipelineStarted() : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record UpdatePipelineCompleted() : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record UpdateRequired() : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record MainWindow_OnShown() : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record MainWindow_OnFormClosed(bool IsUserInitiated) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record MainWindow_OnStateChanged(WindowState State) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+
+public record MainWindow_OnFocusChanged(FocusState State) : IEvent {
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+};
+

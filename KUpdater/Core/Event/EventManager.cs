@@ -4,6 +4,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using KUpdater.Abstractions.Events;
 
 namespace KUpdater.Core.Event {
     /// <summary>
@@ -28,19 +29,19 @@ namespace KUpdater.Core.Event {
 
         #region Registrierung Sync / Async
 
-        public void Register<T>(Action<T> listener) {
+        public void Register<T>(Action<T> listener) where T : IEvent {
             AddListener(typeof(T), listener);
         }
 
-        public void RegisterAsync<T>(AsyncAction<T> listener) {
+        public void RegisterAsync<T>(AsyncAction<T> listener) where T : IEvent {
             AddListener(typeof(T), listener);
         }
 
-        public void Unregister<T>(Action<T> listener) {
+        public void Unregister<T>(Action<T> listener) where T : IEvent {
             RemoveListener(typeof(T), listener);
         }
 
-        public void UnregisterAsync<T>(AsyncAction<T> listener) {
+        public void UnregisterAsync<T>(AsyncAction<T> listener) where T : IEvent {
             RemoveListener(typeof(T), listener);
         }
 
@@ -121,7 +122,7 @@ namespace KUpdater.Core.Event {
         /// <summary>
         /// Benachrichtigt alle synchronen Listener für Nachrichten vom Typ T.
         /// </summary>
-        public void NotifyAll<T>(T message) {
+        public void NotifyAll<T>(T message) where T : IEvent {
             if (_listeners.TryGetValue(typeof(T), out var arr) && !arr.IsDefaultOrEmpty) {
                 // Snapshot ist arr selbst (ImmutableArray ist threadsicher)
                 foreach (var del in arr) {
@@ -141,7 +142,7 @@ namespace KUpdater.Core.Event {
         /// <summary>
         /// Benachrichtigt alle Listener (sync + async). Async Listener werden gesammelt und awaited.
         /// </summary>
-        public async Task NotifyAllAsync<T>(T message) {
+        public async Task NotifyAllAsync<T>(T message) where T : IEvent {
             if (_listeners.TryGetValue(typeof(T), out var arr) && !arr.IsDefaultOrEmpty) {
                 var tasks = new List<Task>(capacity: 4);
 
