@@ -6,7 +6,4 @@
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>x64</Platforms>
   </PropertyGroup>
-  <ItemGroup>
-    <Folder Include="Tray\" />
-  </ItemGroup>
 </Project>
