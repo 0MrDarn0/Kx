@@ -6,14 +6,21 @@ using KUpdater.Abstractions.Events;
 namespace KUpdater.Abstractions.Backend;
 
 public interface IWindowBackend : IRenderTarget, IUiThreadInvoker {
-    event Action<WindowResizeEvent>? Resized;
-    event Action<WindowMouseEvent>? MouseMove;
-    event Action<WindowMouseEvent>? MouseDown;
-    event Action<WindowMouseEvent>? MouseUp;
-    event Action<WindowMouseEvent>? MouseWheel;
-    event Action? Shown;
-    event Action<bool /* userInitiated */>? Closed;
+    event Action<ShownEvent>? Shown;
+    event Action<ClosedEvent>? Closed;
 
+    event Action<ResizeEvent>? Resized;
+    event Action<MouseEvent>? MouseMove;
+    event Action<MouseEvent>? MouseDown;
+    event Action<MouseEvent>? MouseUp;
+    event Action<MouseEvent>? MouseWheel;
+
+    event Action<KeyEvent>? KeyDown;
+    event Action<KeyEvent>? KeyUp;
+    event Action<TextInputEvent>? TextInput;
+
+    event Action<StateEvent>? StateChanged;
+    event Action<FocusEvent>? FocusChanged;
 
     void SetSize(int width, int height);
     void SetPosition(int x, int y);

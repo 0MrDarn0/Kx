@@ -85,10 +85,12 @@ public sealed class KRuntime(IWindowBackend backend) {
     private void InitializeUI() {
         _window = _container.Get<Window>();
 
-        backend.Shown += () => _window.OnShown();
-        backend.Closed += async userInitiated => {
-            _window.OnClosed(userInitiated);
+        backend.Shown += e => _window.OnShown();
+        backend.Closed += async e => {
+            _window.OnClosed(e.UserInitiated);
             await ShutdownAsync();
         };
+        backend.StateChanged += e => _window.OnStateChanged(e.State);
+        backend.FocusChanged += e => _window.OnFocusChanged(e.State);
     }
 }

@@ -3,7 +3,9 @@
 
 namespace KUpdater.Abstractions.Events;
 
-public enum MouseButton { None, Left, Right, Middle }
-public record WindowMouseEvent(int X, int Y, MouseButton Button, int Delta, int Clicks);
-public record WindowResizeEvent(int Width, int Height);
-public record HotkeyEvent(int Id);
+public sealed record ResizeEvent(int Width, int Height);
+public sealed record HotkeyEvent(int Id);
+public sealed record ShownEvent();
+public sealed record ClosedEvent(bool UserInitiated);
+public sealed record StateEvent(WindowState State);
+public sealed record FocusEvent(FocusState State);

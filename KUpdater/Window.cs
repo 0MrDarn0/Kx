@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Abstractions.Backend;
+using KUpdater.Abstractions.Events;
 using KUpdater.Abstractions.Logging;
 using KUpdater.Core;
 using KUpdater.Core.Configuration;
@@ -148,13 +149,14 @@ public class Window : IDisposable {
 
     public async void OnShown() {
         _ctx.Events.NotifyAll(new MainWindow_OnShown());
-
+        _logger?.Info($"Window OnShown()");
         if (_ctx.Pipeline != null)
             await _ctx.Pipeline.RunAsync(rootDir: AppDomain.CurrentDomain.BaseDirectory);
     }
 
     public void OnClosed(bool userClosing) {
         _ctx.Events.NotifyAll(new MainWindow_OnFormClosed(userClosing));
+        _logger?.Info($"Window OnClosed({userClosing})");
 
         // TrayService wird disposed, falls es nicht vom DI Container verwaltet wird.
         _trayService?.Dispose();
@@ -162,6 +164,26 @@ public class Window : IDisposable {
         _ctx.Dispose();
         Instance = null;
     }
+
+    public void OnStateChanged(WindowState state) {
+        _ctx.Events.NotifyAll(new MainWindow_OnStateChanged(state));
+
+        // Optional: Logging
+        _logger?.Info($"Window state changed: {state}");
+
+        // Optional: Renderer neu anstoßen
+        _ctx.Renderer.RequestRender();
+    }
+
+    public void OnFocusChanged(FocusState state) {
+        _ctx.Events.NotifyAll(new MainWindow_OnFocusChanged(state));
+
+        _logger?.Info($"Window focus changed: {state}");
+
+        // Optional: Re-render, falls UI auf Fokus reagiert
+        _ctx.Renderer.RequestRender();
+    }
+
 
     public void Dispose() {
         OnClosed(userClosing: false);

@@ -36,11 +36,11 @@ public class WindowInteraction {
         backend.Resized += OnResize;
     }
 
-    private void OnResize(WindowResizeEvent e) {
+    private void OnResize(ResizeEvent e) {
         _ctx.Renderer.RequestRender();
     }
 
-    private void OnMouseMove(WindowMouseEvent e) {
+    private void OnMouseMove(MouseEvent e) {
         var location = new Point(e.X, e.Y);
 
         if (_isResizing) {
@@ -87,7 +87,7 @@ public class WindowInteraction {
             _ctx.Renderer.RequestRender();
     }
 
-    private void OnMouseDown(WindowMouseEvent e) {
+    private void OnMouseDown(MouseEvent e) {
         if (e.Button != MouseButton.Left)
             return;
 
@@ -115,7 +115,7 @@ public class WindowInteraction {
         _dragStart = location;
     }
 
-    private void OnMouseUp(WindowMouseEvent e) {
+    private void OnMouseUp(MouseEvent e) {
         _isDragging = false;
         _isResizing = false;
 
@@ -124,7 +124,7 @@ public class WindowInteraction {
             _ctx.Renderer.RequestRender();
     }
 
-    private void OnMouseWheel(WindowMouseEvent e) {
+    private void OnMouseWheel(MouseEvent e) {
         var location = new Point(e.X, e.Y);
         if (_ctx.UIElementManager.MouseWheel(e.Delta, location))
             _ctx.Renderer.RequestRender();
