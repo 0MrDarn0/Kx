@@ -2,8 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Backend.WinForms;
 using KUpdater.Utility;
+using KUpdater.WindowHost.WinForms;
 
 namespace KUpdater;
 
@@ -18,11 +18,11 @@ internal static class Program {
             return;
         }
 
-        var backend = new WinFormsBackend();
-        var runtime = new KRuntime(backend);
+        var windowHost = new WinFormsWindowHost();
+        var runtime = new KRuntime(windowHost);
 
-        backend.HandleCreated += (_, _) => runtime.Start();
+        windowHost.HandleCreated += (_, _) => runtime.Start();
 
-        Application.Run(backend);
+        Application.Run(windowHost);
     }
 }

@@ -8,11 +8,9 @@ using SkiaSharp;
 
 namespace KUpdater.UI.Elements.Panel;
 
-public class Grid : Panel {
+public class Grid(WindowContext ctx, string id) : Panel(ctx, id) {
     public List<RowDefinition> Rows { get; } = [];
     public List<ColumnDefinition> Columns { get; } = [];
-
-    public Grid(WindowContext ctx, string id) : base(ctx, id) { }
 
     public override void Measure(float dpi) {
         int maxWidth = 0;

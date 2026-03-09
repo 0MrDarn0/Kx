@@ -1,9 +1,10 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 namespace KUpdater.Core.Update;
 
 public class HttpUpdateSource : IUpdateSource {
-    private static readonly HttpClient SharedHttp;
+    private static readonly HttpClient _sharedHttp;
 
     static HttpUpdateSource() {
         var handler = new SocketsHttpHandler {
@@ -12,27 +13,27 @@ public class HttpUpdateSource : IUpdateSource {
             MaxConnectionsPerServer = UpdaterConstants.DefaultMaxConnectionsPerServer
         };
 
-        SharedHttp = new HttpClient(handler) {
+        _sharedHttp = new HttpClient(handler) {
             Timeout = TimeSpan.FromSeconds(UpdaterConstants.HttpTimeoutSeconds)
         };
 
-        SharedHttp.DefaultRequestHeaders.UserAgent.Clear();
-        SharedHttp.DefaultRequestHeaders.UserAgent.ParseAdd(UpdaterConstants.DefaultUserAgent);
+        _sharedHttp.DefaultRequestHeaders.UserAgent.Clear();
+        _sharedHttp.DefaultRequestHeaders.UserAgent.ParseAdd(UpdaterConstants.DefaultUserAgent);
     }
 
     private readonly HttpClient _http;
 
-    public HttpUpdateSource(HttpClient? httpClient = null) => _http = httpClient ?? SharedHttp;
+    public HttpUpdateSource(HttpClient? httpClient = null) => _http = httpClient ?? _sharedHttp;
 
     // Retry configuration
     private const int MaxRetries = 3;
-    private static readonly TimeSpan BaseDelay = TimeSpan.FromSeconds(1);
-    private static readonly Random Jitter = new();
+    private static readonly TimeSpan _baseDelay = TimeSpan.FromSeconds(1);
+    private static readonly Random _jitter = new();
 
     private static TimeSpan GetDelay(int attempt) {
         var exponential = Math.Pow(2, attempt - 1);
-        var jitter = 0.75 + Jitter.NextDouble() * 0.5; // 0.75..1.25
-        return TimeSpan.FromMilliseconds(BaseDelay.TotalMilliseconds * exponential * jitter);
+        var jitter = 0.75 + _jitter.NextDouble() * 0.5; // 0.75..1.25
+        return TimeSpan.FromMilliseconds(_baseDelay.TotalMilliseconds * exponential * jitter);
     }
 
     private async Task<T> ExecuteWithRetriesAsync<T>(Func<CancellationToken, Task<T>> operation, CancellationToken ct) {

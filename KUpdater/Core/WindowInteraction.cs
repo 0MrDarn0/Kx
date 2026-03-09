@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Backend;
 using KUpdater.Abstractions.Events;
+using KUpdater.Abstractions.WindowHost;
 
 namespace KUpdater.Core;
 
 public class WindowInteraction {
-    private readonly IWindowBackend _backend;
+    private readonly IWindowHost _windowHost;
     private readonly WindowContext _ctx;
 
     private bool _isDragging;
@@ -22,18 +22,18 @@ public class WindowInteraction {
     private readonly int _minClientWidth;
     private readonly int _minClientHeight;
 
-    public WindowInteraction(IWindowBackend backend, WindowContext ctx, bool allowResizing = true, int minClientWidth = 450, int minClientHeight = 300) {
-        _backend = backend;
+    public WindowInteraction(IWindowHost windowHost, WindowContext ctx, bool allowResizing = true, int minClientWidth = 450, int minClientHeight = 300) {
+        _windowHost = windowHost;
         _ctx = ctx;
         _minClientWidth = minClientWidth;
         _minClientHeight = minClientHeight;
         _allowResizing = allowResizing;
 
-        backend.MouseMove += OnMouseMove;
-        backend.MouseDown += OnMouseDown;
-        backend.MouseUp += OnMouseUp;
-        backend.MouseWheel += OnMouseWheel;
-        backend.Resized += OnResize;
+        windowHost.MouseMove += OnMouseMove;
+        windowHost.MouseDown += OnMouseDown;
+        windowHost.MouseUp += OnMouseUp;
+        windowHost.MouseWheel += OnMouseWheel;
+        windowHost.Resized += OnResize;
     }
 
     private void OnResize(ResizeEvent e) {
@@ -59,26 +59,26 @@ public class WindowInteraction {
             newWidth = Math.Max(_minClientWidth, Math.Min(newWidth, maxWidth));
             newHeight = Math.Max(_minClientHeight, Math.Min(newHeight, maxHeight));
 
-            _backend.SetSize(newWidth, newHeight);
+            _windowHost.SetSize(newWidth, newHeight);
             return;
         }
 
         if (_isDragging) {
             Point newLocation = new(
-                _backend.Left + e.X - _dragStart.X,
-                _backend.Top + e.Y - _dragStart.Y);
-            _backend.SetPosition(newLocation.X, newLocation.Y);
+                _windowHost.Left + e.X - _dragStart.X,
+                _windowHost.Top + e.Y - _dragStart.Y);
+            _windowHost.SetPosition(newLocation.X, newLocation.Y);
             return;
         }
 
         if (_allowResizing) {
             var resizeRect = new Rectangle(
-                _backend.Width - _resizeHitSize,
-                _backend.Height - _resizeHitSize,
+                _windowHost.Width - _resizeHitSize,
+                _windowHost.Height - _resizeHitSize,
                 _resizeHitSize,
                 _resizeHitSize);
 
-            _backend.Cursor = resizeRect.Contains(location)
+            _windowHost.Cursor = resizeRect.Contains(location)
                 ? Cursors.SizeNWSE
                 : Cursors.Default;
         }
@@ -99,15 +99,15 @@ public class WindowInteraction {
         }
 
         Rectangle resizeRect = new(
-            _backend.Width - _resizeHitSize,
-            _backend.Height - _resizeHitSize,
+            _windowHost.Width - _resizeHitSize,
+            _windowHost.Height - _resizeHitSize,
             _resizeHitSize,
             _resizeHitSize);
 
         if (_allowResizing && resizeRect.Contains(location)) {
             _isResizing = true;
             _resizeStartCursor = Cursor.Position;
-            _resizeStartSize = new Size(_backend.Width, _backend.Height);
+            _resizeStartSize = new Size(_windowHost.Width, _windowHost.Height);
             return;
         }
 

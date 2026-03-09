@@ -97,14 +97,14 @@ public class UIElementManager : IDisposable {
     public void BringToFront(UIElement el) {
         if (el == null)
             return;
-        el.ZIndex = _elements.Any() ? _elements.Max(x => x.ZIndex) + 1 : 0;
+        el.ZIndex = _elements.Count != 0 ? _elements.Max(x => x.ZIndex) + 1 : 0;
         SortElements();
     }
 
     public void SendToBack(UIElement el) {
         if (el == null)
             return;
-        el.ZIndex = _elements.Any() ? _elements.Min(x => x.ZIndex) - 1 : 0;
+        el.ZIndex = _elements.Count != 0 ? _elements.Min(x => x.ZIndex) - 1 : 0;
         SortElements();
     }
 
@@ -160,12 +160,12 @@ public class UIElementManager : IDisposable {
         return false;
     }
 
-    private bool HitTestRecursive(UIElement el, Point p, Func<UIElement, bool> action) {
+    private static bool HitTestRecursive(UIElement el, Point p, Func<UIElement, bool> action) {
         if (!el.Visible)
             return false;
 
         // Prüfe zuerst Kinder (oberstes Kind zuerst), falls das Element ein Panel/Container ist
-        if (el is KUpdater.UI.Elements.Panel.Panel panel && panel.Children.Any()) {
+        if (el is Elements.Panel.Panel panel && panel.Children.Count != 0) {
             // sortiere Kinder nach Layer/ZIndex absteigend (oberstes zuerst)
             var children = panel.Children
             .OrderByDescending(c => c.Layer)

@@ -12,13 +12,7 @@ using KUpdater.Core.Update;
 namespace KUpdater.Core.Pipeline.Steps;
 
 [PipelineStep(30)]
-public class DownloadAndExtractStep : IUpdateStep {
-    private readonly IUpdateSource _source;
-
-    public DownloadAndExtractStep(IUpdateSource source) {
-        _source = source;
-    }
-
+public class DownloadAndExtractStep(IUpdateSource source) : IUpdateStep {
     public string Name => "DownloadAndExtract";
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
@@ -28,11 +22,11 @@ public class DownloadAndExtractStep : IUpdateStep {
         try {
             // Download
             eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.downloading_pkg")));
-            await using (var stream = await _source.GetPackageStreamAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false))
+            await using (var stream = await source.GetPackageStreamAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false))
             await using (var fs = new FileStream(tempZip, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
                 byte[] buffer = new byte[UpdaterConstants.BufferSize];
                 long totalRead = 0;
-                long totalLength = await _source.GetPackageSizeAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false) ?? -1;
+                long totalLength = await source.GetPackageSizeAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false) ?? -1;
                 int read;
                 while ((read = await stream.ReadAsync(buffer, 0, buffer.Length, ct).ConfigureAwait(false)) > 0) {
                     await fs.WriteAsync(buffer, 0, read, ct).ConfigureAwait(false);

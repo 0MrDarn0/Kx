@@ -3,9 +3,9 @@
 
 using KUpdater.Abstractions.Events;
 
-namespace KUpdater.Abstractions.Backend;
+namespace KUpdater.Abstractions.WindowHost;
 
-public interface IWindowBackend : IRenderTarget, IUiThreadInvoker {
+public interface IWindowHost : IWindowSurface, IUiDispatcher {
     event Action<ShownEvent>? Shown;
     event Action<ClosedEvent>? Closed;
 

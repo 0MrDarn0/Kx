@@ -174,7 +174,7 @@ public abstract class UIElement : Visual, IDockable {
     }
 
     // Hilfsfunktion: Text kürzen mit Ellipse so, dass er in maxWidth passt
-    private string TruncateTextToWidth(string text, SKFont font, float maxWidth) {
+    private static string TruncateTextToWidth(string text, SKFont font, float maxWidth) {
         if (string.IsNullOrEmpty(text))
             return text;
         font.MeasureText(text, out SKRect tb);
@@ -184,12 +184,12 @@ public abstract class UIElement : Visual, IDockable {
         const string ell = "…";
         int left = 0;
         int right = text.Length;
-        string candidate = text;
+        string candidate;
 
         // Binäre Suche auf Länge
         while (left <= right) {
             int mid = (left + right) / 2;
-            candidate = text.Substring(0, Math.Max(0, mid)) + ell;
+            candidate = string.Concat(text.AsSpan(0, Math.Max(0, mid)), ell);
             font.MeasureText(candidate, out SKRect tb2);
             if (tb2.Width > maxWidth)
                 right = mid - 1;
@@ -198,7 +198,7 @@ public abstract class UIElement : Visual, IDockable {
         }
 
         int len = Math.Max(0, left - 1);
-        candidate = text.Substring(0, Math.Min(len, text.Length)) + ell;
+        candidate = string.Concat(text.AsSpan(0, Math.Min(len, text.Length)), ell);
 
         // Feinjustierung: entferne Zeichen bis es passt
         while (true) {
@@ -207,7 +207,7 @@ public abstract class UIElement : Visual, IDockable {
                 break;
             if (candidate.Length <= 1)
                 break;
-            candidate = candidate.Substring(0, candidate.Length - 2) + ell;
+            candidate = string.Concat(candidate.AsSpan(0, candidate.Length - 2), ell);
         }
 
         return candidate;

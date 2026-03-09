@@ -1,23 +1,23 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Backend;
 using KUpdater.Abstractions.Events;
+using KUpdater.Abstractions.Rendering;
+using KUpdater.Abstractions.WindowHost;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
 using KUpdater.Core.Localization;
 using KUpdater.Core.Pipeline;
 using KUpdater.UI.Manager;
-using KUpdater.UI.Rendering;
 using KUpdater.UI.Themes;
 using KUpdater.Utility;
 
 namespace KUpdater.Core;
 
 public sealed class WindowContext : IDisposable {
-    public IRenderTarget Target { get; }
-    public IUiThreadInvoker UiThread { get; }
-    public IWindowBackend Backend { get; }
+    public IWindowSurface Target { get; }
+    public IUiDispatcher UiThread { get; }
+    public IWindowHost WindowHost { get; }
     public IResourceProvider Resources { get; }
     public IEventManager Events { get; }
     public AppConfig Config { get; }
@@ -30,13 +30,13 @@ public sealed class WindowContext : IDisposable {
     public float DpiScale { get; set; } = 1f;
 
     public WindowContext(
-        IRenderTarget target,
-        IUiThreadInvoker uiThread,
-        IWindowBackend backend,
+        IWindowSurface target,
+        IUiDispatcher uiThread,
+        IWindowHost windowHost,
         IEventManager? eventManager = null) {
         Target = target;
         UiThread = uiThread;
-        Backend = backend;
+        WindowHost = windowHost;
         DpiScale = Math.Max(1f, Target.DeviceDpi / 96f);
         Config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
         Resources = new FileResourceProvider(Paths.ResFolder);

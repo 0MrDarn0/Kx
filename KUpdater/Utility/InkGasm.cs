@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using SkiaSharp;
 
@@ -58,7 +59,7 @@ public static class InkGasm {
             Shader = SKShader.CreateLinearGradient(
                 new SKPoint(x - 40, y - 20),
                 new SKPoint(x + 40, y + 20),
-                new[] { start, end },
+                [start, end],
                 null,
                 SKShaderTileMode.Clamp)
         };
@@ -79,13 +80,12 @@ public static class InkGasm {
             Shader = SKShader.CreateLinearGradient(
                 new SKPoint(x - 100 + offset, y),
                 new SKPoint(x + 100 + offset, y),
-                new[]
-                {
+                [
                     new SKColor(255,255,255,0),
                     new SKColor(255,255,255,180),
                     new SKColor(255,255,255,0)
-                },
-                new float[] { 0f, 0.5f, 1f },
+                ],
+                [0f, 0.5f, 1f],
                 SKShaderTileMode.Clamp)
         };
 

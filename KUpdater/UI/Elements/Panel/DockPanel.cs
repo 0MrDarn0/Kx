@@ -7,9 +7,7 @@ using KUpdater.UI.Layout;
 
 namespace KUpdater.UI.Elements.Panel;
 
-public class DockPanel : Panel {
-    public DockPanel(WindowContext ctx, string id) : base(ctx, id) { }
-
+public class DockPanel(WindowContext ctx, string id) : Panel(ctx, id) {
     public override void Measure(float dpi) {
         int width = 0;
         int height = 0;

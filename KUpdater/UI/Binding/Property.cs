@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Backend;
+using KUpdater.Abstractions.WindowHost;
 
 namespace KUpdater.UI.Binding;
 
-public sealed class Property<T>(IUiThreadInvoker ui, T initialValue = default!, Action? onChanged = null) {
-    private readonly IUiThreadInvoker _ui = ui ?? throw new ArgumentNullException(nameof(ui));
+public sealed class Property<T>(IUiDispatcher ui, T initialValue = default!, Action? onChanged = null) {
+    private readonly IUiDispatcher _ui = ui ?? throw new ArgumentNullException(nameof(ui));
     private readonly Action? _onChanged = onChanged;
     private T _value = initialValue!;
 

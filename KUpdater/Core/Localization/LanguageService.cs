@@ -1,20 +1,22 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
 namespace KUpdater.Core.Localization;
 
 public static class LanguageService {
-    private static IDictionary<string, object>? Lang;
-    private static IDictionary<string, object>? Fallback;
+    private static IDictionary<string, object>? _lang;
+    private static IDictionary<string, object>? _fallback;
 
     public static void Initialize(IDictionary<string, object> lang, IDictionary<string, object> fallback) {
-        LanguageService.Lang = lang;
-        LanguageService.Fallback = fallback;
+        LanguageService._lang = lang;
+        LanguageService._fallback = fallback;
     }
 
     public static string Translate(string key, params object[] args) {
-        if (Lang == null || Fallback == null)
+        if (_lang == null || _fallback == null)
             return Format(key, args);
 
-        string? raw = Lookup(Lang, key) ?? Lookup(Fallback, key);
+        string? raw = Lookup(_lang, key) ?? Lookup(_fallback, key);
 
         if (raw == null)
             raw = $"[MISSING:{key}]";

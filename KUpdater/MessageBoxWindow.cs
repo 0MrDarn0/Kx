@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Backend;
+using KUpdater.Abstractions.WindowHost;
 using KUpdater.Core;
 using KUpdater.UI.Rendering;
 using KUpdater.UI.Themes;
@@ -24,17 +24,17 @@ public class MessageBoxOptions {
 }
 
 public class MessageBoxWindow : IDisposable {
-    private readonly IWindowBackend _backend;
+    private readonly IWindowHost _windowHost;
     private readonly WindowContext _ctx;
     private readonly WindowInteraction _interaction;
     private readonly TaskCompletionSource<MessageBoxResult> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly MessageBoxOptions _options;
 
-    public MessageBoxWindow(IWindowBackend backend, string title, string message, MessageBoxOptions? options = null) {
-        _backend = backend;
+    public MessageBoxWindow(IWindowHost windowHost, string title, string message, MessageBoxOptions? options = null) {
+        _windowHost = windowHost;
         _options = options ?? new MessageBoxOptions();
 
-        _ctx = new WindowContext(backend, backend, backend);
+        _ctx = new WindowContext(windowHost, windowHost, windowHost);
 
         var frameConfig = new FrameConfig();
         var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, (_ctx.Target.DeviceDpi / 96f));
@@ -43,19 +43,19 @@ public class MessageBoxWindow : IDisposable {
         var renderer = new LayeredWindowRenderer(_ctx);
         _ctx.SetRenderer(renderer);
 
-        _interaction = new WindowInteraction(_backend, _ctx, _options.AllowResizing);
-        _backend.SetSize(670, 300);
+        _interaction = new WindowInteraction(_windowHost, _ctx, _options.AllowResizing);
+        _windowHost.SetSize(670, 300);
     }
 
 
     public Task<MessageBoxResult> ShowAsync() {
-        _backend.BeginInvoke((Action)(() => {
-            if (_options.Modal && _backend is Form form) {
+        _windowHost.BeginInvoke((Action)(() => {
+            if (_options.Modal && _windowHost is Form form) {
                 Task.Run(() => {
                     var dr = form.ShowDialog();
                 });
             } else {
-                _backend.ShowWindow();
+                _windowHost.ShowWindow();
             }
         }));
 
@@ -63,9 +63,9 @@ public class MessageBoxWindow : IDisposable {
     }
 
     public void CloseWithResult(MessageBoxResult result) {
-        _backend.BeginInvoke((Action)(() => {
+        _windowHost.BeginInvoke((Action)(() => {
             try {
-                _backend.CloseWindow();
+                _windowHost.CloseWindow();
             }
             finally {
                 _tcs.TrySetResult(result);
@@ -74,7 +74,7 @@ public class MessageBoxWindow : IDisposable {
     }
 
     public MessageBoxResult ShowDialog() {
-        if (_backend is Form form) {
+        if (_windowHost is Form form) {
             var dr = form.ShowDialog();
             return _tcs.Task.IsCompleted ? _tcs.Task.Result : MessageBoxResult.None;
         }
@@ -83,11 +83,11 @@ public class MessageBoxWindow : IDisposable {
 
 
     public void Show() {
-        _backend.ShowWindow();
+        _windowHost.ShowWindow();
     }
 
     public void Close() {
-        _backend.CloseWindow();
+        _windowHost.CloseWindow();
     }
 
     public void Dispose() {

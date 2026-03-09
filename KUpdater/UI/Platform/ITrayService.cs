@@ -3,7 +3,6 @@
 
 namespace KUpdater.UI.Platform;
 
-
 /// <summary>
 /// Abstraktion für Systemtray‑Funktionen.
 /// </summary>

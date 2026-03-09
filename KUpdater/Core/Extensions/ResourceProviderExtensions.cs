@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using KUpdater.Utility;
 using SkiaSharp;
@@ -6,7 +7,7 @@ using SkiaSharp;
 namespace KUpdater.Core.Extensions;
 
 public static class ResourceProviderExtensions {
-    private static readonly string[] States = ["normal", "hover", "click"];
+    private static readonly string[] _states = ["normal", "hover", "click"];
 
     /// <summary>
     /// Erzeugt eine standardisierte GetResource-ID für Visual-States:
@@ -26,7 +27,7 @@ public static class ResourceProviderExtensions {
     /// </summary>
     public static void LoadControlStateResources(this IResourceProvider? provider, string skinKey, string id, Dictionary<string, SKBitmap> stateBitmaps) {
 
-        foreach (var state in States) {
+        foreach (var state in _states) {
             var resourceId = MakeControlStateId(skinKey, id, state);
 
             // Provider versuchen (wenn vorhanden)

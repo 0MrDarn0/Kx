@@ -9,7 +9,7 @@ public enum GridUnitType {
     Star
 }
 
-public struct GridLength {
+public readonly struct GridLength {
     public float Value { get; }
     public GridUnitType UnitType { get; }
 

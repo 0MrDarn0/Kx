@@ -6,11 +6,9 @@ using KUpdater.Core.Extensions;
 
 namespace KUpdater.UI.Elements.Panel;
 
-public class StackPanel : Panel {
+public class StackPanel(WindowContext ctx, string id) : Panel(ctx, id) {
     public Layout.Orientation Orientation { get; set; } = Layout.Orientation.Vertical;
     public float Spacing { get; set; } = 4f;
-
-    public StackPanel(WindowContext ctx, string id) : base(ctx, id) { }
 
     public override void Measure(float dpi) {
         float totalWidth = 0;

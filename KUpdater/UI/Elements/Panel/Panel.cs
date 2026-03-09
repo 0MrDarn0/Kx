@@ -6,10 +6,8 @@ using SkiaSharp;
 
 namespace KUpdater.UI.Elements.Panel;
 
-public abstract class Panel : UIElement {
+public abstract class Panel(WindowContext ctx, string id) : UIElement(ctx, id) {
     public List<UIElement> Children { get; } = [];
-
-    protected Panel(WindowContext ctx, string id) : base(ctx, id) { }
 
     public void AddChild(UIElement child) {
         if (child == null)

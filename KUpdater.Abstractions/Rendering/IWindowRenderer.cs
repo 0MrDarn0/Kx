@@ -4,8 +4,11 @@
 namespace KUpdater.Abstractions.Rendering;
 
 public interface IWindowRenderer : IDisposable {
-    void RequestRender();
     void ToggleDebugOverlay();
+    void RequestRender();
+    void Resize(int width, int height);
     void TogglePerfOverlay();
     void ToggleContentRectDebug();
+    long LastRenderDurationMs { get; }
+    int LastPresentError { get; }
 }

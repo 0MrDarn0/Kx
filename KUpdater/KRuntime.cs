@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Backend;
 using KUpdater.Abstractions.DI;
 using KUpdater.Abstractions.Logging;
 using KUpdater.Abstractions.Plugin;
+using KUpdater.Abstractions.WindowHost;
 using KUpdater.Core.DI;
 using KUpdater.Core.Lifecycle;
 using KUpdater.Core.Logging;
@@ -14,9 +14,9 @@ using KUpdater.Utility;
 
 namespace KUpdater;
 
-public sealed class KRuntime(IWindowBackend backend) {
+public sealed class KRuntime(IWindowHost windowHost) {
 
-    private readonly IDependencyContainer _container = new MsDiContainer();
+    private readonly MsDiContainer _container = new();
     private Window _window = null!;
 
     public void Start() {
@@ -69,7 +69,7 @@ public sealed class KRuntime(IWindowBackend backend) {
 
         // Window
         _container.RegisterFactory<Window>(Lifetime.Transient,
-            c => new Window(backend, c.Get<ITrayService>(), c.Get<ILoggingService>()));
+            c => new Window(windowHost, c.Get<ITrayService>(), c.Get<ILoggingService>()));
     }
 
     private void InitializePlugins() {
@@ -85,12 +85,12 @@ public sealed class KRuntime(IWindowBackend backend) {
     private void InitializeUI() {
         _window = _container.Get<Window>();
 
-        backend.Shown += e => _window.OnShown();
-        backend.Closed += async e => {
+        windowHost.Shown += e => _window.OnShown();
+        windowHost.Closed += async e => {
             _window.OnClosed(e.UserInitiated);
             await ShutdownAsync();
         };
-        backend.StateChanged += e => _window.OnStateChanged(e.State);
-        backend.FocusChanged += e => _window.OnFocusChanged(e.State);
+        windowHost.StateChanged += e => _window.OnStateChanged(e.State);
+        windowHost.FocusChanged += e => _window.OnFocusChanged(e.State);
     }
 }

@@ -3,11 +3,11 @@
 
 namespace KUpdater.UI.Layout;
 
-public struct Thickness {
-    public float Left;
-    public float Top;
-    public float Right;
-    public float Bottom;
+public struct Thickness(float left, float top, float right, float bottom) {
+    public float Left = left;
+    public float Top = top;
+    public float Right = right;
+    public float Bottom = bottom;
 
     public Thickness(float uniform)
         : this(uniform, uniform, uniform, uniform) { }
@@ -15,13 +15,6 @@ public struct Thickness {
     public Thickness(float horizontal, float vertical)
         : this(horizontal, vertical, horizontal, vertical) { }
 
-    public Thickness(float left, float top, float right, float bottom) {
-        Left = left;
-        Top = top;
-        Right = right;
-        Bottom = bottom;
-    }
-
-    public float Horizontal => Left + Right;
-    public float Vertical => Top + Bottom;
+    public readonly float Horizontal => Left + Right;
+    public readonly float Vertical => Top + Bottom;
 }

@@ -91,8 +91,7 @@ public class Button : UIElement {
         canvas.DrawRect(skRect, _borderPaint);
 
         var text = Text ?? string.Empty;
-        if (_font == null)
-            _font = new SKFont(SKTypeface.Default, _scaledFontSize);
+        _font ??= new SKFont(SKTypeface.Default, _scaledFontSize);
 
         _font.MeasureText(text, out SKRect textBounds);
 

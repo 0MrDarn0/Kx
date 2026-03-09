@@ -2,28 +2,28 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Abstractions.Backend;
 using KUpdater.Abstractions.Events;
+using KUpdater.Abstractions.WindowHost;
 using KUpdater.Core.Interop;
 using KUpdater.Core.Localization;
 using KUpdater.Utility;
 
-namespace KUpdater.Backend.WinForms;
+namespace KUpdater.WindowHost.WinForms;
 
-public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBackend {
+public class WinFormsWindowHost : Form, IWindowHost {
 
-    IntPtr IRenderTarget.Handle => Handle;
-    bool IRenderTarget.IsDisposed => IsDisposed;
-    bool IRenderTarget.IsHandleCreated => IsHandleCreated;
-    int IRenderTarget.Left => Left;
-    int IRenderTarget.Top => Top;
-    int IRenderTarget.Width => Width;
-    int IRenderTarget.Height => Height;
-    int IRenderTarget.DeviceDpi => DeviceDpi;
+    IntPtr IWindowSurface.Handle => Handle;
+    bool IWindowSurface.IsDisposed => IsDisposed;
+    bool IWindowSurface.IsHandleCreated => IsHandleCreated;
+    int IWindowSurface.Left => Left;
+    int IWindowSurface.Top => Top;
+    int IWindowSurface.Width => Width;
+    int IWindowSurface.Height => Height;
+    int IWindowSurface.DeviceDpi => DeviceDpi;
 
-    bool IUiThreadInvoker.InvokeRequired => base.InvokeRequired;
-    void IUiThreadInvoker.BeginInvoke(Delegate d) => base.BeginInvoke(d);
-    void IUiThreadInvoker.Invoke(Action action) => base.Invoke(action);
+    bool IUiDispatcher.InvokeRequired => base.InvokeRequired;
+    void IUiDispatcher.BeginInvoke(Delegate d) => base.BeginInvoke(d);
+    void IUiDispatcher.Invoke(Action action) => base.Invoke(action);
 
     private Icon? _appIcon;
     private bool _iconMissingNotified;
@@ -46,30 +46,30 @@ public class WinFormsBackend : Form, IRenderTarget, IUiThreadInvoker, IWindowBac
     private event Action<FocusEvent>? _focusChanged;
 
 
-    event Action<ResizeEvent>? IWindowBackend.Resized { add => _resized += value; remove => _resized -= value; }
-    event Action<MouseEvent>? IWindowBackend.MouseMove { add => _mouseMove += value; remove => _mouseMove -= value; }
-    event Action<MouseEvent>? IWindowBackend.MouseDown { add => _mouseDown += value; remove => _mouseDown -= value; }
-    event Action<MouseEvent>? IWindowBackend.MouseUp { add => _mouseUp += value; remove => _mouseUp -= value; }
-    event Action<MouseEvent>? IWindowBackend.MouseWheel { add => _mouseWheel += value; remove => _mouseWheel -= value; }
-    event Action<ShownEvent>? IWindowBackend.Shown { add => _shown += value; remove => _shown -= value; }
-    event Action<ClosedEvent>? IWindowBackend.Closed { add => _closed += value; remove => _closed -= value; }
-    event Action<KeyEvent>? IWindowBackend.KeyDown { add => _keyDown += value; remove => _keyDown -= value; }
-    event Action<KeyEvent>? IWindowBackend.KeyUp { add => _keyUp += value; remove => _keyUp -= value; }
-    event Action<TextInputEvent>? IWindowBackend.TextInput { add => _textInput += value; remove => _textInput -= value; }
-    event Action<StateEvent>? IWindowBackend.StateChanged { add => _stateChanged += value; remove => _stateChanged -= value; }
-    event Action<FocusEvent>? IWindowBackend.FocusChanged { add => _focusChanged += value; remove => _focusChanged -= value; }
+    event Action<ResizeEvent>? IWindowHost.Resized { add => _resized += value; remove => _resized -= value; }
+    event Action<MouseEvent>? IWindowHost.MouseMove { add => _mouseMove += value; remove => _mouseMove -= value; }
+    event Action<MouseEvent>? IWindowHost.MouseDown { add => _mouseDown += value; remove => _mouseDown -= value; }
+    event Action<MouseEvent>? IWindowHost.MouseUp { add => _mouseUp += value; remove => _mouseUp -= value; }
+    event Action<MouseEvent>? IWindowHost.MouseWheel { add => _mouseWheel += value; remove => _mouseWheel -= value; }
+    event Action<ShownEvent>? IWindowHost.Shown { add => _shown += value; remove => _shown -= value; }
+    event Action<ClosedEvent>? IWindowHost.Closed { add => _closed += value; remove => _closed -= value; }
+    event Action<KeyEvent>? IWindowHost.KeyDown { add => _keyDown += value; remove => _keyDown -= value; }
+    event Action<KeyEvent>? IWindowHost.KeyUp { add => _keyUp += value; remove => _keyUp -= value; }
+    event Action<TextInputEvent>? IWindowHost.TextInput { add => _textInput += value; remove => _textInput -= value; }
+    event Action<StateEvent>? IWindowHost.StateChanged { add => _stateChanged += value; remove => _stateChanged -= value; }
+    event Action<FocusEvent>? IWindowHost.FocusChanged { add => _focusChanged += value; remove => _focusChanged -= value; }
 
     public void SetSize(int width, int height) => Size = new Size(width, height);
     public void SetPosition(int x, int y) => Location = new Point(x, y);
     public void ShowWindow() => Show();
     public void CloseWindow() => Close();
 
-    object? IWindowBackend.Cursor {
+    object? IWindowHost.Cursor {
         get => base.Cursor;
         set => base.Cursor = value as Cursor;
     }
 
-    public WinFormsBackend() {
+    public WinFormsWindowHost() {
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
         DoubleBuffered = true;

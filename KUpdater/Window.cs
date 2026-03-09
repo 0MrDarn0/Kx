@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using KUpdater.Abstractions.Backend;
 using KUpdater.Abstractions.Events;
 using KUpdater.Abstractions.Logging;
+using KUpdater.Abstractions.WindowHost;
 using KUpdater.Core;
 using KUpdater.Core.Configuration;
 using KUpdater.Core.Event;
@@ -22,22 +22,22 @@ namespace KUpdater;
 public class Window : IDisposable {
     public static Window? Instance { get; private set; }
 
-    private readonly IWindowBackend _backend;
+    private readonly IWindowHost _windowHost;
     private readonly WindowContext _ctx;
     private readonly WindowInteraction _interaction;
     private readonly ITrayService? _trayService;
     private readonly ILoggingService? _logger;
 
-    public Window(IWindowBackend backend, ITrayService? trayService = null, ILoggingService? loggingService = null) {
+    public Window(IWindowHost windowHost, ITrayService? trayService = null, ILoggingService? loggingService = null) {
         Instance = this;
-        _backend = backend;
+        _windowHost = windowHost;
         _trayService = trayService;
         _logger = loggingService;
 
         _ctx = new WindowContext(
-            target: backend,
-            uiThread: backend,
-            backend: backend,
+            target: windowHost,
+            uiThread: windowHost,
+            windowHost: windowHost,
             eventManager: new EventManager());
 
         var config = ConfigLoader.Load<WindowConfig>(Paths.GetConfig("frame.yaml"));
@@ -100,7 +100,7 @@ public class Window : IDisposable {
 
         _ctx.SetPipeline(pipeline);
 
-        _interaction = new WindowInteraction(backend: _backend, ctx: _ctx);
+        _interaction = new WindowInteraction(windowHost: _windowHost, ctx: _ctx);
 
 
         // TrayService konfigurieren, falls vorhanden

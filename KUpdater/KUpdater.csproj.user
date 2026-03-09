@@ -4,7 +4,7 @@
     <_LastSelectedProfileId>X:\KUpdater\KUpdater\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Update="Backend\WinForms\WinFormsBackend.cs">
+    <Compile Update="WindowHost\WinForms\WinFormsWindowHost.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

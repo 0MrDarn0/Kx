@@ -4,32 +4,14 @@
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using KUpdater.Abstractions.Rendering;
 using KUpdater.Core;
 using KUpdater.Core.Interop;
+using KUpdater.Core.Interop.SafeHandles;
 using KUpdater.Utility;
-using Microsoft.Win32.SafeHandles;
 using SkiaSharp;
 
 namespace KUpdater.UI.Rendering;
-
-internal sealed class SafeMemoryDcHandle : SafeHandleZeroOrMinusOneIsInvalid {
-    public SafeMemoryDcHandle() : base(true) { }
-    public SafeMemoryDcHandle(IntPtr hdc) : base(true) {
-        SetHandle(hdc);
-    }
-    public void Attach(IntPtr hdc) => SetHandle(hdc);
-    protected override bool ReleaseHandle() => NativeMethods.DeleteDC(handle);
-}
-
-internal sealed class SafeGdiObjectHandle : SafeHandleZeroOrMinusOneIsInvalid {
-    public SafeGdiObjectHandle() : base(true) { }
-    public SafeGdiObjectHandle(IntPtr hObj) : base(true) {
-        SetHandle(hObj);
-    }
-    public void Attach(IntPtr hObj) => SetHandle(hObj);
-    protected override bool ReleaseHandle() => NativeMethods.DeleteObject(handle);
-}
-
 
 public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     private readonly WindowContext _ctx;

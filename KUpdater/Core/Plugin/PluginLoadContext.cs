@@ -6,13 +6,8 @@ using System.Runtime.Loader;
 
 namespace KUpdater.Core.Plugin;
 
-public sealed class PluginLoadContext : AssemblyLoadContext {
-    private readonly AssemblyDependencyResolver _resolver;
-
-    public PluginLoadContext(string mainAssemblyPath)
-        : base(isCollectible: true) {
-        _resolver = new AssemblyDependencyResolver(mainAssemblyPath);
-    }
+public sealed class PluginLoadContext(string mainAssemblyPath) : AssemblyLoadContext(isCollectible: true) {
+    private readonly AssemblyDependencyResolver _resolver = new(mainAssemblyPath);
 
     protected override Assembly? Load(AssemblyName assemblyName) {
         var path = _resolver.ResolveAssemblyToPath(assemblyName);
