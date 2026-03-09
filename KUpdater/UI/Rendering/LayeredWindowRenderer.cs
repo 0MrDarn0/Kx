@@ -55,7 +55,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
 
     // DIBSection + DC (UI-Thread)
     private IntPtr _hSection = IntPtr.Zero;
-    private IntPtr _hDib = IntPtr.Zero;
+    private SafeGdiObjectHandle? _hDibHandle;
     private IntPtr _dibPixels = IntPtr.Zero;
     private int _dibWidth;
     private int _dibHeight;
@@ -136,15 +136,29 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
         try { ReleaseMappedDib(); }
         catch { }
 
-        if (_memDc is not null && !_memDc.IsInvalid) {
-            try {
-                if (_oldMemDcObj != IntPtr.Zero)
-                    _ = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _oldMemDcObj);
+        try {
+            lock (_dibLock) {
+                if (_memDc is not null && !_memDc.IsInvalid) {
+                    try {
+                        if (_oldMemDcObj != IntPtr.Zero) {
+                            TryRestoreSelectedObject(_memDc, _oldMemDcObj);
+                            _oldMemDcObj = IntPtr.Zero;
+                        }
+                    }
+                    catch { /* best effort */ }
+                }
             }
-            catch { }
-            try { _memDc.Dispose(); }
-            catch { }
         }
+        catch { /* best effort */ }
+
+        try {
+            if (_memDc is not null) {
+                try { _memDc.Dispose(); }
+                catch { }
+                _memDc = null;
+            }
+        }
+        catch { /* best effort */ }
 
         _bgSurface = null;
         _bgRenderBitmap = null;
@@ -200,6 +214,55 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
         }
     }
 
+    // Sichert Lebenszeit von memDcHandle und hbitmapHandle, selektiert hbitmap und liefert das vorherige Objekt.
+    private static bool TrySelectHbitmap(SafeHandle memDcHandle, SafeHandle hbitmapHandle, out IntPtr previous) {
+        previous = IntPtr.Zero;
+        if (memDcHandle is null || memDcHandle.IsInvalid)
+            return false;
+        if (hbitmapHandle is null || hbitmapHandle.IsInvalid)
+            return false;
+
+        bool memAdded = false;
+        bool bmpAdded = false;
+        try {
+            memDcHandle.DangerousAddRef(ref memAdded);
+            hbitmapHandle.DangerousAddRef(ref bmpAdded);
+
+            IntPtr memHdc = memDcHandle.DangerousGetHandle();
+            IntPtr bmpH = hbitmapHandle.DangerousGetHandle();
+
+            previous = NativeMethods.SelectObject(memHdc, bmpH);
+            return previous != IntPtr.Zero;
+        }
+        finally {
+            if (bmpAdded)
+                hbitmapHandle.DangerousRelease();
+            if (memAdded)
+                memDcHandle.DangerousRelease();
+        }
+    }
+
+    // Stellt ein zuvor gespeichertes Objekt wieder her; sichert Lebenszeit des DC SafeHandle.
+    private static void TryRestoreSelectedObject(SafeHandle memDcHandle, IntPtr previous) {
+        if (previous == IntPtr.Zero)
+            return;
+        if (memDcHandle is null || memDcHandle.IsInvalid)
+            return;
+
+        bool memAdded = false;
+        try {
+            memDcHandle.DangerousAddRef(ref memAdded);
+            IntPtr memHdc = memDcHandle.DangerousGetHandle();
+            _ = NativeMethods.SelectObject(memHdc, previous);
+        }
+        catch { /* best effort */ }
+        finally {
+            if (memAdded)
+                memDcHandle.DangerousRelease();
+        }
+    }
+
+
     private void EnsureWorkerBuffers(int width, int height) {
         if (_bgRenderBitmap == null ||
             _bgRenderBitmap.Width != width ||
@@ -241,39 +304,46 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
 
         lock (_dibLock) {
             bool sizeMatches =
-                _hDib != IntPtr.Zero &&
-                _dibPixels != IntPtr.Zero &&
-                _dibWidth == width &&
-                _dibHeight == height;
+            _hDibHandle is not null &&
+            !_hDibHandle.IsInvalid &&
+            _dibPixels != IntPtr.Zero &&
+            _dibWidth == width &&
+            _dibHeight == height;
 
             if (sizeMatches && _memDc is not null && !_memDc.IsInvalid)
                 return true;
 
+            // Wenn ein altes DIB existiert: zuerst Rückselektion, dann Dispose und Nulling
             try {
-                if (_hDib != IntPtr.Zero) {
-                    // Wenn das DIB aktuell in unserem persistenten DC selektiert ist, stelle das alte Objekt wieder her
+                if (_hDibHandle is not null) {
                     try {
                         if (_memDc is not null && !_memDc.IsInvalid && _oldMemDcObj != IntPtr.Zero) {
-                            _ = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _oldMemDcObj);
+                            TryRestoreSelectedObject(_memDc, _oldMemDcObj);
                             _oldMemDcObj = IntPtr.Zero;
                         }
                     }
                     catch { /* best effort */ }
 
-                    _ = NativeMethods.DeleteObject(_hDib);
-                    _hDib = IntPtr.Zero;
+                    try { _hDibHandle.Dispose(); }
+                    catch { }
+                    _hDibHandle = null;
+
+                    // sofort ungültig markieren
+                    _dibPixels = IntPtr.Zero;
+                    _dibWidth = 0;
+                    _dibHeight = 0;
                 }
             }
-            catch { }
+            catch { /* best effort */ }
 
-
+            // Close previous section if any
             try {
                 if (_hSection != IntPtr.Zero) {
                     _ = NativeMethods.CloseHandle(_hSection);
                     _hSection = IntPtr.Zero;
                 }
             }
-            catch { }
+            catch { /* best effort */ }
 
             long bytes = (long)width * height * 4;
             if (bytes <= 0 || bytes > (long)int.MaxValue * 4L) {
@@ -285,22 +355,20 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             uint sizeHigh = (uint)((bytes >> 32) & 0xFFFFFFFF);
 
             IntPtr hSection = NativeMethods.CreateFileMapping(
-                NativeMethods.INVALID_HANDLE_VALUE,
-                IntPtr.Zero,
-                NativeMethods.PAGE_READWRITE,
-                sizeHigh,
-                sizeLow,
-                null);
+            NativeMethods.INVALID_HANDLE_VALUE,
+            IntPtr.Zero,
+            NativeMethods.PAGE_READWRITE,
+            sizeHigh,
+            sizeLow,
+            null);
 
             if (hSection == IntPtr.Zero) {
                 Debug.WriteLine($"CreateFileMapping failed: {Marshal.GetLastWin32Error()}");
                 return false;
             }
 
-            var bmi = new NativeMethods.BITMAPINFO
-            {
-                bmiHeader = new NativeMethods.BITMAPINFOHEADER
-                {
+            var bmi = new NativeMethods.BITMAPINFO {
+                bmiHeader = new NativeMethods.BITMAPINFOHEADER {
                     biSize = (uint)Marshal.SizeOf<NativeMethods.BITMAPINFOHEADER>(),
                     biWidth = width,
                     biHeight = -height,
@@ -314,12 +382,12 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
 
             IntPtr dibPixels;
             IntPtr hDib = NativeMethods.CreateDIBSection(
-                IntPtr.Zero,
-                ref bmi,
-                NativeMethods.DIB_RGB_COLORS,
-                out dibPixels,
-                hSection,
-                0);
+            IntPtr.Zero,
+            ref bmi,
+            NativeMethods.DIB_RGB_COLORS,
+            out dibPixels,
+            hSection,
+            0);
 
             if (hDib == IntPtr.Zero || dibPixels == IntPtr.Zero) {
                 Debug.WriteLine($"CreateDIBSection failed: {Marshal.GetLastWin32Error()}");
@@ -328,8 +396,14 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 return false;
             }
 
+            // Assign new section and DIB handle
             _hSection = hSection;
-            _hDib = hDib;
+
+            // Dispose any previous handle (already disposed above, but keep defensive)
+            try { _hDibHandle?.Dispose(); }
+            catch { }
+            _hDibHandle = new SafeGdiObjectHandle(hDib);
+
             _dibPixels = dibPixels;
             _dibWidth = width;
             _dibHeight = height;
@@ -358,13 +432,16 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 }
             }
 
-            // DIB in persistenten DC selektieren
-            if (_memDc is not null && !_memDc.IsInvalid) {
+            // DIB in persistenten DC selektieren (sicher)
+            if (_memDc is not null && !_memDc.IsInvalid && _hDibHandle is not null && !_hDibHandle.IsInvalid) {
                 try {
-                    if (_oldMemDcObj == IntPtr.Zero) {
-                        _oldMemDcObj = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _hDib);
+                    if (TrySelectHbitmap(_memDc, _hDibHandle, out IntPtr prev)) {
+                        if (_oldMemDcObj == IntPtr.Zero)
+                            _oldMemDcObj = prev;
+                        else if (prev == IntPtr.Zero)
+                            Debug.WriteLine("SelectObject returned null when selecting new DIB into persistent DC.");
                     } else {
-                        _ = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _hDib);
+                        Debug.WriteLine("TrySelectHbitmap failed when selecting new DIB into persistent DC.");
                     }
                 }
                 catch (Exception ex) {
@@ -407,20 +484,27 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     private void ReleaseMappedDib() {
         lock (_dibLock) {
             try {
-                if (_hDib != IntPtr.Zero) {
+                if (_hDibHandle is not null) {
                     try {
                         if (_memDc is not null && !_memDc.IsInvalid && _oldMemDcObj != IntPtr.Zero) {
-                            _ = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _oldMemDcObj);
+                            TryRestoreSelectedObject(_memDc, _oldMemDcObj);
                             _oldMemDcObj = IntPtr.Zero;
                         }
                     }
-                    catch { }
+                    catch { /* best effort */ }
 
-                    _ = NativeMethods.DeleteObject(_hDib);
-                    _hDib = IntPtr.Zero;
+                    try {
+                        _hDibHandle.Dispose();
+                    }
+                    catch { /* best effort */ }
+
+                    _hDibHandle = null;
+                    _dibPixels = IntPtr.Zero;
+                    _dibWidth = 0;
+                    _dibHeight = 0;
                 }
             }
-            catch { }
+            catch { /* best effort */ }
 
             try {
                 if (_hSection != IntPtr.Zero) {
@@ -428,11 +512,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                     _hSection = IntPtr.Zero;
                 }
             }
-            catch { }
-
-            _dibPixels = IntPtr.Zero;
-            _dibWidth = 0;
-            _dibHeight = 0;
+            catch { /* best effort */ }
         }
     }
 
@@ -565,7 +645,9 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     // ============================================================
     private void PresentDibFast() {
         lock (_dibLock) {
-            if (_hDib == IntPtr.Zero || _dibPixels == IntPtr.Zero)
+            if (_hDibHandle is null || _hDibHandle.IsInvalid)
+                return;
+            if (_dibPixels == IntPtr.Zero)
                 return;
             if (_memDc is null || _memDc.IsInvalid)
                 return;
@@ -578,31 +660,44 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             Point source = new(0, 0);
             Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
 
-            var blend = new NativeMethods.BLENDFUNCTION
-            {
+            var blend = new NativeMethods.BLENDFUNCTION {
                 BlendOp = NativeMethods.AC_SRC_OVER,
                 BlendFlags = 0,
                 SourceConstantAlpha = 255,
                 AlphaFormat = NativeMethods.AC_SRC_ALPHA
             };
 
-            bool success = NativeMethods.UpdateLayeredWindow(
+            bool memAdded = false;
+            try {
+                _memDc.DangerousAddRef(ref memAdded);
+                IntPtr memHdc = _memDc.DangerousGetHandle();
+
+                bool success = NativeMethods.UpdateLayeredWindow(
                 hwnd,
-                IntPtr.Zero, // Desktop-DC
+                IntPtr.Zero,
                 ref topPos,
                 ref size,
-                _memDc.DangerousGetHandle(),
+                memHdc,
                 ref source,
                 0,
                 ref blend,
                 NativeMethods.ULW_ALPHA);
 
-            if (!success) {
-                LastPresentError = Marshal.GetLastWin32Error();
-                Debug.WriteLine($"UpdateLayeredWindow failed: {LastPresentError}");
+                if (!success) {
+                    LastPresentError = Marshal.GetLastWin32Error();
+                    Debug.WriteLine($"UpdateLayeredWindow failed: {LastPresentError}");
+                }
+            }
+            catch (Exception ex) {
+                Debug.WriteLine($"PresentDibFast error: {ex}");
+            }
+            finally {
+                if (memAdded)
+                    _memDc.DangerousRelease();
             }
         }
     }
+
 
     private void EnqueueUiPresentFallback() {
         SKBitmap? toPresent;
@@ -714,27 +809,29 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             return;
 
         IntPtr screenDc = IntPtr.Zero;
-        IntPtr memDc = IntPtr.Zero;
-        IntPtr hDibLocal = IntPtr.Zero;
-        IntPtr oldObj = IntPtr.Zero;
+        IntPtr rawMemDc = IntPtr.Zero;
         IntPtr dibPixelsLocal = IntPtr.Zero;
+
+        SafeMemoryDcHandle? localMemDcHandle = null;
+        SafeGdiObjectHandle? localDibHandle = null;
+        IntPtr oldObj = IntPtr.Zero;
 
         try {
             screenDc = NativeMethods.GetDC(IntPtr.Zero);
             if (screenDc == IntPtr.Zero)
                 return;
 
-            memDc = NativeMethods.CreateCompatibleDC(screenDc);
-            if (memDc == IntPtr.Zero)
+            rawMemDc = NativeMethods.CreateCompatibleDC(screenDc);
+            if (rawMemDc == IntPtr.Zero)
                 return;
+
+            localMemDcHandle = new SafeMemoryDcHandle(rawMemDc);
 
             int width = bitmap.Width;
             int height = bitmap.Height;
 
-            var bmi = new NativeMethods.BITMAPINFO
-        {
-                bmiHeader = new NativeMethods.BITMAPINFOHEADER
-            {
+            var bmi = new NativeMethods.BITMAPINFO {
+                bmiHeader = new NativeMethods.BITMAPINFOHEADER {
                     biSize = (uint)Marshal.SizeOf<NativeMethods.BITMAPINFOHEADER>(),
                     biWidth = width,
                     biHeight = -height,
@@ -746,16 +843,18 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 bmiColors = new uint[3]
             };
 
-            hDibLocal = NativeMethods.CreateDIBSection(
-                screenDc,
-                ref bmi,
-                NativeMethods.DIB_RGB_COLORS,
-                out dibPixelsLocal,
-                IntPtr.Zero,
-                0);
+            IntPtr hDibLocal = NativeMethods.CreateDIBSection(
+            screenDc,
+            ref bmi,
+            NativeMethods.DIB_RGB_COLORS,
+            out dibPixelsLocal,
+            IntPtr.Zero,
+            0);
 
             if (hDibLocal == IntPtr.Zero || dibPixelsLocal == IntPtr.Zero)
                 return;
+
+            localDibHandle = new SafeGdiObjectHandle(hDibLocal);
 
             var bmpData = bitmap.LockBits(
             new Rectangle(0, 0, width, height),
@@ -766,7 +865,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 int dstStride = width * 4;
                 int rowBytesToCopy = Math.Min(bmpData.Stride, dstStride);
 
-                // zentrale Kopierfunktion verwenden
                 PixelCopyHelpers.CopyFromBitmapData(
                     bmpData.Scan0,
                     bmpData.Stride,
@@ -780,45 +878,76 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 bitmap.UnlockBits(bmpData);
             }
 
-            oldObj = NativeMethods.SelectObject(memDc, hDibLocal);
+            bool memAdded = false;
+            bool dibAdded = false;
+            try {
+                localMemDcHandle.DangerousAddRef(ref memAdded);
+                localDibHandle.DangerousAddRef(ref dibAdded);
 
-            Size size = new(width, height);
-            Point source = new(0, 0);
-            Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
+                IntPtr memHdc = localMemDcHandle.DangerousGetHandle();
+                IntPtr dibHbitmap = localDibHandle.DangerousGetHandle();
 
-            var blend = new NativeMethods.BLENDFUNCTION
-        {
-                BlendOp = NativeMethods.AC_SRC_OVER,
-                BlendFlags = 0,
-                SourceConstantAlpha = opacity,
-                AlphaFormat = NativeMethods.AC_SRC_ALPHA
-            };
+                oldObj = NativeMethods.SelectObject(memHdc, dibHbitmap);
 
-            bool success = NativeMethods.UpdateLayeredWindow(
-            hwnd,
-            screenDc,
-            ref topPos,
-            ref size,
-            memDc,
-            ref source,
-            0,
-            ref blend,
-            NativeMethods.ULW_ALPHA);
+                Size size = new(width, height);
+                Point source = new(0, 0);
+                Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
 
-            if (!success) {
-                LastPresentError = Marshal.GetLastWin32Error();
-                Debug.WriteLine($"UpdateLayeredWindow (fallback) failed: {LastPresentError}");
+                var blend = new NativeMethods.BLENDFUNCTION {
+                    BlendOp = NativeMethods.AC_SRC_OVER,
+                    BlendFlags = 0,
+                    SourceConstantAlpha = opacity,
+                    AlphaFormat = NativeMethods.AC_SRC_ALPHA
+                };
+
+                bool success = NativeMethods.UpdateLayeredWindow(
+                hwnd,
+                screenDc,
+                ref topPos,
+                ref size,
+                memHdc,
+                ref source,
+                0,
+                ref blend,
+                NativeMethods.ULW_ALPHA);
+
+                if (!success) {
+                    LastPresentError = Marshal.GetLastWin32Error();
+                    Debug.WriteLine($"UpdateLayeredWindow (fallback) failed: {LastPresentError}");
+                }
             }
+            finally {
+                try {
+                    if (localMemDcHandle is not null && oldObj != IntPtr.Zero)
+                        TryRestoreSelectedObject(localMemDcHandle, oldObj);
+                }
+                catch { /* best effort */ }
 
-            _ = NativeMethods.SelectObject(memDc, oldObj);
+                if (dibAdded)
+                    localDibHandle?.DangerousRelease();
+                if (memAdded)
+                    localMemDcHandle?.DangerousRelease();
+            }
         }
         finally {
-            if (hDibLocal != IntPtr.Zero)
-                _ = NativeMethods.DeleteObject(hDibLocal);
-            if (memDc != IntPtr.Zero)
-                _ = NativeMethods.DeleteDC(memDc);
-            if (screenDc != IntPtr.Zero)
-                _ = NativeMethods.ReleaseDC(IntPtr.Zero, screenDc);
+            try { localDibHandle?.Dispose(); }
+            catch { }
+
+            try {
+                if (rawMemDc != IntPtr.Zero) {
+                    if (localMemDcHandle is not null) {
+                        try { localMemDcHandle.Dispose(); }
+                        catch { }
+                    } else {
+                        try { NativeMethods.DeleteDC(rawMemDc); }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+
+            try { if (screenDc != IntPtr.Zero) _ = NativeMethods.ReleaseDC(IntPtr.Zero, screenDc); }
+            catch { }
         }
     }
 
