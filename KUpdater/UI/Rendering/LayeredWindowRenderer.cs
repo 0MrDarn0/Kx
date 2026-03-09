@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using KUpdater.Core;
 using KUpdater.Core.Interop;
+using KUpdater.Utility;
 using Microsoft.Win32.SafeHandles;
 using SkiaSharp;
 
@@ -13,33 +14,22 @@ namespace KUpdater.UI.Rendering;
 
 internal sealed class SafeMemoryDcHandle : SafeHandleZeroOrMinusOneIsInvalid {
     public SafeMemoryDcHandle() : base(true) { }
-
     public SafeMemoryDcHandle(IntPtr hdc) : base(true) {
         SetHandle(hdc);
     }
-
-    public void Attach(IntPtr hdc) {
-        SetHandle(hdc);
-    }
-
-    protected override bool ReleaseHandle()
-        => NativeMethods.DeleteDC(handle);
+    public void Attach(IntPtr hdc) => SetHandle(hdc);
+    protected override bool ReleaseHandle() => NativeMethods.DeleteDC(handle);
 }
 
 internal sealed class SafeGdiObjectHandle : SafeHandleZeroOrMinusOneIsInvalid {
     public SafeGdiObjectHandle() : base(true) { }
-
     public SafeGdiObjectHandle(IntPtr hObj) : base(true) {
         SetHandle(hObj);
     }
-
-    public void Attach(IntPtr hObj) {
-        SetHandle(hObj);
-    }
-
-    protected override bool ReleaseHandle()
-        => NativeMethods.DeleteObject(handle);
+    public void Attach(IntPtr hObj) => SetHandle(hObj);
+    protected override bool ReleaseHandle() => NativeMethods.DeleteObject(handle);
 }
+
 
 public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     private readonly WindowContext _ctx;
@@ -261,11 +251,21 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
 
             try {
                 if (_hDib != IntPtr.Zero) {
+                    // Wenn das DIB aktuell in unserem persistenten DC selektiert ist, stelle das alte Objekt wieder her
+                    try {
+                        if (_memDc is not null && !_memDc.IsInvalid && _oldMemDcObj != IntPtr.Zero) {
+                            _ = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _oldMemDcObj);
+                            _oldMemDcObj = IntPtr.Zero;
+                        }
+                    }
+                    catch { /* best effort */ }
+
                     _ = NativeMethods.DeleteObject(_hDib);
                     _hDib = IntPtr.Zero;
                 }
             }
             catch { }
+
 
             try {
                 if (_hSection != IntPtr.Zero) {
@@ -376,10 +376,46 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
         }
     }
 
+    private unsafe bool CopySkBitmapToMappedDib(SKBitmap toPresent) {
+        if (toPresent == null)
+            return false;
+
+        lock (_dibLock) {
+            if (_dibPixels == IntPtr.Zero)
+                return false;
+
+            SKPixmap pixmap = new();
+            bool hasPixmap = false;
+            try {
+                hasPixmap = toPresent.PeekPixels(pixmap);
+            }
+            catch {
+                hasPixmap = false;
+            }
+
+            if (!hasPixmap || pixmap.GetPixels() == IntPtr.Zero)
+                return false;
+
+            int dstStride = _dibWidth * 4;
+
+            // PixelCopyHelpers übernimmt alle Stride-Fälle und nutzt _zeroRowBuffer per ref
+            bool ok = PixelCopyHelpers.TryCopyFromSkPixmap(pixmap, _dibPixels, dstStride, ref _zeroRowBuffer);
+            return ok;
+        }
+    }
+
     private void ReleaseMappedDib() {
         lock (_dibLock) {
             try {
                 if (_hDib != IntPtr.Zero) {
+                    try {
+                        if (_memDc is not null && !_memDc.IsInvalid && _oldMemDcObj != IntPtr.Zero) {
+                            _ = NativeMethods.SelectObject(_memDc.DangerousGetHandle(), _oldMemDcObj);
+                            _oldMemDcObj = IntPtr.Zero;
+                        }
+                    }
+                    catch { }
+
                     _ = NativeMethods.DeleteObject(_hDib);
                     _hDib = IntPtr.Zero;
                 }
@@ -399,6 +435,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             _dibHeight = 0;
         }
     }
+
 
     // ============================================================
     //  RenderWorkerLoop
@@ -463,65 +500,16 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                     continue;
 
                 bool fallbackNeeded = false;
-                lock (_dibLock) {
-                    if (_dibPixels == IntPtr.Zero) {
+
+                // Neuer, zentraler Kopierpfad: versucht, SKBitmap direkt in die gemappte DIB zu kopieren.
+                // CopySkBitmapToMappedDib sperrt intern _dibLock und verwendet PixelCopyHelpers.
+                try {
+                    if (!CopySkBitmapToMappedDib(toPresent))
                         fallbackNeeded = true;
-                    } else {
-                        SKPixmap pixmap = new();
-                        bool hasPixmap = false;
-                        try {
-                            hasPixmap = toPresent.PeekPixels(pixmap);
-                        }
-                        catch {
-                            hasPixmap = false;
-                        }
-
-                        if (!hasPixmap || pixmap.GetPixels() == IntPtr.Zero) {
-                            fallbackNeeded = true;
-                        } else {
-                            int srcStride = pixmap.RowBytes;
-                            int srcHeight = pixmap.Height;
-                            long srcExpected = (long)srcStride * srcHeight;
-
-                            int dstStride = _dibWidth * 4;
-                            long dstExpected = (long)dstStride * srcHeight;
-
-                            if (srcExpected <= 0 || dstExpected <= 0 || toPresent.ByteCount < srcExpected) {
-                                fallbackNeeded = true;
-                            } else {
-                                try {
-                                    byte* srcPtr = (byte*)pixmap.GetPixels();
-                                    byte* dstPtr = (byte*)_dibPixels;
-
-                                    Span<byte> srcSpan = new(srcPtr, (int)srcExpected);
-                                    Span<byte> dstSpan = new(dstPtr, (int)dstExpected);
-
-                                    if (dstStride > srcStride) {
-                                        EnsureZeroRowBuffer(dstStride);
-                                        for (int y = 0; y < srcHeight; y++) {
-                                            var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
-                                            var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                                            sRow.CopyTo(dRow);
-                                            if (dstStride > sRow.Length)
-                                                dRow[sRow.Length..].Clear();
-                                        }
-                                    } else if (srcStride == dstStride) {
-                                        srcSpan.CopyTo(dstSpan);
-                                    } else {
-                                        for (int y = 0; y < srcHeight; y++) {
-                                            var sRow = srcSpan.Slice(y * srcStride, srcStride);
-                                            var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                                            sRow[..dstStride].CopyTo(dRow);
-                                        }
-                                    }
-                                }
-                                catch (Exception ex) {
-                                    Debug.WriteLine($"Pixel copy error: {ex}");
-                                    fallbackNeeded = true;
-                                }
-                            }
-                        }
-                    }
+                }
+                catch (Exception ex) {
+                    Debug.WriteLine($"Pixel copy (central) error: {ex}");
+                    fallbackNeeded = true;
                 }
 
                 if (fallbackNeeded) {
@@ -668,48 +656,40 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             Interlocked.Exchange(ref _needsRender, 1);
     }
 
-    private void PresentFallbackBitmap(SKBitmap toPresent) {
+
+    private unsafe void PresentFallbackBitmap(SKBitmap toPresent) {
+        if (toPresent == null)
+            return;
+
         Bitmap? tmpBmp = null;
         try {
             tmpBmp = new Bitmap(toPresent.Width, toPresent.Height, PixelFormat.Format32bppPArgb);
             var bmpData = tmpBmp.LockBits(
-                new Rectangle(0, 0, tmpBmp.Width, tmpBmp.Height),
-                ImageLockMode.WriteOnly,
-                PixelFormat.Format32bppPArgb);
+            new Rectangle(0, 0, tmpBmp.Width, tmpBmp.Height),
+            ImageLockMode.WriteOnly,
+            PixelFormat.Format32bppPArgb);
 
             try {
-                byte* src = (byte*)toPresent.GetPixels();
-                byte* dst = (byte*)bmpData.Scan0;
-                int srcStride = toPresent.RowBytes;
-                int dstStride = bmpData.Stride;
-                long srcExpected = (long)srcStride * toPresent.Height;
-                long dstExpected = (long)dstStride * toPresent.Height;
-                long skByteCount = toPresent.ByteCount;
+                SKPixmap pixmap = new();
+                bool hasPixmap = false;
+                try { hasPixmap = toPresent.PeekPixels(pixmap); }
+                catch { hasPixmap = false; }
 
-                if (src == null || dst == null || skByteCount < srcExpected)
+                if (!hasPixmap || pixmap.GetPixels() == IntPtr.Zero)
                     return;
 
-                Span<byte> srcSpan = new(src, (int)srcExpected);
-                Span<byte> dstSpan = new(dst, (int)dstExpected);
+                int dstStride = bmpData.Stride;
+                int rowBytesToCopy = Math.Min(pixmap.RowBytes, dstStride);
 
-                if (dstStride > srcStride) {
-                    EnsureZeroRowBuffer(dstStride);
-                    for (int y = 0; y < toPresent.Height; y++) {
-                        var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
-                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                        sRow.CopyTo(dRow);
-                        if (dstStride > sRow.Length)
-                            dRow[sRow.Length..].Clear();
-                    }
-                } else if (srcStride == dstStride) {
-                    srcSpan.CopyTo(dstSpan);
-                } else {
-                    for (int y = 0; y < toPresent.Height; y++) {
-                        var sRow = srcSpan.Slice(y * srcStride, srcStride);
-                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                        sRow[..dstStride].CopyTo(dRow);
-                    }
-                }
+                // zentrale Copy-Routine
+                PixelCopyHelpers.CopyStrideAware(
+                    (byte*)pixmap.GetPixels(),
+                    pixmap.RowBytes,
+                    (byte*)bmpData.Scan0,
+                    dstStride,
+                    rowBytesToCopy,
+                    toPresent.Height,
+                    ref _zeroRowBuffer);
             }
             finally {
                 tmpBmp.UnlockBits(bmpData);
@@ -723,7 +703,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
         }
     }
 
-    public void Present(Bitmap bitmap, byte opacity = 255) {
+    public unsafe void Present(Bitmap bitmap, byte opacity = 255) {
         if (_disposed || bitmap == null)
             return;
         if (_ctx.Target.IsDisposed || !_ctx.Target.IsHandleCreated)
@@ -752,9 +732,9 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             int height = bitmap.Height;
 
             var bmi = new NativeMethods.BITMAPINFO
-            {
+        {
                 bmiHeader = new NativeMethods.BITMAPINFOHEADER
-                {
+            {
                     biSize = (uint)Marshal.SizeOf<NativeMethods.BITMAPINFOHEADER>(),
                     biWidth = width,
                     biHeight = -height,
@@ -778,38 +758,23 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 return;
 
             var bmpData = bitmap.LockBits(
-                new Rectangle(0, 0, width, height),
-                ImageLockMode.ReadOnly,
-                PixelFormat.Format32bppPArgb);
+            new Rectangle(0, 0, width, height),
+            ImageLockMode.ReadOnly,
+            PixelFormat.Format32bppPArgb);
 
             try {
-                byte* src = (byte*)bmpData.Scan0;
-                byte* dst = (byte*)dibPixelsLocal;
-                int srcStride = bmpData.Stride;
                 int dstStride = width * 4;
-                long srcExpected = (long)srcStride * height;
-                long dstExpected = (long)dstStride * height;
+                int rowBytesToCopy = Math.Min(bmpData.Stride, dstStride);
 
-                Span<byte> srcSpan = new(src, (int)srcExpected);
-                Span<byte> dstSpan = new(dst, (int)dstExpected);
-
-                if (srcStride == dstStride) {
-                    srcSpan.CopyTo(dstSpan);
-                } else if (dstStride > srcStride) {
-                    for (int y = 0; y < height; y++) {
-                        var sRow = srcSpan.Slice(y * srcStride, Math.Min(srcStride, dstStride));
-                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                        sRow.CopyTo(dRow);
-                        if (dstStride > sRow.Length)
-                            dRow[sRow.Length..].Clear();
-                    }
-                } else {
-                    for (int y = 0; y < height; y++) {
-                        var sRow = srcSpan.Slice(y * srcStride, srcStride);
-                        var dRow = dstSpan.Slice(y * dstStride, dstStride);
-                        sRow[..dstStride].CopyTo(dRow);
-                    }
-                }
+                // zentrale Kopierfunktion verwenden
+                PixelCopyHelpers.CopyFromBitmapData(
+                    bmpData.Scan0,
+                    bmpData.Stride,
+                    dibPixelsLocal,
+                    dstStride,
+                    rowBytesToCopy,
+                    height,
+                    ref _zeroRowBuffer);
             }
             finally {
                 bitmap.UnlockBits(bmpData);
@@ -822,7 +787,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             Point topPos = new(_ctx.Target.Left, _ctx.Target.Top);
 
             var blend = new NativeMethods.BLENDFUNCTION
-            {
+        {
                 BlendOp = NativeMethods.AC_SRC_OVER,
                 BlendFlags = 0,
                 SourceConstantAlpha = opacity,
@@ -830,15 +795,15 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             };
 
             bool success = NativeMethods.UpdateLayeredWindow(
-                hwnd,
-                screenDc,
-                ref topPos,
-                ref size,
-                memDc,
-                ref source,
-                0,
-                ref blend,
-                NativeMethods.ULW_ALPHA);
+            hwnd,
+            screenDc,
+            ref topPos,
+            ref size,
+            memDc,
+            ref source,
+            0,
+            ref blend,
+            NativeMethods.ULW_ALPHA);
 
             if (!success) {
                 LastPresentError = Marshal.GetLastWin32Error();
@@ -856,6 +821,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 _ = NativeMethods.ReleaseDC(IntPtr.Zero, screenDc);
         }
     }
+
 
     // ============================================================
     //  Draw + Overlays
