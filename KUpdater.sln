@@ -3,21 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11018.127
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KUpdater", "KUpdater\KUpdater.csproj", "{D466A973-2EE2-42F2-889D-CB6E6E2C0084}"
-	ProjectSection(ProjectDependencies) = postProject
-		{B66FDAD5-15D2-B561-2DC9-8692E7D50534} = {B66FDAD5-15D2-B561-2DC9-8692E7D50534}
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateBuilder", "UpdateBuilder\UpdateBuilder.csproj", "{10DECC93-B6E3-4984-B65D-907CDF00594B}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C727B4EB-7967-46A0-B553-6BD082563FCD}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KUpdater.Abstractions", "KUpdater.Abstractions\KUpdater.Abstractions.csproj", "{95D10BD7-5C2A-4247-A3B3-7DCE7903C4AB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Plugin.Example", "Kx.Plugin.Example\Kx.Plugin.Example.csproj", "{5EC7CEF2-1EDA-F445-E81B-E34F5D899E43}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KPlugin", "KPlugin\KPlugin.csproj", "{B66FDAD5-15D2-B561-2DC9-8692E7D50534}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Abstractions", "Kx.Abstractions\Kx.Abstractions.csproj", "{E8130B61-6D32-62C4-9AFE-6ABF4092B5EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx", "Kx\Kx.csproj", "{881760AA-0EAA-A241-346D-B62CF504EA9E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Update.Builder", "Kx.Update.Builder\Kx.Update.Builder.csproj", "{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,22 +22,22 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D466A973-2EE2-42F2-889D-CB6E6E2C0084}.Debug|x64.ActiveCfg = Debug|x64
-		{D466A973-2EE2-42F2-889D-CB6E6E2C0084}.Debug|x64.Build.0 = Debug|x64
-		{D466A973-2EE2-42F2-889D-CB6E6E2C0084}.Release|x64.ActiveCfg = Release|x64
-		{D466A973-2EE2-42F2-889D-CB6E6E2C0084}.Release|x64.Build.0 = Release|x64
-		{10DECC93-B6E3-4984-B65D-907CDF00594B}.Debug|x64.ActiveCfg = Debug|x64
-		{10DECC93-B6E3-4984-B65D-907CDF00594B}.Debug|x64.Build.0 = Debug|x64
-		{10DECC93-B6E3-4984-B65D-907CDF00594B}.Release|x64.ActiveCfg = Release|x64
-		{10DECC93-B6E3-4984-B65D-907CDF00594B}.Release|x64.Build.0 = Release|x64
-		{95D10BD7-5C2A-4247-A3B3-7DCE7903C4AB}.Debug|x64.ActiveCfg = Debug|x64
-		{95D10BD7-5C2A-4247-A3B3-7DCE7903C4AB}.Debug|x64.Build.0 = Debug|x64
-		{95D10BD7-5C2A-4247-A3B3-7DCE7903C4AB}.Release|x64.ActiveCfg = Release|x64
-		{95D10BD7-5C2A-4247-A3B3-7DCE7903C4AB}.Release|x64.Build.0 = Release|x64
-		{B66FDAD5-15D2-B561-2DC9-8692E7D50534}.Debug|x64.ActiveCfg = Debug|x64
-		{B66FDAD5-15D2-B561-2DC9-8692E7D50534}.Debug|x64.Build.0 = Debug|x64
-		{B66FDAD5-15D2-B561-2DC9-8692E7D50534}.Release|x64.ActiveCfg = Release|x64
-		{B66FDAD5-15D2-B561-2DC9-8692E7D50534}.Release|x64.Build.0 = Release|x64
+		{5EC7CEF2-1EDA-F445-E81B-E34F5D899E43}.Debug|x64.ActiveCfg = Debug|x64
+		{5EC7CEF2-1EDA-F445-E81B-E34F5D899E43}.Debug|x64.Build.0 = Debug|x64
+		{5EC7CEF2-1EDA-F445-E81B-E34F5D899E43}.Release|x64.ActiveCfg = Release|x64
+		{5EC7CEF2-1EDA-F445-E81B-E34F5D899E43}.Release|x64.Build.0 = Release|x64
+		{E8130B61-6D32-62C4-9AFE-6ABF4092B5EE}.Debug|x64.ActiveCfg = Debug|x64
+		{E8130B61-6D32-62C4-9AFE-6ABF4092B5EE}.Debug|x64.Build.0 = Debug|x64
+		{E8130B61-6D32-62C4-9AFE-6ABF4092B5EE}.Release|x64.ActiveCfg = Release|x64
+		{E8130B61-6D32-62C4-9AFE-6ABF4092B5EE}.Release|x64.Build.0 = Release|x64
+		{881760AA-0EAA-A241-346D-B62CF504EA9E}.Debug|x64.ActiveCfg = Debug|x64
+		{881760AA-0EAA-A241-346D-B62CF504EA9E}.Debug|x64.Build.0 = Debug|x64
+		{881760AA-0EAA-A241-346D-B62CF504EA9E}.Release|x64.ActiveCfg = Release|x64
+		{881760AA-0EAA-A241-346D-B62CF504EA9E}.Release|x64.Build.0 = Release|x64
+		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Debug|x64.ActiveCfg = Debug|x64
+		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Debug|x64.Build.0 = Debug|x64
+		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Release|x64.ActiveCfg = Release|x64
+		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -26,6 +26,15 @@ indent_size = 4
 file_header_template = Copyright (c) 2026 Christian Schnuck\nLicensed under the GPL-3.0 (see LICENSE.txt)
 
 
+# Usings: System first, separate Gruppen
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# Platzierung der using‑Direktiven (optional)
+csharp_using_directive_placement = outside_namespace
+
+
+
 ###########################################################
 # Private Felder: _camelCase
 ###########################################################

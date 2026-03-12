@@ -1,0 +1,19 @@
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
+
+namespace Kx.Abstractions.Updater;
+
+
+public class UpdateFile
+{
+    public string Path { get; set; } = string.Empty;
+    public string Sha256 { get; set; } = string.Empty;
+}
+
+public class UpdateMetadata
+{
+    public string Version { get; set; } = string.Empty;
+    public string PackageUrl { get; set; } = string.Empty;
+    public List<UpdateFile> Files { get; set; } = [];
+}

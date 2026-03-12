@@ -1,0 +1,38 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Platforms>x64</Platforms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Kx.Plugin.Example</AssemblyName>
+    <RootNamespace>Kx.Plugin</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Plugin.yaml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kx.Abstractions\Kx.Abstractions.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyPlugin" AfterTargets="Build">
+    <PropertyGroup>
+      <PluginTargetDir>
+		  $(SolutionDir)Kx\bin\$(Platform)\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\Assets\Plugins\$(AssemblyName)\
+	  </PluginTargetDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(PluginTargetDir)" />
+
+    <Copy SourceFiles="$(OutputPath)$(TargetFileName)" DestinationFolder="$(PluginTargetDir)" />
+
+    <Copy SourceFiles="Plugin.yaml" DestinationFolder="$(PluginTargetDir)" />
+  </Target>
+
+</Project>
