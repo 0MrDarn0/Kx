@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Utility;
+
 using SkiaSharp;
 
 namespace Kx.UI.Themes;
@@ -118,7 +119,7 @@ public sealed class FrameResource : IDisposable {
             return;
 
         int corner = (int)(DefaultCornerSize * DpiScale);
-        int edge   = (int)(DefaultEdgeThickness * DpiScale);
+        int edge = (int)(DefaultEdgeThickness * DpiScale);
 
         TopLeft ??= CreatePlaceholder(corner, corner);
         TopRight ??= CreatePlaceholder(corner, corner);

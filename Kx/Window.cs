@@ -20,7 +20,6 @@ using Kx.Utility;
 namespace Kx;
 
 public class Window : IDisposable {
-    public static Window? Instance { get; private set; }
 
     private readonly IWindowHost _windowHost;
     private readonly WindowContext _ctx;
@@ -29,7 +28,6 @@ public class Window : IDisposable {
     private readonly ILoggingService? _logger;
 
     public Window(IWindowHost windowHost, ITrayService? trayService = null, ILoggingService? loggingService = null) {
-        Instance = this;
         _windowHost = windowHost;
         _trayService = trayService;
         _logger = loggingService;
@@ -53,7 +51,7 @@ public class Window : IDisposable {
         grid.Rows.Add(new RowDefinition { Height = GridLength.Pixel(50) });
         grid.Rows.Add(new RowDefinition { Height = GridLength.Star(1) });
 
-        var header = new UI.Elements.Label(_ctx, id : "header", text : "HEADER", size : 10) {
+        var header = new UI.Elements.Label(_ctx, id: "header", text: "HEADER", size: 10) {
             GridRow = 0,
             GridColumn = 0,
             GridColumnSpan = 2
@@ -162,7 +160,6 @@ public class Window : IDisposable {
         _trayService?.Dispose();
 
         _ctx.Dispose();
-        Instance = null;
     }
 
     public void OnStateChanged(WindowState state) {

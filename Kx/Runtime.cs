@@ -14,7 +14,7 @@ using Kx.Utility;
 
 namespace Kx;
 
-public sealed class KRuntime(IWindowHost windowHost) {
+public sealed class Runtime(IWindowHost windowHost) {
 
     private readonly MsDiContainer _container = new();
     private Window _window = null!;

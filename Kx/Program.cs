@@ -19,7 +19,7 @@ internal static class Program {
         }
 
         var windowHost = new WinFormsWindowHost();
-        var runtime = new KRuntime(windowHost);
+        var runtime = new Runtime(windowHost);
 
         windowHost.HandleCreated += (_, _) => runtime.Start();
 

@@ -54,7 +54,8 @@ public class MessageBoxWindow : IDisposable {
                 Task.Run(() => {
                     var dr = form.ShowDialog();
                 });
-            } else {
+            }
+            else {
                 _windowHost.ShowWindow();
             }
         }));

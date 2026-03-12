@@ -16,6 +16,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx", "Kx\Kx.csproj", "{8817
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Update.Builder", "Kx.Update.Builder\Kx.Update.Builder.csproj", "{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Update.App", "Kx.Update.App\Kx.Update.App.csproj", "{40463D3B-B156-4735-AABE-CC58F6DA0AA8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -38,6 +40,10 @@ Global
 		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Debug|x64.Build.0 = Debug|x64
 		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Release|x64.ActiveCfg = Release|x64
 		{2D010A05-9124-8C2C-F592-2C5FEBBA95AE}.Release|x64.Build.0 = Release|x64
+		{40463D3B-B156-4735-AABE-CC58F6DA0AA8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{40463D3B-B156-4735-AABE-CC58F6DA0AA8}.Debug|x64.Build.0 = Debug|Any CPU
+		{40463D3B-B156-4735-AABE-CC58F6DA0AA8}.Release|x64.ActiveCfg = Release|Any CPU
+		{40463D3B-B156-4735-AABE-CC58F6DA0AA8}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

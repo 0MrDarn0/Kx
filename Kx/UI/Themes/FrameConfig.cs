@@ -1,9 +1,11 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Abstractions.UI;
+
 namespace Kx.UI.Themes;
 
-public class FrameConfig {
+public class FrameConfig : IFrameConfig {
     public string TopLeft { get; set; } = "KalOnline:Frame:top_left.png";
     public string TopCenter { get; set; } = "KalOnline:Frame:top_center.png";
     public string TopRight { get; set; } = "KalOnline:Frame:top_right.png";
