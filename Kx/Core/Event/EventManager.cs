@@ -25,6 +25,7 @@ namespace Kx.Core.Event {
             builder[nameof(ChangelogEvent)] = typeof(ChangelogEvent);
             builder[nameof(WindowShownEvent)] = typeof(WindowShownEvent);
             builder[nameof(WindowClosedEvent)] = typeof(WindowClosedEvent);
+            builder[nameof(MarkupActionEvent)] = typeof(MarkupActionEvent);
             _eventTypes = builder.ToImmutable();
         }
 

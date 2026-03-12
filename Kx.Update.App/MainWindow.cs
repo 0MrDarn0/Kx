@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.Logging;
+using Kx.Abstractions.UI.Actions;
 using Kx.Abstractions.UI.Layout;
 using Kx.Abstractions.UI.Markup;
 using Kx.Abstractions.UI.Themes;
@@ -15,8 +16,8 @@ namespace Kx.Update.App;
 
 
 public sealed class MainWindow : Window {
-    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
-        : base(host, tray, log, controlRegistry, themeRegistry, windowRegistry) {
+    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
+        : base(host, tray, log, actionRegistry, controlRegistry, themeRegistry, windowRegistry) {
     }
 
     protected override void OnInitialize() {

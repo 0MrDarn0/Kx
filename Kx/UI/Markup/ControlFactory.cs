@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.UI;
+using Kx.Abstractions.UI.Actions;
 using Kx.Abstractions.UI.Elements;
 using Kx.Abstractions.UI.Layout;
 using Kx.Abstractions.UI.Markup;
@@ -14,20 +15,21 @@ using SkiaSharp;
 namespace Kx.UI.Markup;
 
 public static class ControlFactory {
-    public static UIElement Create(IControlRegistry registry, IVisualContext context, ControlConfig config) {
+    public static UIElement Create(IControlRegistry registry, IMarkupActionRegistry actionRegistry, IVisualContext context, ControlConfig config) {
         ArgumentNullException.ThrowIfNull(registry);
+        ArgumentNullException.ThrowIfNull(actionRegistry);
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(config);
 
         if (!registry.TryCreate(context, config, out var control) || control is null)
             throw new InvalidOperationException($"No control factory has been registered for type '{config.Type}'.");
 
-        ApplyCommonProperties(control, config);
-        ApplyContainerProperties(registry, context, control, config);
+        ApplyCommonProperties(actionRegistry, control, config);
+        ApplyContainerProperties(registry, actionRegistry, context, control, config);
         return control;
     }
 
-    private static void ApplyCommonProperties(UIElement control, ControlConfig config) {
+    private static void ApplyCommonProperties(IMarkupActionRegistry actionRegistry, UIElement control, ControlConfig config) {
         if (config.Margin is not null)
             control.Margin = ToThickness(config.Margin);
 
@@ -63,7 +65,7 @@ public static class ControlFactory {
                 break;
 
             case Kx.UI.Elements.Button button:
-                ApplyButtonProperties(button, config);
+                ApplyButtonProperties(actionRegistry, button, config);
                 break;
 
             case StackPanel stackPanel:
@@ -72,15 +74,15 @@ public static class ControlFactory {
         }
     }
 
-    private static void ApplyContainerProperties(IControlRegistry registry, IVisualContext context, UIElement control, ControlConfig config) {
+    private static void ApplyContainerProperties(IControlRegistry registry, IMarkupActionRegistry actionRegistry, IVisualContext context, UIElement control, ControlConfig config) {
         switch (control) {
             case Grid grid:
                 ApplyGridDefinitions(grid, config);
-                AddChildren(registry, context, grid, config.Children);
+                AddChildren(registry, actionRegistry, context, grid, config.Children);
                 break;
 
             case Kx.UI.Elements.Panel.Panel panel:
-                AddChildren(registry, context, panel, config.Children);
+                AddChildren(registry, actionRegistry, context, panel, config.Children);
                 break;
         }
     }
@@ -99,15 +101,16 @@ public static class ControlFactory {
         label.Font.Value = new SKFont(typeface, config.Font.Size);
     }
 
-    private static void ApplyButtonProperties(Kx.UI.Elements.Button button, ControlConfig config) {
+    private static void ApplyButtonProperties(IMarkupActionRegistry actionRegistry, Kx.UI.Elements.Button button, ControlConfig config) {
         if (config.Text is not null)
             button.Text = config.Text;
 
         if (config.Font is not null)
             button.FontSize = config.Font.Size;
 
-        if (string.Equals(config.OnClick, "closeWindow", StringComparison.OrdinalIgnoreCase))
-            button.Click += button.Context.CloseWindow;
+        if (TryParseAction(config.OnClick, out var actionName, out var argument)) {
+            button.Click += () => ExecuteAction(actionRegistry, button, actionName, argument);
+        }
     }
 
     private static void ApplyStackPanelProperties(StackPanel stackPanel, ControlConfig config) {
@@ -144,11 +147,35 @@ public static class ControlFactory {
             grid.Columns.Add(new ColumnDefinition { Width = ToGridLength(column.Width) });
     }
 
-    private static void AddChildren(IControlRegistry registry, IVisualContext context, Kx.UI.Elements.Panel.Panel panel, IEnumerable<ControlConfig> children) {
+    private static void AddChildren(IControlRegistry registry, IMarkupActionRegistry actionRegistry, IVisualContext context, Kx.UI.Elements.Panel.Panel panel, IEnumerable<ControlConfig> children) {
         foreach (var childConfig in children) {
-            var child = Create(registry, context, childConfig);
+            var child = Create(registry, actionRegistry, context, childConfig);
             panel.AddChild(child);
         }
+    }
+
+    private static void ExecuteAction(IMarkupActionRegistry actionRegistry, UIElement source, string actionName, string? argument) {
+        var context = new Kx.UI.Actions.MarkupActionContext(source.Context, source, actionName, argument);
+        if (!actionRegistry.TryExecute(context))
+            throw new InvalidOperationException($"No markup action has been registered for '{actionName}'.");
+    }
+
+    private static bool TryParseAction(string? actionExpression, out string actionName, out string? argument) {
+        actionName = string.Empty;
+        argument = null;
+
+        if (string.IsNullOrWhiteSpace(actionExpression))
+            return false;
+
+        int separatorIndex = actionExpression.IndexOf(':');
+        if (separatorIndex < 0) {
+            actionName = actionExpression.Trim();
+            return true;
+        }
+
+        actionName = actionExpression[..separatorIndex].Trim();
+        argument = actionExpression[(separatorIndex + 1)..].Trim();
+        return !string.IsNullOrWhiteSpace(actionName);
     }
 
     private static Thickness ToThickness(ThicknessConfig config) {

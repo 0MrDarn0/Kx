@@ -35,6 +35,16 @@ public class UIElementManager : IUIElementManager {
         SortElements();
     }
 
+    public bool TryGet(string id, out IVisual? visual) {
+        if (string.IsNullOrWhiteSpace(id)) {
+            visual = null;
+            return false;
+        }
+
+        visual = _elements.FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.Ordinal));
+        return visual is not null;
+    }
+
     public void AddRoot(IVisual root) {
         if (root == null)
             return;

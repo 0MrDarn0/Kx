@@ -5,6 +5,7 @@ using System.Drawing;
 
 using Kx.Abstractions.Plugin;
 using Kx.Abstractions.UI;
+using Kx.Abstractions.UI.Actions;
 using Kx.Abstractions.UI.Elements;
 using Kx.Abstractions.UI.Markup;
 using Kx.Abstractions.UI.Themes;
@@ -18,10 +19,12 @@ public sealed class Example : IPlugin {
 
     public void Initialize(IPluginContext context) {
         var controlRegistry = context.Services.Get<IControlRegistry>();
+        var actionRegistry = context.Services.Get<IMarkupActionRegistry>();
         var themeRegistry = context.Services.Get<IThemeRegistry>();
         var windowRegistry = context.Services.Get<IWindowRegistry>();
 
         controlRegistry.Register("ExampleBadge", (uiContext, config) => new ExampleBadge(uiContext, config.Id, config.Text));
+        actionRegistry.Register("example.toggleVisibility", actionContext => ToggleVisibility(actionContext));
         themeRegistry.Register("Example.Dark", new WindowTheme {
             Frame = new FrameConfig {
                 Style = FrameStyle.Default,
@@ -70,6 +73,12 @@ public sealed class Example : IPlugin {
                             Type = "ExampleBadge",
                             Id = "example_badge",
                             Text = "Plugin Content"
+                        },
+                        new ControlConfig {
+                            Type = "Button",
+                            Id = "example_toggle_button",
+                            Text = "Toggle Badge",
+                            OnClick = "example.toggleVisibility:example_badge"
                         }
                     ]
                 }
@@ -86,6 +95,16 @@ public sealed class Example : IPlugin {
 
     public void Dispose() {
 
+    }
+
+    private static void ToggleVisibility(IMarkupActionContext actionContext) {
+        if (string.IsNullOrWhiteSpace(actionContext.Argument))
+            return;
+
+        if (!actionContext.VisualContext.UIElementManager.TryGet(actionContext.Argument, out var visual) || visual is null)
+            return;
+
+        visual.Visible = !visual.Visible;
     }
 
     private sealed class ExampleBadge(IVisualContext context, string id, string? text) : UIElement(context, id) {

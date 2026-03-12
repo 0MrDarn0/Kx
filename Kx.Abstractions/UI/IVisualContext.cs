@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.WindowHost;
+using Kx.Abstractions.Events;
 
 namespace Kx.Abstractions.UI;
 
@@ -12,6 +13,7 @@ public interface IVisualContext {
     float DpiScale { get; }
     IUiDispatcher UiThread { get; }
     IUIElementManager UIElementManager { get; }
+    IEventManager Events { get; }
 
     /// <summary>
     /// Requests a new render pass for the current window.
