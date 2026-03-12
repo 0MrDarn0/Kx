@@ -10,10 +10,12 @@ public struct Thickness(float left, float top, float right, float bottom) {
     public float Bottom = bottom;
 
     public Thickness(float uniform)
-        : this(uniform, uniform, uniform, uniform) { }
+        : this(uniform, uniform, uniform, uniform) {
+    }
 
     public Thickness(float horizontal, float vertical)
-        : this(horizontal, vertical, horizontal, vertical) { }
+        : this(horizontal, vertical, horizontal, vertical) {
+    }
 
     public readonly float Horizontal => Left + Right;
     public readonly float Vertical => Top + Bottom;

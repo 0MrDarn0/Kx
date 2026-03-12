@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using Kx.Abstractions.UI;
 using Kx.Core.Extensions;
 using Kx.UI.Layout;
 
@@ -9,7 +9,7 @@ using SkiaSharp;
 
 namespace Kx.UI.Elements.Panel;
 
-public class Grid(WindowContext ctx, string id) : Panel(ctx, id) {
+public class Grid(IVisualContext ctx, string id) : Panel(ctx, id) {
     public List<RowDefinition> Rows { get; } = [];
     public List<ColumnDefinition> Columns { get; } = [];
 

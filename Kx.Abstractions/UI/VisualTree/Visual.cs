@@ -1,7 +1,10 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using System.Drawing;
+
+using Kx.Abstractions.Events;
+using Kx.Abstractions.UI;
 using Kx.UI.Binding;
 
 using SkiaSharp;
@@ -10,6 +13,8 @@ namespace Kx.UI.VisualTree;
 
 public abstract class Visual : IVisual, IDisposable {
     public string Id { get; }
+    public virtual Rectangle Bounds => Rectangle.Empty;
+    public virtual bool UseContentArea { get; set; } = true;
 
     private readonly Property<bool> _visible;
     public bool Visible {
@@ -24,25 +29,31 @@ public abstract class Visual : IVisual, IDisposable {
     }
 
     private readonly Property<VisualLayer> _layer;
-    private readonly WindowContext _ctx;
+    private readonly IVisualContext _ctx;
 
     public VisualLayer Layer {
         get => _layer.Value;
         set => _layer.Value = value;
     }
+
+    public IVisualContext Context => _ctx;
+
     public virtual bool CanFocus => false;
-    public bool IsFocused { get; internal set; }
+    public bool IsFocused { get; private set; }
     public float DpiScale { get; private set; } = 1f;
     public virtual void OnDpiChanged(float scale) { }
     public virtual void OnFocusGained() { }
     public virtual void OnFocusLost() { }
-    public virtual bool OnKeyDown(Keys key) => false;
-    public virtual bool OnKeyUp(Keys key) => false;
+    public virtual bool OnKeyDown(KeyCode key) => false;
+    public virtual bool OnKeyUp(KeyCode key) => false;
 
     protected bool _initializing = true;
     private bool _disposed;
 
-    protected Visual(WindowContext ctx, string id, bool visible = true) {
+    protected Visual(IVisualContext ctx, string id, bool visible = true) {
+        ArgumentNullException.ThrowIfNull(ctx);
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+
         _ctx = ctx;
         DpiScale = _ctx.DpiScale;
         Id = id;
@@ -61,13 +72,17 @@ public abstract class Visual : IVisual, IDisposable {
 
     protected void Invalidate() {
         if (!_initializing)
-            _ctx.Renderer.RequestRender();
+            _ctx.RequestRender();
     }
 
-    internal void SetDpiScale(float scale) {
+    public void SetDpiScale(float scale) {
         DpiScale = scale;
         OnDpiChanged(scale);
         Invalidate();
+    }
+
+    public void SetFocused(bool isFocused) {
+        IsFocused = isFocused;
     }
 
     public void Dispose() {

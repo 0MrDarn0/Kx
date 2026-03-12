@@ -15,7 +15,7 @@ public class FrameConfig {
     public string LeftCenter { get; set; } = "KalOnline:Frame:left_center.png";
     public string FillBitmap { get; set; } = "KalOnline:Frame:fill_bitmap.bmp";
     public string FillColor { get; set; } = "#101010";
-    public bool UseFillColor { get; set; } = false;
+    public bool UseFillColor { get; set; }
     public int TopWidthOffset { get; set; } = 7;
     public int BottomWidthOffset { get; set; } = 15;
     public int LeftHeightOffset { get; set; } = 5;

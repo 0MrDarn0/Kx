@@ -9,7 +9,9 @@ using Kx.Core.DI;
 using Kx.Core.Lifecycle;
 using Kx.Core.Logging;
 using Kx.Core.Plugin;
+using Kx.UI.Markup;
 using Kx.UI.Platform;
+using Kx.UI.Themes;
 using Kx.Utility;
 
 namespace Kx.App;
@@ -103,7 +105,16 @@ public sealed class Runtime {
     }
 
     private void ConfigureServices() {
+        var controlRegistry = new ControlRegistry();
+        var themeRegistry = new ThemeRegistry();
+        var windowRegistry = new WindowRegistry();
+
+        BuiltInControlRegistrar.Register(controlRegistry);
+
         _services.Register<IWindowHost>(_windowHost);
+        _services.Register<IControlRegistry>(controlRegistry);
+        _services.Register<IThemeRegistry>(themeRegistry);
+        _services.Register<IWindowRegistry>(windowRegistry);
 
         // Startup
         _services.RegisterFactory<StartupManager>(Lifetime.Singleton, c => new StartupManager(c));

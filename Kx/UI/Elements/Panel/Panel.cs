@@ -1,19 +1,22 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using Kx.Abstractions.UI;
+using Kx.UI.VisualTree;
 
 using SkiaSharp;
 
 namespace Kx.UI.Elements.Panel;
 
-public abstract class Panel(WindowContext ctx, string id) : UIElement(ctx, id) {
+public abstract class Panel(IVisualContext ctx, string id) : UIElement(ctx, id), IVisualContainer {
     public List<UIElement> Children { get; } = [];
+
+    IReadOnlyList<IVisual> IVisualContainer.Children => Children;
 
     public void AddChild(UIElement child) {
         if (child == null)
             return;
-        child.Parent = this;
+        child.SetParent(this);
         Children.Add(child);
     }
 
@@ -22,7 +25,7 @@ public abstract class Panel(WindowContext ctx, string id) : UIElement(ctx, id) {
             return false;
         var removed = Children.Remove(child);
         if (removed)
-            child.Parent = null;
+            child.SetParent(null);
         return removed;
     }
 

@@ -1,7 +1,8 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using Kx.Abstractions.Events;
+using Kx.Abstractions.UI;
 using Kx.Core.Extensions;
 
 using SkiaSharp;
@@ -25,7 +26,7 @@ public class Button : UIElement {
     private SKFont? _font;
     private float _scaledFontSize;
 
-    public Button(WindowContext ctx, string id, string text) : base(ctx, id) {
+    public Button(IVisualContext ctx, string id, string text) : base(ctx, id) {
         Text = text;
         _scaledFontSize = FontSize * DpiScale;
         _font = new SKFont(SKTypeface.Default, _scaledFontSize);
@@ -143,11 +144,11 @@ public class Button : UIElement {
         return _isHovered;
     }
 
-    public override bool OnKeyDown(Keys key) {
+    public override bool OnKeyDown(KeyCode key) {
         if (!IsEnabled)
             return false;
 
-        if (IsFocused && (key == Keys.Enter || key == Keys.Space)) {
+        if (IsFocused && (key == KeyCode.Enter || key == KeyCode.Space)) {
             _isPressed = true;
             Invalidate();
             return true;
@@ -156,11 +157,11 @@ public class Button : UIElement {
         return false;
     }
 
-    public override bool OnKeyUp(Keys key) {
+    public override bool OnKeyUp(KeyCode key) {
         if (!IsEnabled)
             return false;
 
-        if (IsFocused && (key == Keys.Enter || key == Keys.Space)) {
+        if (IsFocused && (key == KeyCode.Enter || key == KeyCode.Space)) {
             if (_isPressed) {
                 _isPressed = false;
                 Click?.Invoke();

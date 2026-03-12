@@ -7,17 +7,23 @@ using Kx.App;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
+using Kx.UI.Markup;
+using Kx.UI.Themes;
 
 namespace Kx.Update.App;
 
 
 public sealed class MainWindow : Window {
-    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log)
-        : base(host, tray, log) {
+    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
+        : base(host, tray, log, controlRegistry, themeRegistry, windowRegistry) {
     }
 
     protected override void OnInitialize() {
         base.OnInitialize();
+
+        if (HasConfiguredContentControls)
+            return;
+
         BuildUI();
     }
 

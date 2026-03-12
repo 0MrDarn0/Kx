@@ -1,13 +1,13 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using Kx.Abstractions.UI;
 using Kx.Core.Extensions;
 using Kx.UI.Layout;
 
 namespace Kx.UI.Elements.Panel;
 
-public class DockPanel(WindowContext ctx, string id) : Panel(ctx, id) {
+public class DockPanel(IVisualContext ctx, string id) : Panel(ctx, id) {
     public override void Measure(float dpi) {
         int width = 0;
         int height = 0;

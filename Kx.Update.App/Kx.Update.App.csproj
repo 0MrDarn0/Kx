@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -12,6 +12,28 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kx\Kx.csproj" />
+    <ProjectReference Include="..\Kx.Plugin.Example\Kx.Plugin.Example.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
   </ItemGroup>
+
+  <Target Name="CopyPluginExampleToAppOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <PluginExampleOutputDir>$(SolutionDir)Kx.Plugin.Example\bin\$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
+      <PluginExampleTargetDir>$(TargetDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(PluginExampleTargetDir)" />
+
+    <ItemGroup>
+      <PluginExampleFiles Include="$(PluginExampleOutputDir)Kx.Plugin.Example.dll" />
+      <PluginExampleFiles Include="$(PluginExampleOutputDir)Kx.Plugin.Example.pdb" Condition="Exists('$(PluginExampleOutputDir)Kx.Plugin.Example.pdb')" />
+      <PluginExampleFiles Include="$(PluginExampleOutputDir)Plugin.yaml" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(PluginExampleFiles)"
+          DestinationFolder="$(PluginExampleTargetDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

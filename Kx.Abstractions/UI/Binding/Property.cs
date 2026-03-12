@@ -13,7 +13,6 @@ public sealed class Property<T>(IUiDispatcher ui, T initialValue = default!, Act
     public T Value {
         get => _value;
         set {
-            // Wenn Aufruf vom UI-Thread verlangt wird, asynchron ausführen.
             if (_ui.InvokeRequired) {
                 _ui.BeginInvoke(new Action(() => {
                     _value = value;

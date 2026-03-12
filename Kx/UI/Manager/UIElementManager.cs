@@ -2,44 +2,48 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Core.Extensions;
+using Kx.Abstractions.Events;
+using Kx.Abstractions.UI;
 using Kx.UI.Elements;
+using Kx.UI.VisualTree;
 using SkiaSharp;
 
 namespace Kx.UI.Manager;
 
-public class UIElementManager : IDisposable {
+public class UIElementManager : IUIElementManager {
 
-    private readonly List<UIElement> _elements = [];
-    private readonly List<UIElement> _roots = [];
+    private readonly List<IVisual> _elements = [];
+    private readonly List<IVisual> _roots = [];
 
-    public IEnumerable<UIElement> Elements => _elements;
-    public IEnumerable<UIElement> Roots => _roots;
+    public IEnumerable<IVisual> Elements => _elements;
+    public IEnumerable<IVisual> Roots => _roots;
 
     public float DpiScale { get; private set; } = 1f;
-    public UIElement? FocusedElement { get; private set; }
-    public UIElement? ModalElement { get; private set; }
+    public IVisual? FocusedElement { get; private set; }
+    public IVisual? ModalElement { get; private set; }
 
-    public void Add(UIElement el) {
+    public void Add(IVisual el) {
         if (el == null)
             return;
 
         _elements.Add(el);
 
         // Wenn das Element keinen Parent hat, behandeln wir es als Root
-        if (el.Parent == null && !_roots.Contains(el))
+        if (el is not UIElement { Parent: not null } && !_roots.Contains(el))
             _roots.Add(el);
 
         SortElements();
     }
 
-    public void AddRoot(UIElement root) {
+    public void AddRoot(IVisual root) {
         if (root == null)
             return;
         if (!_elements.Contains(root))
             _elements.Add(root);
 
         // Root hat explizit keinen Parent
-        root.Parent = null;
+        if (root is UIElement element)
+            element.SetParent(null);
 
         if (!_roots.Contains(root))
             _roots.Add(root);
@@ -47,7 +51,7 @@ public class UIElementManager : IDisposable {
         SortElements();
     }
 
-    public void Remove(UIElement el) {
+    public void Remove(IVisual el) {
         if (el == null)
             return;
 
@@ -94,41 +98,51 @@ public class UIElementManager : IDisposable {
         }
     }
 
-    public void BringToFront(UIElement el) {
+    public void BringToFront(IVisual el) {
         if (el == null)
             return;
         el.ZIndex = _elements.Count != 0 ? _elements.Max(x => x.ZIndex) + 1 : 0;
         SortElements();
     }
 
-    public void SendToBack(UIElement el) {
+    public void SendToBack(IVisual el) {
         if (el == null)
             return;
         el.ZIndex = _elements.Count != 0 ? _elements.Min(x => x.ZIndex) - 1 : 0;
         SortElements();
     }
 
-    public void SetFocus(UIElement el) {
+    public void SetFocus(IVisual el) {
         if (FocusedElement == el)
             return;
 
-        if (FocusedElement is UIElement old)
-            old.OnFocusLost();
+        var previous = FocusedElement;
+
+        if (FocusedElement is Visual oldVisual)
+            oldVisual.SetFocused(false);
+
+        previous?.OnFocusLost();
 
         FocusedElement = el;
 
-        if (el is UIElement cb)
-            cb.OnFocusGained();
+        if (el is Visual visual)
+            visual.SetFocused(true);
+
+        el.OnFocusGained();
     }
 
     public void ClearFocus() {
-        if (FocusedElement is UIElement old)
-            old.OnFocusLost();
+        var previous = FocusedElement;
+
+        if (FocusedElement is Visual oldVisual)
+            oldVisual.SetFocused(false);
+
+        previous?.OnFocusLost();
 
         FocusedElement = null;
     }
 
-    public void ShowModal(UIElement el) {
+    public void ShowModal(IVisual el) {
         ModalElement = el;
         BringToFront(el);
     }
@@ -141,7 +155,10 @@ public class UIElementManager : IDisposable {
         DpiScale = scale;
 
         foreach (var el in _elements)
-            el.SetDpiScale(scale);
+            if (el is Visual visual)
+                visual.SetDpiScale(scale);
+            else
+                el.OnDpiChanged(scale);
     }
 
     public void Render(SKCanvas canvas) {
@@ -151,7 +168,7 @@ public class UIElementManager : IDisposable {
                 el.Draw(canvas);
     }
 
-    private bool HitTest(Point p, Func<UIElement, bool> action) {
+    private bool HitTest(Point p, Func<IVisual, bool> action) {
         // Iterate roots from topmost to bottommost
         foreach (var root in _roots.OrderByDescending(x => x.Layer).ThenByDescending(x => x.ZIndex)) {
             if (HitTestRecursive(root, p, action))
@@ -160,14 +177,14 @@ public class UIElementManager : IDisposable {
         return false;
     }
 
-    private static bool HitTestRecursive(UIElement el, Point p, Func<UIElement, bool> action) {
+    private static bool HitTestRecursive(IVisual el, Point p, Func<IVisual, bool> action) {
         if (!el.Visible)
             return false;
 
         // Prüfe zuerst Kinder (oberstes Kind zuerst), falls das Element ein Panel/Container ist
-        if (el is Elements.Panel.Panel panel && panel.Children.Count != 0) {
+        if (el is IVisualContainer container && container.Children.Count != 0) {
             // sortiere Kinder nach Layer/ZIndex absteigend (oberstes zuerst)
-            var children = panel.Children
+            var children = container.Children
             .OrderByDescending(c => c.Layer)
             .ThenByDescending(c => c.ZIndex);
 
@@ -220,14 +237,14 @@ public class UIElementManager : IDisposable {
         return HitTest(p, el => el.OnMouseWheel(delta, p));
     }
 
-    public bool KeyDown(Keys key) {
+    public bool KeyDown(KeyCode key) {
         if (FocusedElement != null)
             return FocusedElement.OnKeyDown(key);
 
         return false;
     }
 
-    public bool KeyUp(Keys key) {
+    public bool KeyUp(KeyCode key) {
         if (FocusedElement != null)
             return FocusedElement.OnKeyUp(key);
 

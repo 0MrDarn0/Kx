@@ -3,6 +3,8 @@
 
 using System.Drawing;
 
+using Kx.UI.VisualTree;
+
 namespace Kx.Abstractions.UI;
 
 public interface IUIElementManager {
@@ -10,6 +12,6 @@ public interface IUIElementManager {
     bool MouseDown(Point location);
     bool MouseUp(Point location);
     bool MouseWheel(int delta, Point location);
-    void Add(object element);
+    void Add(IVisual element);
     void Dispose();
 }

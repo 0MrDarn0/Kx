@@ -6,10 +6,12 @@ using Kx.Abstractions.Logging;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
+using Kx.UI.Elements;
 using Kx.UI.Markup;
 using Kx.UI.Platform;
 using Kx.UI.Rendering;
 using Kx.UI.Themes;
+using Kx.UI.VisualTree;
 using Kx.Utility;
 
 namespace Kx.App;
@@ -20,11 +22,21 @@ public abstract class Window : IDisposable {
     protected WindowInteraction? _interaction;
     protected ITrayService? _tray;
     protected ILoggingService? _logger;
+    protected bool HasConfiguredContentControls { get; private set; }
 
-    protected Window(IWindowHost host, ITrayService? tray, ILoggingService? log) {
+    private readonly IControlRegistry? _controlRegistry;
+    private readonly IThemeRegistry? _themeRegistry;
+    private readonly IWindowRegistry? _windowRegistry;
+    private WindowConfig? _resolvedWindowConfig;
+    private WindowTheme? _resolvedTheme;
+
+    protected Window(IWindowHost host, ITrayService? tray, ILoggingService? log, IControlRegistry? controlRegistry = null, IThemeRegistry? themeRegistry = null, IWindowRegistry? windowRegistry = null) {
         _host = host;
         _tray = tray;
         _logger = log;
+        _controlRegistry = controlRegistry;
+        _themeRegistry = themeRegistry;
+        _windowRegistry = windowRegistry;
 
         _ctx = new WindowContext(
             target: host,
@@ -35,13 +47,20 @@ public abstract class Window : IDisposable {
         InitializeFrame();
         InitializeRenderer();
         InitializeInteraction();
+        InitializeConfiguredControls();
         RegisterWindowEvents();
         OnInitialize();
     }
 
+    protected virtual string WindowDefinitionName => GetType().Name;
+    protected virtual string WindowConfigPath => Paths.GetConfig("frame.yaml");
+
     protected virtual void InitializeFrame() {
-        var cfg = ConfigLoader.Load<WindowConfig>(Paths.GetConfig("frame.yaml"));
-        var frame = FrameResource.FromConfig(cfg.Frame, _ctx.Resources, _ctx.DpiScale);
+        _resolvedWindowConfig = ResolveWindowConfig();
+        _resolvedTheme = ResolveWindowTheme(_resolvedWindowConfig);
+
+        var frameConfig = ResolveFrameConfig(_resolvedWindowConfig, _resolvedTheme);
+        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, _ctx.DpiScale);
         _ctx.SetFrame(frame);
     }
 
@@ -82,6 +101,52 @@ public abstract class Window : IDisposable {
     protected virtual void OnFocusChanged(FocusState state) {
         _ctx.Events.NotifyAll(new WindowFocusChangedEvent(state));
         _logger?.Info($"{typeof(Window).FullName} OnFocusChanged({state})");
+    }
+
+    protected virtual void InitializeConfiguredControls() {
+        if (_controlRegistry is null || _resolvedWindowConfig is null)
+            return;
+
+        foreach (var config in ResolveControlConfigs(_resolvedWindowConfig, _resolvedTheme)) {
+            var control = ControlFactory.Create(_controlRegistry, _ctx, config);
+            _ctx.UIElementManager.Add(control);
+
+            if (control.Layer == VisualLayer.Content)
+                HasConfiguredContentControls = true;
+        }
+    }
+
+    private WindowConfig ResolveWindowConfig() {
+        if (_windowRegistry?.TryGet(WindowDefinitionName, out var config) == true && config is not null)
+            return config;
+
+        return ConfigLoader.Load<WindowConfig>(WindowConfigPath);
+    }
+
+    private WindowTheme? ResolveWindowTheme(WindowConfig config) {
+        if (!string.IsNullOrWhiteSpace(config.Theme) &&
+            _themeRegistry?.TryGet(config.Theme, out var theme) == true) {
+            return theme;
+        }
+
+        return null;
+    }
+
+    private static FrameConfig ResolveFrameConfig(WindowConfig config, WindowTheme? theme) {
+        if (theme is not null)
+            return theme.Frame;
+
+        return config.Frame;
+    }
+
+    private static IEnumerable<ControlConfig> ResolveControlConfigs(WindowConfig config, WindowTheme? theme) {
+        if (theme?.Controls is not null) {
+            foreach (var themeControl in theme.Controls)
+                yield return themeControl;
+        }
+
+        foreach (var control in config.Controls)
+            yield return control;
     }
 
     public virtual void Dispose() {

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using Kx.Abstractions.UI;
 using Kx.Core.Extensions;
 using Kx.UI.Binding;
 
@@ -14,7 +14,7 @@ public class Label : UIElement {
     public Property<SKFont> Font { get; }
     public Property<SKColor> Color { get; }
 
-    public Label(WindowContext ctx, string id, string text, float size) : base(ctx, id) {
+    public Label(IVisualContext ctx, string id, string text, float size) : base(ctx, id) {
         Text = new Property<string>(ctx.UiThread, text, Invalidate);
         Font = new Property<SKFont>(ctx.UiThread, new SKFont(SKTypeface.Default, size), Invalidate);
         Color = new Property<SKColor>(ctx.UiThread, SKColors.White, Invalidate);

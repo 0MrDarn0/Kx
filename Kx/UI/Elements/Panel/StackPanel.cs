@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.App;
+using Kx.Abstractions.UI;
 using Kx.Core.Extensions;
 
 namespace Kx.UI.Elements.Panel;
 
-public class StackPanel(WindowContext ctx, string id) : Panel(ctx, id) {
+public class StackPanel(IVisualContext ctx, string id) : Panel(ctx, id) {
     public Layout.Orientation Orientation { get; set; } = Layout.Orientation.Vertical;
     public float Spacing { get; set; } = 4f;
 

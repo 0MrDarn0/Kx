@@ -3,6 +3,7 @@
 
 using Kx.Abstractions.Events;
 using Kx.Abstractions.Rendering;
+using Kx.Abstractions.UI;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
@@ -14,7 +15,7 @@ using Kx.Utility;
 
 namespace Kx.App;
 
-public sealed class WindowContext : IDisposable {
+public sealed class WindowContext : IVisualContext, IDisposable {
     public IWindowSurface Target { get; }
     public IUiDispatcher UiThread { get; }
     public IWindowHost WindowHost { get; }
@@ -28,6 +29,8 @@ public sealed class WindowContext : IDisposable {
 
     private readonly object _frameLock = new();
     public float DpiScale { get; set; } = 1f;
+
+    IUIElementManager IVisualContext.UIElementManager => UIElementManager;
 
     public WindowContext(
         IWindowSurface target,
@@ -56,6 +59,20 @@ public sealed class WindowContext : IDisposable {
 
     public void SetRenderer(IWindowRenderer renderer) {
         Renderer = renderer;
+    }
+
+    /// <summary>
+    /// Requests a new render pass for the current window.
+    /// </summary>
+    public void RequestRender() {
+        Renderer.RequestRender();
+    }
+
+    /// <summary>
+    /// Requests that the host window should close.
+    /// </summary>
+    public void CloseWindow() {
+        WindowHost.CloseWindow();
     }
 
     public void SetPipeline(UpdaterPipelineRunner pipeline) {
