@@ -11,6 +11,7 @@ namespace Kx.Core.DI;
 public class MsDiContainer : IDependencyContainer {
     private readonly IServiceCollection _services = new ServiceCollection();
     private IServiceProvider? _provider;
+    public IServiceProvider Provider => _provider!;
 
     // Container finalisieren
     public void Build() {
@@ -28,8 +29,11 @@ public class MsDiContainer : IDependencyContainer {
         => _provider!.GetServices<T>();
 
     // Instanz mit DI + Parametern erzeugen
-    public T Create<T>(params object[] args) where T : class =>
-        ActivatorUtilities.CreateInstance<T>(_provider!, args);
+    public T Create<T>(params object[] args) where T : class
+        => ActivatorUtilities.CreateInstance<T>(_provider!, args);
+
+    public object Create(Type type, params object[] args)
+        => ActivatorUtilities.CreateInstance(_provider!, type, args);
 
     // --------------------------------------------------------
     // Register

@@ -6,5 +6,5 @@ namespace Kx.Abstractions.Plugin;
 public interface IPlugin {
     string Name { get; }
     void Initialize(IPluginContext context);
-    public void Dispose();
+    void Dispose();
 }

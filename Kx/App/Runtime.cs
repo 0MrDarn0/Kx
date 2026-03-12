@@ -12,24 +12,41 @@ using Kx.Core.Plugin;
 using Kx.UI.Platform;
 using Kx.Utility;
 
-namespace Kx;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Kx.App;
 
 public sealed class Runtime(IWindowHost windowHost) {
 
-    private readonly MsDiContainer _container = new();
+    private readonly MsDiContainer _services = new();
+    private Type? _windowType;
     private Window _window = null!;
 
     public void Start() {
         ConfigurePaths();
         ConfigureServices();
-        _container.Build();
+        _services.Build();
 
         InitializePlugins();
         InitializeUI();
+        windowHost.ShowWindow();
     }
 
+    public void RegisterWindow<TWindow>() where TWindow : Window {
+        _windowType = typeof(TWindow);
+
+        _services.RegisterFactory<TWindow>(Lifetime.Transient,
+            c => ActivatorUtilities.CreateInstance<TWindow>(
+                _services.Provider,
+                windowHost,
+                c.Get<ITrayService>(),
+                c.Get<ILoggingService>()
+            ));
+    }
+
+
     public async Task ShutdownAsync() {
-        await _container.Get<ShutdownManager>().ShutdownAsync();
+        await _services.Get<ShutdownManager>().ShutdownAsync();
     }
 
     private static void ConfigurePaths() {
@@ -40,13 +57,13 @@ public sealed class Runtime(IWindowHost windowHost) {
 
     private void ConfigureServices() {
         // Shutdown
-        _container.RegisterFactory<ShutdownManager>(Lifetime.Singleton, c => new ShutdownManager(c));
+        _services.RegisterFactory<ShutdownManager>(Lifetime.Singleton, c => new ShutdownManager(c));
 
         // Logging sinks
-        _container.RegisterFactory<ILogSink>(Lifetime.Singleton,
+        _services.RegisterFactory<ILogSink>(Lifetime.Singleton,
             c => new AsyncLogSink(new DebugSink()));
 
-        _container.RegisterFactory<ILogSink>(Lifetime.Singleton,
+        _services.RegisterFactory<ILogSink>(Lifetime.Singleton,
             c => new AsyncLogSink(
                 new DailyRollingFileSink(
                     5 * 1024 * 1024,
@@ -57,40 +74,33 @@ public sealed class Runtime(IWindowHost windowHost) {
         );
 
         // LoggerFactory
-        _container.RegisterFactory<ILoggerFactory>(Lifetime.Singleton, c => new LoggerFactory(c));
+        _services.RegisterFactory<ILoggerFactory>(Lifetime.Singleton, c => new LoggerFactory(c));
 
         // System logger
-        _container.RegisterFactory<ILoggingService>(Lifetime.Singleton,
+        _services.RegisterFactory<ILoggingService>(Lifetime.Singleton,
             c => c.Get<ILoggerFactory>().CreateLogger("System"));
 
         // TrayIcon services
-        _container.Register(new TrayIcon());
-        _container.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
-
-        // Window
-        _container.RegisterFactory<Window>(Lifetime.Transient,
-            c => new Window(windowHost, c.Get<ITrayService>(), c.Get<ILoggingService>()));
+        _services.Register(new TrayIcon());
+        _services.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
     }
 
     private void InitializePlugins() {
-        var log = _container.Get<ILoggingService>();
+        var log = _services.Get<ILoggingService>();
         var plugins = PluginLoader.LoadAll<IPlugin>();
 
         foreach (var plugin in plugins) {
             log.Info($"Loading plugin: {plugin.Name}");
-            plugin.Initialize(new PluginContext(_container, plugin.Name));
+            plugin.Initialize(new PluginContext(_services, plugin.Name));
         }
     }
 
     private void InitializeUI() {
-        _window = _container.Get<Window>();
+        _window = (Window)_services.Get(_windowType!);
 
-        windowHost.Shown += e => _window.OnShown();
         windowHost.Closed += async e => {
-            _window.OnClosed(e.UserInitiated);
+            _window.RaiseClosed(e.UserInitiated);
             await ShutdownAsync();
         };
-        windowHost.StateChanged += e => _window.OnStateChanged(e.State);
-        windowHost.FocusChanged += e => _window.OnFocusChanged(e.State);
     }
 }

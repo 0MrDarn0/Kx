@@ -14,6 +14,6 @@ public sealed class Example : IPlugin {
     }
 
     public void Dispose() {
-        // optional cleanup
+
     }
 }

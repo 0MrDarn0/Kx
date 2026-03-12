@@ -2,6 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
+
+using Kx.App;
 using Kx.Utility;
 using Kx.WindowHost.WinForms;
 
@@ -11,7 +13,7 @@ internal static class Program {
     [STAThread]
     static void Main() {
 
-        const string appMutexName = "Global\\{C0A76B5A-12AB-45C5-B9D9-D693FAA6E7B9}";
+        const string appMutexName = "Global\\{881760AA-0EAA-A241-346D-B62CF504EA9E}";
         using var instance = AppInstance.Acquire(appMutexName);
         if (instance == null) {
             AppInstance.BringExistingInstanceToFront(Process.GetCurrentProcess().ProcessName);

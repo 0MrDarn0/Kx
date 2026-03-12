@@ -1,8 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Core;
+using Kx.App;
 using Kx.Core.Extensions;
+
 using SkiaSharp;
 
 namespace Kx.UI.Elements;

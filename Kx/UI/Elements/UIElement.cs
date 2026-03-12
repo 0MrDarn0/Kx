@@ -1,11 +1,12 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Core;
+using Kx.App;
 using Kx.Core.Extensions;
 using Kx.UI.Binding;
 using Kx.UI.Layout;
 using Kx.UI.VisualTree;
+
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 

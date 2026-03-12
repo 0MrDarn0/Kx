@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
+
 using Kx.Abstractions.Events;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.Interop;
@@ -11,7 +12,6 @@ using Kx.Utility;
 namespace Kx.WindowHost.WinForms;
 
 public class WinFormsWindowHost : Form, IWindowHost {
-
     IntPtr IWindowSurface.Handle => Handle;
     bool IWindowSurface.IsDisposed => IsDisposed;
     bool IWindowSurface.IsHandleCreated => IsHandleCreated;
@@ -20,7 +20,6 @@ public class WinFormsWindowHost : Form, IWindowHost {
     int IWindowSurface.Width => Width;
     int IWindowSurface.Height => Height;
     int IWindowSurface.DeviceDpi => DeviceDpi;
-
     bool IUiDispatcher.InvokeRequired => base.InvokeRequired;
     void IUiDispatcher.BeginInvoke(Delegate d) => base.BeginInvoke(d);
     void IUiDispatcher.Invoke(Action action) => base.Invoke(action);
@@ -98,7 +97,8 @@ public class WinFormsWindowHost : Form, IWindowHost {
                 NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_SMALL), _appIcon.Handle);
                 NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICON, _appIcon.Handle);
                 NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICONSM, _appIcon.Handle);
-            } else if (!_iconMissingNotified) {
+            }
+            else if (!_iconMissingNotified) {
                 _iconMissingNotified = true;
                 MessageBox.Show(
                     this,

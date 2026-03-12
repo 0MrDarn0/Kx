@@ -4,7 +4,7 @@
 using Kx.Abstractions.Events;
 using Kx.Abstractions.WindowHost;
 
-namespace Kx.Core;
+namespace Kx.App;
 
 public class WindowInteraction {
     private readonly IWindowHost _windowHost;

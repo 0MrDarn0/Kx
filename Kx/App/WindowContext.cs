@@ -12,7 +12,7 @@ using Kx.UI.Manager;
 using Kx.UI.Themes;
 using Kx.Utility;
 
-namespace Kx.Core;
+namespace Kx.App;
 
 public sealed class WindowContext : IDisposable {
     public IWindowSurface Target { get; }

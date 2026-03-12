@@ -4,11 +4,13 @@
 using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+
 using Kx.Abstractions.Rendering;
-using Kx.Core;
+using Kx.App;
 using Kx.Core.Interop;
 using Kx.Core.Interop.SafeHandles;
 using Kx.Utility;
+
 using SkiaSharp;
 
 namespace Kx.UI.Rendering;

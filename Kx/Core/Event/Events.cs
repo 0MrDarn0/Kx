@@ -37,19 +37,19 @@ public record UpdateRequired() : IEvent {
     public DateTime OccurredAt { get; } = DateTime.UtcNow;
 };
 
-public record MainWindow_OnShown() : IEvent {
+public record WindowShownEvent() : IEvent {
     public DateTime OccurredAt { get; } = DateTime.UtcNow;
 };
 
-public record MainWindow_OnFormClosed(bool IsUserInitiated) : IEvent {
+public record WindowClosedEvent(bool IsUserInitiated) : IEvent {
     public DateTime OccurredAt { get; } = DateTime.UtcNow;
 };
 
-public record MainWindow_OnStateChanged(WindowState State) : IEvent {
+public record WindowStateChangedEvent(WindowState State) : IEvent {
     public DateTime OccurredAt { get; } = DateTime.UtcNow;
 };
 
-public record MainWindow_OnFocusChanged(FocusState State) : IEvent {
+public record WindowFocusChangedEvent(FocusState State) : IEvent {
     public DateTime OccurredAt { get; } = DateTime.UtcNow;
 };
 
