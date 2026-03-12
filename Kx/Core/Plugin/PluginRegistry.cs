@@ -43,6 +43,17 @@ public static class PluginRegistry {
         }
     }
 
+    /// <summary>
+    /// Returns the currently loaded plugins in dependency-resolved load order.
+    /// </summary>
+    public static IReadOnlyList<IPlugin> GetLoadOrder() {
+        lock (_sync) {
+            return _loadOrder
+                .Where(_entries.ContainsKey)
+                .ToArray();
+        }
+    }
+
     public static void Unregister(IPlugin plugin) {
         lock (_sync) {
             _entries.Remove(plugin);

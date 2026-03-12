@@ -14,12 +14,19 @@ using Kx.Utility;
 
 namespace Kx.App;
 
-public sealed class Runtime(IWindowHost windowHost) {
+public sealed class Runtime {
 
     private readonly MsDiContainer _services = new();
+    private readonly PluginManager _pluginManager;
+    private readonly IWindowHost _windowHost;
     private bool _started;
     private Type? _windowType;
     private Window _window = null!;
+
+    public Runtime(IWindowHost windowHost) {
+        _windowHost = windowHost;
+        _pluginManager = new PluginManager(_services);
+    }
 
     public void Start() {
         if (_started)
@@ -31,11 +38,12 @@ public sealed class Runtime(IWindowHost windowHost) {
         _started = true;
         ConfigurePaths();
         ConfigureServices();
+        _pluginManager.ConfigureServices();
         _services.Build();
 
         InitializePlugins();
         InitializeUI();
-        windowHost.ShowWindow();
+        _windowHost.ShowWindow();
     }
 
     public void RegisterWindow<TWindow>() where TWindow : Window {
@@ -57,12 +65,12 @@ public sealed class Runtime(IWindowHost windowHost) {
     }
 
     private void ConfigureServices() {
-        _services.Register<IWindowHost>(windowHost);
+        _services.Register<IWindowHost>(_windowHost);
 
         // Shutdown
         _services.RegisterFactory<ShutdownManager>(Lifetime.Singleton, c => new ShutdownManager(c));
-        _services.RegisterFactory<PluginManager>(Lifetime.Singleton, c => new PluginManager(c));
-        _services.RegisterFactory<IShutdownAware>(Lifetime.Singleton, c => c.Get<PluginManager>());
+        _services.Register(_pluginManager);
+        _services.Register<IShutdownAware>(_pluginManager);
 
         // Logging sinks
         _services.RegisterFactory<ILogSink>(Lifetime.Singleton,
@@ -91,13 +99,13 @@ public sealed class Runtime(IWindowHost windowHost) {
     }
 
     private void InitializePlugins() {
-        _services.Get<PluginManager>().InitializeAll();
+        _pluginManager.InitializeAll();
     }
 
     private void InitializeUI() {
         _window = (Window)_services.Get(_windowType!);
 
-        windowHost.Closed += async e => {
+        _windowHost.Closed += async e => {
             await ShutdownAsync();
         };
     }
