@@ -1,4 +1,5 @@
 frame:
+  style: Default
   topLeft: "KalOnline:Frame:top_left.png"
   topCenter: "KalOnline:Frame:top_center.png"
   topRight: "KalOnline:Frame:top_right.png"
@@ -20,6 +21,24 @@ frame:
   fillPosOffset: 5
   fillWidthOffset: 12
   fillHeightOffset: 9
+
+  default:
+    title: "KUpdater"
+    backgroundColor: "#1E1F22"
+    titleBarColor: "#25262B"
+    borderColor: "#3A3D46"
+    separatorColor: "#3A3D46"
+    titleColor: "#F5F5F5"
+    closeButtonColor: "#2D2F36"
+    closeButtonForegroundColor: "#F5F5F5"
+    borderThickness: 1
+    cornerRadius: 10
+    titleBarHeight: 36
+    titlePadding: 14
+    titleFontSize: 14
+    contentPadding: 10
+    closeButtonSize: 24
+    closeButtonMargin: 6
 
 controls:
   - type: Label

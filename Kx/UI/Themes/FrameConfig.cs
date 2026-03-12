@@ -4,6 +4,7 @@
 namespace Kx.UI.Themes;
 
 public class FrameConfig {
+    public FrameStyle Style { get; set; } = FrameStyle.Auto;
     public string TopLeft { get; set; } = "KalOnline:Frame:top_left.png";
     public string TopCenter { get; set; } = "KalOnline:Frame:top_center.png";
     public string TopRight { get; set; } = "KalOnline:Frame:top_right.png";
@@ -22,4 +23,5 @@ public class FrameConfig {
     public int FillPosOffset { get; set; } = 5;
     public int FillWidthOffset { get; set; } = 12;
     public int FillHeightOffset { get; set; } = 9;
+    public DefaultFrameConfig Default { get; set; } = new();
 }

@@ -9,6 +9,7 @@ using Kx.Abstractions.Rendering;
 using Kx.App;
 using Kx.Core.Interop;
 using Kx.Core.Interop.SafeHandles;
+using Kx.UI.Themes;
 using Kx.Utility;
 
 using SkiaSharp;
@@ -967,6 +968,11 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
         if (f == null)
             return;
 
+        if (f.UsesDefaultFrame) {
+            DrawDefaultWindowFrame(canvas, size, f);
+            return;
+        }
+
         // Falls Bitmaps nicht exsitieren, platzhalter erstellen
         f.AutoGenerateMissingParts(size.Width, size.Height);
 
@@ -1029,6 +1035,97 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             } else {
                 canvas.DrawBitmap(f.FillBitmap, rect);
             }
+        }
+    }
+
+    private void DrawDefaultWindowFrame(SKCanvas canvas, Size size, FrameResource frame) {
+        int width = size.Width;
+        int height = size.Height;
+
+        canvas.Clear(SKColors.Transparent);
+
+        var outerRect = new SKRect(0, 0, width, height);
+        float radius = frame.DefaultFrame.CornerRadius;
+        var outerRoundRect = new SKRoundRect(outerRect, radius, radius);
+
+        using var borderPaint = new SKPaint {
+            Color = frame.DefaultFrame.BorderColor,
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+        canvas.DrawRoundRect(outerRoundRect, borderPaint);
+
+        float borderThickness = frame.DefaultFrame.BorderThickness;
+        var innerRect = new SKRect(
+            outerRect.Left + borderThickness,
+            outerRect.Top + borderThickness,
+            Math.Max(outerRect.Left + borderThickness, outerRect.Right - borderThickness),
+            Math.Max(outerRect.Top + borderThickness, outerRect.Bottom - borderThickness));
+        float innerRadius = Math.Max(0, radius - borderThickness);
+        var innerRoundRect = new SKRoundRect(innerRect, innerRadius, innerRadius);
+
+        using var bodyPaint = new SKPaint {
+            Color = frame.DefaultFrame.BackgroundColor,
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+        canvas.DrawRoundRect(innerRoundRect, bodyPaint);
+
+        using (new SKAutoCanvasRestore(canvas, true)) {
+            canvas.ClipRoundRect(innerRoundRect, antialias: true);
+
+            var titleBarRect = frame.GetTitleBarRect(size);
+            using var titleBarPaint = new SKPaint {
+                Color = frame.DefaultFrame.TitleBarColor,
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+            canvas.DrawRect(titleBarRect, titleBarPaint);
+
+            using var separatorPaint = new SKPaint {
+                Color = frame.DefaultFrame.SeparatorColor,
+                IsAntialias = true,
+                StrokeWidth = Math.Max(1f, borderThickness)
+            };
+            canvas.DrawLine(titleBarRect.Left, titleBarRect.Bottom, titleBarRect.Right, titleBarRect.Bottom, separatorPaint);
+        }
+
+        var closeRect = frame.GetCloseButtonRect(size);
+        using var closeButtonPaint = new SKPaint {
+            Color = frame.DefaultFrame.CloseButtonColor,
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+        canvas.DrawRoundRect(closeRect, Math.Min(closeRect.Width, closeRect.Height) / 4f, Math.Min(closeRect.Width, closeRect.Height) / 4f, closeButtonPaint);
+
+        using var closeGlyphPaint = new SKPaint {
+            Color = frame.DefaultFrame.CloseButtonForegroundColor,
+            IsAntialias = true,
+            StrokeWidth = Math.Max(1.5f, frame.DefaultFrame.BorderThickness + 0.5f),
+            StrokeCap = SKStrokeCap.Round
+        };
+        float glyphInset = Math.Max(5f, closeRect.Width * 0.28f);
+        canvas.DrawLine(closeRect.Left + glyphInset, closeRect.Top + glyphInset, closeRect.Right - glyphInset, closeRect.Bottom - glyphInset, closeGlyphPaint);
+        canvas.DrawLine(closeRect.Right - glyphInset, closeRect.Top + glyphInset, closeRect.Left + glyphInset, closeRect.Bottom - glyphInset, closeGlyphPaint);
+
+        string fallbackTitle = Process.GetCurrentProcess().ProcessName;
+        string title = frame.GetTitle(fallbackTitle);
+        var titleBar = frame.GetTitleBarRect(size);
+        float titleLeft = titleBar.Left + frame.DefaultFrame.TitlePadding;
+        float titleRight = Math.Max(titleLeft, closeRect.Left - frame.DefaultFrame.TitlePadding);
+        var titleRect = new SKRect(titleLeft, titleBar.Top, titleRight, titleBar.Bottom);
+
+        using var titlePaint = new SKPaint {
+            Color = frame.DefaultFrame.TitleColor,
+            IsAntialias = true
+        };
+        using var titleFont = new SKFont(SKTypeface.FromFamilyName("Segoe UI"), frame.DefaultFrame.TitleFontSize);
+        var titleMetrics = titleFont.Metrics;
+        float titleBaseline = titleBar.MidY - (titleMetrics.Ascent + titleMetrics.Descent) / 2f;
+
+        using (new SKAutoCanvasRestore(canvas, true)) {
+            canvas.ClipRect(titleRect);
+            canvas.DrawText(title, titleRect.Left, titleBaseline, SKTextAlign.Left, titleFont, titlePaint);
         }
     }
 

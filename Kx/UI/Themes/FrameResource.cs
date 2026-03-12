@@ -9,6 +9,7 @@ namespace Kx.UI.Themes;
 
 public sealed class FrameResource : IDisposable {
     // Original Properties
+    public FrameStyle Style { get; private set; }
     public SKBitmap? TopLeft { get; private set; }
     public SKBitmap? TopCenter { get; private set; }
     public SKBitmap? TopRight { get; private set; }
@@ -35,6 +36,7 @@ public sealed class FrameResource : IDisposable {
     public int DefaultCornerSize { get; set; } = 64;
     public int DefaultEdgeThickness { get; set; } = 48;
     public float DpiScale { get; private set; } = 1f;
+    internal DefaultFrameResource DefaultFrame { get; private set; } = new();
 
     private bool _disposed;
 
@@ -42,6 +44,7 @@ public sealed class FrameResource : IDisposable {
 
     public static FrameResource FromConfig(FrameConfig cfg, IResourceProvider provider, float dpiScale) {
         var fr = new FrameResource {
+            Style = cfg.Style,
             TopLeft = provider.TryGetSkiaBitmap(cfg.TopLeft),
             TopCenter = provider.TryGetSkiaBitmap(cfg.TopCenter),
             TopRight = provider.TryGetSkiaBitmap(cfg.TopRight),
@@ -62,6 +65,7 @@ public sealed class FrameResource : IDisposable {
             FillWidthOffset = cfg.FillWidthOffset,
             FillHeightOffset = cfg.FillHeightOffset,
             DpiScale = dpiScale,
+            DefaultFrame = DefaultFrameResource.FromConfig(cfg.Default),
         };
 
         fr.ApplyDpiScaling();
@@ -70,6 +74,9 @@ public sealed class FrameResource : IDisposable {
     }
 
     public SKRect GetContentRect(Size size) {
+        if (UsesDefaultFrame)
+            return GetDefaultContentRect(size);
+
         float width = Math.Max(0f, size.Width);
         float height = Math.Max(0f, size.Height);
 
@@ -84,6 +91,40 @@ public sealed class FrameResource : IDisposable {
         float fillBottom = fillTop + Math.Max(0f, height - topHeight - bottomHeight + FillHeightOffset);
 
         return new SKRect(fillLeft, fillTop, fillRight, fillBottom);
+    }
+
+    internal bool UsesDefaultFrame => Style == FrameStyle.Default || Style == FrameStyle.Auto && !HasCompleteImageFrame();
+
+    internal SKRect GetTitleBarRect(Size size) {
+        float width = Math.Max(0f, size.Width);
+        float height = Math.Max(0f, size.Height);
+
+        float border = Math.Max(0f, DefaultFrame.BorderThickness);
+        float titleBarHeight = Math.Min(Math.Max(0f, DefaultFrame.TitleBarHeight), Math.Max(0f, height - border * 2));
+
+        return new SKRect(border, border, Math.Max(border, width - border), border + titleBarHeight);
+    }
+
+    internal SKRect GetCloseButtonRect(Size size) {
+        var titleBarRect = GetTitleBarRect(size);
+
+        float margin = Math.Max(0f, DefaultFrame.CloseButtonMargin);
+        float availableHeight = Math.Max(0f, titleBarRect.Height - margin * 2);
+        float buttonSize = Math.Min(Math.Max(0f, DefaultFrame.CloseButtonSize), availableHeight);
+        float top = titleBarRect.Top + Math.Max(0f, (titleBarRect.Height - buttonSize) / 2f);
+        float right = titleBarRect.Right - margin;
+
+        return new SKRect(
+            Math.Max(titleBarRect.Left, right - buttonSize),
+            top,
+            right,
+            top + buttonSize);
+    }
+
+    internal string GetTitle(string fallbackTitle) {
+        return string.IsNullOrWhiteSpace(DefaultFrame.Title)
+            ? fallbackTitle
+            : DefaultFrame.Title;
     }
 
     // ---------------------------------------------------------
@@ -115,6 +156,9 @@ public sealed class FrameResource : IDisposable {
     // 2) Fehlende Teile automatisch generieren
     // ---------------------------------------------------------
     public void AutoGenerateMissingParts(int windowWidth, int windowHeight) {
+        if (UsesDefaultFrame)
+            return;
+
         if (!AutoGenerateMissing)
             return;
 
@@ -172,6 +216,85 @@ public sealed class FrameResource : IDisposable {
         FillPosOffset = (int)(FillPosOffset * DpiScale);
         FillWidthOffset = (int)(FillWidthOffset * DpiScale);
         FillHeightOffset = (int)(FillHeightOffset * DpiScale);
+
+        DefaultFrame.ApplyDpiScaling(DpiScale);
+    }
+
+    private bool HasCompleteImageFrame() {
+        return TopLeft is not null &&
+               TopCenter is not null &&
+               TopRight is not null &&
+               RightCenter is not null &&
+               BottomRight is not null &&
+               BottomCenter is not null &&
+               BottomLeft is not null &&
+               LeftCenter is not null &&
+               (UseFillColor || FillBitmap is not null);
+    }
+
+    private SKRect GetDefaultContentRect(Size size) {
+        float width = Math.Max(0f, size.Width);
+        float height = Math.Max(0f, size.Height);
+
+        float border = Math.Max(0f, DefaultFrame.BorderThickness);
+        float padding = Math.Max(0f, DefaultFrame.ContentPadding);
+        float top = border + Math.Max(0f, DefaultFrame.TitleBarHeight) + padding;
+        float left = border + padding;
+        float right = Math.Max(left, width - border - padding);
+        float bottom = Math.Max(top, height - border - padding);
+
+        return new SKRect(left, top, right, bottom);
+    }
+
+    internal sealed class DefaultFrameResource {
+        public string Title { get; private set; } = string.Empty;
+        public SKColor BackgroundColor { get; private set; }
+        public SKColor TitleBarColor { get; private set; }
+        public SKColor BorderColor { get; private set; }
+        public SKColor SeparatorColor { get; private set; }
+        public SKColor TitleColor { get; private set; }
+        public SKColor CloseButtonColor { get; private set; }
+        public SKColor CloseButtonForegroundColor { get; private set; }
+        public float BorderThickness { get; private set; }
+        public float CornerRadius { get; private set; }
+        public float TitleBarHeight { get; private set; }
+        public float TitlePadding { get; private set; }
+        public float TitleFontSize { get; private set; }
+        public float ContentPadding { get; private set; }
+        public float CloseButtonSize { get; private set; }
+        public float CloseButtonMargin { get; private set; }
+
+        public static DefaultFrameResource FromConfig(DefaultFrameConfig cfg) {
+            return new DefaultFrameResource {
+                Title = cfg.Title,
+                BackgroundColor = SKColor.Parse(cfg.BackgroundColor),
+                TitleBarColor = SKColor.Parse(cfg.TitleBarColor),
+                BorderColor = SKColor.Parse(cfg.BorderColor),
+                SeparatorColor = SKColor.Parse(cfg.SeparatorColor),
+                TitleColor = SKColor.Parse(cfg.TitleColor),
+                CloseButtonColor = SKColor.Parse(cfg.CloseButtonColor),
+                CloseButtonForegroundColor = SKColor.Parse(cfg.CloseButtonForegroundColor),
+                BorderThickness = Math.Max(0, cfg.BorderThickness),
+                CornerRadius = Math.Max(0, cfg.CornerRadius),
+                TitleBarHeight = Math.Max(0, cfg.TitleBarHeight),
+                TitlePadding = Math.Max(0, cfg.TitlePadding),
+                TitleFontSize = Math.Max(1, cfg.TitleFontSize),
+                ContentPadding = Math.Max(0, cfg.ContentPadding),
+                CloseButtonSize = Math.Max(1, cfg.CloseButtonSize),
+                CloseButtonMargin = Math.Max(0, cfg.CloseButtonMargin),
+            };
+        }
+
+        public void ApplyDpiScaling(float dpiScale) {
+            BorderThickness *= dpiScale;
+            CornerRadius *= dpiScale;
+            TitleBarHeight *= dpiScale;
+            TitlePadding *= dpiScale;
+            TitleFontSize *= dpiScale;
+            ContentPadding *= dpiScale;
+            CloseButtonSize *= dpiScale;
+            CloseButtonMargin *= dpiScale;
+        }
     }
 
     // ---------------------------------------------------------

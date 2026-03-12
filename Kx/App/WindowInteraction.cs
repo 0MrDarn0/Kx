@@ -93,6 +93,14 @@ public class WindowInteraction {
 
         var location = new Point(e.X, e.Y);
 
+        if (_ctx.Frame?.UsesDefaultFrame == true) {
+            var closeRect = _ctx.Frame.GetCloseButtonRect(new Size(_windowHost.Width, _windowHost.Height));
+            if (closeRect.Contains(location.X, location.Y)) {
+                _windowHost.CloseWindow();
+                return;
+            }
+        }
+
         if (_ctx.UIElementManager.MouseDown(location)) {
             _ctx.Renderer.RequestRender();
             return;
@@ -109,6 +117,12 @@ public class WindowInteraction {
             _resizeStartCursor = Cursor.Position;
             _resizeStartSize = new Size(_windowHost.Width, _windowHost.Height);
             return;
+        }
+
+        if (_ctx.Frame?.UsesDefaultFrame == true) {
+            var titleBarRect = _ctx.Frame.GetTitleBarRect(new Size(_windowHost.Width, _windowHost.Height));
+            if (!titleBarRect.Contains(location.X, location.Y))
+                return;
         }
 
         _isDragging = true;
