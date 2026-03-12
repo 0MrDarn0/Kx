@@ -272,14 +272,6 @@ public static class PluginLoader {
     }
 
     public static void Unload(IPlugin plugin) {
-        if (!PluginRegistry.TryGetContext(plugin, out var alc) || alc is null)
-            return;
-
-        (plugin as IDisposable)?.Dispose();
-        PluginRegistry.Unregister(plugin);
-        alc.Unload();
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        PluginRegistry.Unload(plugin);
     }
 }

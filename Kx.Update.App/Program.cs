@@ -28,8 +28,8 @@ namespace Kx.Update.App {
             // App-spezifisches Window registrieren
             runtime.RegisterWindow<MainWindow>();
 
-            // Runtime starten (einmalig!)
-            runtime.Start();
+            // Runtime starten, sobald der Host bereit ist
+            windowHost.HandleCreated += (_, _) => runtime.Start();
 
             // WinForms Event Loop starten
             Application.Run(windowHost);

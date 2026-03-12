@@ -2,8 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.DI;
+using Kx.Abstractions.Lifecycle;
 using Kx.Abstractions.Logging;
-using Kx.Abstractions.Plugin;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.DI;
 using Kx.Core.Lifecycle;
@@ -12,17 +12,23 @@ using Kx.Core.Plugin;
 using Kx.UI.Platform;
 using Kx.Utility;
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Kx.App;
 
 public sealed class Runtime(IWindowHost windowHost) {
 
     private readonly MsDiContainer _services = new();
+    private bool _started;
     private Type? _windowType;
     private Window _window = null!;
 
     public void Start() {
+        if (_started)
+            return;
+
+        if (_windowType is null)
+            throw new InvalidOperationException("No window has been registered. Call RegisterWindow<TWindow>() before Start().");
+
+        _started = true;
         ConfigurePaths();
         ConfigureServices();
         _services.Build();
@@ -36,12 +42,7 @@ public sealed class Runtime(IWindowHost windowHost) {
         _windowType = typeof(TWindow);
 
         _services.RegisterFactory<TWindow>(Lifetime.Transient,
-            c => ActivatorUtilities.CreateInstance<TWindow>(
-                _services.Provider,
-                windowHost,
-                c.Get<ITrayService>(),
-                c.Get<ILoggingService>()
-            ));
+            c => c.Create<TWindow>());
     }
 
 
@@ -56,8 +57,12 @@ public sealed class Runtime(IWindowHost windowHost) {
     }
 
     private void ConfigureServices() {
+        _services.Register<IWindowHost>(windowHost);
+
         // Shutdown
         _services.RegisterFactory<ShutdownManager>(Lifetime.Singleton, c => new ShutdownManager(c));
+        _services.RegisterFactory<PluginManager>(Lifetime.Singleton, c => new PluginManager(c));
+        _services.RegisterFactory<IShutdownAware>(Lifetime.Singleton, c => c.Get<PluginManager>());
 
         // Logging sinks
         _services.RegisterFactory<ILogSink>(Lifetime.Singleton,
@@ -86,20 +91,13 @@ public sealed class Runtime(IWindowHost windowHost) {
     }
 
     private void InitializePlugins() {
-        var log = _services.Get<ILoggingService>();
-        var plugins = PluginLoader.LoadAll<IPlugin>();
-
-        foreach (var plugin in plugins) {
-            log.Info($"Loading plugin: {plugin.Name}");
-            plugin.Initialize(new PluginContext(_services, plugin.Name));
-        }
+        _services.Get<PluginManager>().InitializeAll();
     }
 
     private void InitializeUI() {
         _window = (Window)_services.Get(_windowType!);
 
         windowHost.Closed += async e => {
-            _window.RaiseClosed(e.UserInitiated);
             await ShutdownAsync();
         };
     }
