@@ -7,21 +7,22 @@ using Kx.Abstractions.Logging;
 
 namespace Kx.Core.Lifecycle;
 
-public sealed class ShutdownManager(IDependencyContainer container) {
-    public async Task ShutdownAsync() {
+public sealed class StartupManager(IDependencyContainer container) {
+    public async Task StartupAsync() {
         var log = container.Get<ILoggingService>();
-        log.Info("Shutting down…");
+        log.Info("Starting up…");
 
-        var services = container.GetAll<IShutdownAware>();
+        var services = container.GetAll<IStartupAware>();
         foreach (var service in services) {
             try {
-                await service.ShutdownAsync().ConfigureAwait(false);
+                await service.StartupAsync().ConfigureAwait(false);
             }
             catch (Exception ex) {
-                log.Error("Shutdown error:", ex);
+                log.Error("Startup error:", ex);
+                throw;
             }
         }
 
-        log.Info("Shutdown complete.");
+        log.Info("Startup complete.");
     }
 }

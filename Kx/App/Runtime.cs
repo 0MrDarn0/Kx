@@ -19,6 +19,8 @@ public sealed class Runtime {
     private readonly MsDiContainer _services = new();
     private readonly PluginManager _pluginManager;
     private readonly IWindowHost _windowHost;
+    private Action<IServiceRegistry>? _configureAppServices;
+    private Task? _startTask;
     private bool _started;
     private Type? _windowType;
     private Window _window = null!;
@@ -29,12 +31,24 @@ public sealed class Runtime {
     }
 
     public void Start() {
-        if (_started)
-            return;
+        StartAsync().GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Starts the runtime and runs startup lifecycle services before the main window is shown.
+    /// </summary>
+    public Task StartAsync() {
+        if (_startTask is not null)
+            return _startTask;
 
         if (_windowType is null)
             throw new InvalidOperationException("No window has been registered. Call RegisterWindow<TWindow>() before Start().");
 
+        _startTask = StartCoreAsync();
+        return _startTask;
+    }
+
+    private async Task StartCoreAsync() {
         _started = true;
         ConfigurePaths();
         ConfigureServices();
@@ -42,20 +56,44 @@ public sealed class Runtime {
         _services.Build();
 
         InitializePlugins();
+        await StartupAsync();
         InitializeUI();
         _windowHost.ShowWindow();
     }
 
     public void RegisterWindow<TWindow>() where TWindow : Window {
-        _windowType = typeof(TWindow);
+        RegisterWindow(typeof(TWindow));
+    }
 
-        _services.RegisterFactory<TWindow>(Lifetime.Transient,
-            c => c.Create<TWindow>());
+    /// <summary>
+    /// Registers application-specific services before the dependency container is built.
+    /// </summary>
+    /// <param name="configureServices">The callback used to register application services.</param>
+    public void ConfigureServices(Action<IServiceRegistry> configureServices) {
+        ArgumentNullException.ThrowIfNull(configureServices);
+
+        if (_started)
+            throw new InvalidOperationException("Application services must be configured before Start() is called.");
+
+        _configureAppServices += configureServices;
+    }
+
+    internal void RegisterWindow(Type windowType) {
+        ArgumentNullException.ThrowIfNull(windowType);
+
+        if (!typeof(Window).IsAssignableFrom(windowType))
+            throw new ArgumentException($"The window type must derive from {nameof(Window)}.", nameof(windowType));
+
+        _windowType = windowType;
     }
 
 
     public async Task ShutdownAsync() {
         await _services.Get<ShutdownManager>().ShutdownAsync();
+    }
+
+    private async Task StartupAsync() {
+        await _services.Get<StartupManager>().StartupAsync();
     }
 
     private static void ConfigurePaths() {
@@ -66,6 +104,9 @@ public sealed class Runtime {
 
     private void ConfigureServices() {
         _services.Register<IWindowHost>(_windowHost);
+
+        // Startup
+        _services.RegisterFactory<StartupManager>(Lifetime.Singleton, c => new StartupManager(c));
 
         // Shutdown
         _services.RegisterFactory<ShutdownManager>(Lifetime.Singleton, c => new ShutdownManager(c));
@@ -96,6 +137,8 @@ public sealed class Runtime {
         // TrayIcon services
         _services.Register(new TrayIcon());
         _services.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
+
+        _configureAppServices?.Invoke(_services);
     }
 
     private void InitializePlugins() {
@@ -103,7 +146,7 @@ public sealed class Runtime {
     }
 
     private void InitializeUI() {
-        _window = (Window)_services.Get(_windowType!);
+        _window = (Window)_services.Create(_windowType!);
 
         _windowHost.Closed += async e => {
             await ShutdownAsync();
