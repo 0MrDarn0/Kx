@@ -5,9 +5,9 @@ using System.Drawing;
 
 using Kx.Abstractions.Plugin;
 using Kx.Abstractions.UI;
-using Kx.UI.Markup;
-using Kx.UI.Elements;
-using Kx.UI.Themes;
+using Kx.Abstractions.UI.Elements;
+using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.Themes;
 
 using SkiaSharp;
 

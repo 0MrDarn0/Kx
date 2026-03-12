@@ -2,8 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.UI;
+using Kx.Abstractions.UI.Layout;
 using Kx.Core.Extensions;
-using Kx.UI.Layout;
 
 namespace Kx.UI.Elements.Panel;
 

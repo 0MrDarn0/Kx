@@ -5,11 +5,11 @@ using System.Drawing;
 
 using Kx.Abstractions.Events;
 using Kx.Abstractions.UI;
-using Kx.UI.Binding;
+using Kx.Abstractions.UI.Binding;
 
 using SkiaSharp;
 
-namespace Kx.UI.VisualTree;
+namespace Kx.Abstractions.UI.VisualTree;
 
 public abstract class Visual : IVisual, IDisposable {
     public string Id { get; }

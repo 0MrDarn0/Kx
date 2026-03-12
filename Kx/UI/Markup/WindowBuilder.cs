@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.App;
+using Kx.Abstractions.UI.Markup;
 using Kx.Core.Configuration;
 using Kx.UI.Themes;
 

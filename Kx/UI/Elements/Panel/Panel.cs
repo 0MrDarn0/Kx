@@ -2,7 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.UI;
-using Kx.UI.VisualTree;
+using Kx.Abstractions.UI.Elements;
+using Kx.Abstractions.UI.VisualTree;
 
 using SkiaSharp;
 

@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.UI.Themes;
+using Kx.Abstractions.UI.Themes;
 
-namespace Kx.UI.Markup;
+namespace Kx.Abstractions.UI.Markup;
 
 public class WindowConfig {
     public string? Theme { get; set; }

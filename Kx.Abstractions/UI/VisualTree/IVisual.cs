@@ -7,7 +7,7 @@ using Kx.Abstractions.Events;
 
 using SkiaSharp;
 
-namespace Kx.UI.VisualTree;
+namespace Kx.Abstractions.UI.VisualTree;
 
 public interface IVisual : IDisposable {
     string Id { get; }

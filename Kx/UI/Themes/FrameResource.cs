@@ -1,15 +1,18 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Abstractions.UI.Themes;
 using Kx.Utility;
 
 using SkiaSharp;
+
+using uFrameStyle = Kx.Abstractions.UI.Themes.FrameStyle;
 
 namespace Kx.UI.Themes;
 
 public sealed class FrameResource : IDisposable {
     // Original Properties
-    public FrameStyle Style { get; private set; }
+    public uFrameStyle Style { get; private set; }
     public SKBitmap? TopLeft { get; private set; }
     public SKBitmap? TopCenter { get; private set; }
     public SKBitmap? TopRight { get; private set; }
@@ -93,7 +96,7 @@ public sealed class FrameResource : IDisposable {
         return new SKRect(fillLeft, fillTop, fillRight, fillBottom);
     }
 
-    internal bool UsesDefaultFrame => Style == FrameStyle.Default || Style == FrameStyle.Auto && !HasCompleteImageFrame();
+    internal bool UsesDefaultFrame => Style == uFrameStyle.Default || Style == uFrameStyle.Auto && !HasCompleteImageFrame();
 
     internal SKRect GetTitleBarRect(Size size) {
         float width = Math.Max(0f, size.Width);

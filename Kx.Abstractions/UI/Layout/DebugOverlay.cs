@@ -3,7 +3,7 @@
 
 using SkiaSharp;
 
-namespace Kx.UI.Layout;
+namespace Kx.Abstractions.UI.Layout;
 
 public static partial class DebugOverlay {
     public enum OverlayType {

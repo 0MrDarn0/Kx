@@ -3,7 +3,7 @@
 
 using Kx.Abstractions.WindowHost;
 
-namespace Kx.UI.Binding;
+namespace Kx.Abstractions.UI.Binding;
 
 public sealed class Property<T>(IUiDispatcher ui, T initialValue = default!, Action? onChanged = null) {
     private readonly IUiDispatcher _ui = ui ?? throw new ArgumentNullException(nameof(ui));
@@ -18,7 +18,8 @@ public sealed class Property<T>(IUiDispatcher ui, T initialValue = default!, Act
                     _value = value;
                     _onChanged?.Invoke();
                 }));
-            } else {
+            }
+            else {
                 _value = value;
                 _onChanged?.Invoke();
             }

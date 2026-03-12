@@ -3,15 +3,17 @@
 
 using Kx.Abstractions.Events;
 using Kx.Abstractions.Logging;
+using Kx.Abstractions.UI.Elements;
+using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.Themes;
+using Kx.Abstractions.UI.VisualTree;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
-using Kx.UI.Elements;
 using Kx.UI.Markup;
 using Kx.UI.Platform;
 using Kx.UI.Rendering;
 using Kx.UI.Themes;
-using Kx.UI.VisualTree;
 using Kx.Utility;
 
 namespace Kx.App;

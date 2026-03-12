@@ -2,9 +2,9 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.UI;
-using Kx.UI.Elements;
+using Kx.Abstractions.UI.Elements;
 
-namespace Kx.UI.Markup;
+namespace Kx.Abstractions.UI.Markup;
 
 public delegate UIElement ControlBuilder(IVisualContext context, ControlConfig config);
 

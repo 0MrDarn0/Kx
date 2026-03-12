@@ -3,14 +3,13 @@
 
 using System.Drawing;
 
-using Kx.Abstractions.UI;
-using Kx.UI.Binding;
-using Kx.UI.Layout;
-using Kx.UI.VisualTree;
+using Kx.Abstractions.UI.Binding;
+using Kx.Abstractions.UI.Layout;
+using Kx.Abstractions.UI.VisualTree;
 
 using SkiaSharp;
 
-namespace Kx.UI.Elements;
+namespace Kx.Abstractions.UI.Elements;
 
 public abstract class UIElement : Visual, IDockable {
     public UIElement? Parent { get; private set; }

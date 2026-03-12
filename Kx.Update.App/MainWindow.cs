@@ -2,13 +2,14 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.Logging;
+using Kx.Abstractions.UI.Layout;
+using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.Themes;
 using Kx.Abstractions.WindowHost;
 using Kx.App;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
-using Kx.UI.Markup;
-using Kx.UI.Themes;
 
 namespace Kx.Update.App;
 

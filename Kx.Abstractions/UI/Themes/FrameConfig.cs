@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-namespace Kx.UI.Themes;
+namespace Kx.Abstractions.UI.Themes;
 
 public class FrameConfig {
     public FrameStyle Style { get; set; } = FrameStyle.Auto;

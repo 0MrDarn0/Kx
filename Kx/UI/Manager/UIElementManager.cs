@@ -4,9 +4,9 @@
 using Kx.Core.Extensions;
 using Kx.Abstractions.Events;
 using Kx.Abstractions.UI;
-using Kx.UI.Elements;
-using Kx.UI.VisualTree;
+using Kx.Abstractions.UI.VisualTree;
 using SkiaSharp;
+using Kx.Abstractions.UI.Elements;
 
 namespace Kx.UI.Manager;
 

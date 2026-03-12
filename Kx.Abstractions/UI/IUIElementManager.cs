@@ -3,7 +3,7 @@
 
 using System.Drawing;
 
-using Kx.UI.VisualTree;
+using Kx.Abstractions.UI.VisualTree;
 
 namespace Kx.Abstractions.UI;
 

@@ -2,7 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Abstractions.UI;
-using Kx.UI.Elements;
+using Kx.Abstractions.UI.Elements;
+using Kx.Abstractions.UI.Markup;
 
 namespace Kx.UI.Markup;
 

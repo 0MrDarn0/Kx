@@ -3,6 +3,7 @@
 
 using Kx.Abstractions.Events;
 using Kx.Abstractions.UI;
+using Kx.Abstractions.UI.Elements;
 using Kx.Core.Extensions;
 
 using SkiaSharp;

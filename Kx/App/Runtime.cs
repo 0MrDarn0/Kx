@@ -4,6 +4,8 @@
 using Kx.Abstractions.DI;
 using Kx.Abstractions.Lifecycle;
 using Kx.Abstractions.Logging;
+using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.Themes;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.DI;
 using Kx.Core.Lifecycle;
