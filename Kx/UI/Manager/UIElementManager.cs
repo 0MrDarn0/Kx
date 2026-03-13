@@ -41,8 +41,13 @@ public class UIElementManager : IUIElementManager {
             return false;
         }
 
-        visual = _elements.FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.Ordinal));
-        return visual is not null;
+        foreach (var root in _roots) {
+            if (TryGetRecursive(root, id, out visual))
+                return true;
+        }
+
+        visual = null;
+        return false;
     }
 
     public void AddRoot(IVisual root) {
@@ -184,6 +189,23 @@ public class UIElementManager : IUIElementManager {
             if (HitTestRecursive(root, p, action))
                 return true;
         }
+        return false;
+    }
+
+    private static bool TryGetRecursive(IVisual visual, string id, out IVisual? match) {
+        if (string.Equals(visual.Id, id, StringComparison.Ordinal)) {
+            match = visual;
+            return true;
+        }
+
+        if (visual is IVisualContainer container) {
+            foreach (var child in container.Children) {
+                if (TryGetRecursive(child, id, out match))
+                    return true;
+            }
+        }
+
+        match = null;
         return false;
     }
 

@@ -3,6 +3,7 @@
 
 namespace Kx.Abstractions.Events;
 
-public sealed record MarkupActionEvent(string EventName, string SourceId) : IEvent {
+public sealed record MarkupActionEvent(string EventName, string SourceId, string? Argument = null) : IEvent {
     public DateTime OccurredAt { get; init; } = DateTime.UtcNow;
+    public UiEventPayload Payload { get; } = new(Argument);
 }

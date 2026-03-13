@@ -4,6 +4,7 @@
 using Kx.Abstractions.Events;
 using Kx.Abstractions.Logging;
 using Kx.Abstractions.UI.Actions;
+using Kx.Abstractions.UI.Commands;
 using Kx.Abstractions.UI.Elements;
 using Kx.Abstractions.UI.Markup;
 using Kx.Abstractions.UI.Themes;
@@ -28,17 +29,20 @@ public abstract class Window : IDisposable {
     protected bool HasConfiguredContentControls { get; private set; }
 
     private readonly IMarkupActionRegistry? _actionRegistry;
+    private readonly IUiCommandRegistry? _commandRegistry;
     private readonly IControlRegistry? _controlRegistry;
     private readonly IThemeRegistry? _themeRegistry;
     private readonly IWindowRegistry? _windowRegistry;
+    private readonly List<IVisual> _configuredControls = [];
     private WindowConfig? _resolvedWindowConfig;
     private WindowTheme? _resolvedTheme;
 
-    protected Window(IWindowHost host, ITrayService? tray, ILoggingService? log, IMarkupActionRegistry? actionRegistry = null, IControlRegistry? controlRegistry = null, IThemeRegistry? themeRegistry = null, IWindowRegistry? windowRegistry = null) {
+    protected Window(IWindowHost host, ITrayService? tray, ILoggingService? log, IMarkupActionRegistry? actionRegistry = null, IUiCommandRegistry? commandRegistry = null, IControlRegistry? controlRegistry = null, IThemeRegistry? themeRegistry = null, IWindowRegistry? windowRegistry = null) {
         _host = host;
         _tray = tray;
         _logger = log;
         _actionRegistry = actionRegistry;
+        _commandRegistry = commandRegistry;
         _controlRegistry = controlRegistry;
         _themeRegistry = themeRegistry;
         _windowRegistry = windowRegistry;
@@ -48,6 +52,9 @@ public abstract class Window : IDisposable {
             uiThread: host,
             windowHost: host,
             new EventManager());
+        if (_commandRegistry is not null)
+            _ctx.SetCommandRegistry(_commandRegistry);
+        _ctx.SetOpenWindowAction(OpenWindowDefinition);
 
         InitializeFrame();
         InitializeRenderer();
@@ -64,7 +71,7 @@ public abstract class Window : IDisposable {
         _resolvedWindowConfig = ResolveWindowConfig();
         _resolvedTheme = ResolveWindowTheme(_resolvedWindowConfig);
 
-        var frameConfig = ResolveFrameConfig(_resolvedWindowConfig, _resolvedTheme);
+        var frameConfig = WindowDefinitionMerger.MergeFrame(_resolvedWindowConfig.Frame, _resolvedTheme);
         var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, _ctx.DpiScale);
         _ctx.SetFrame(frame);
     }
@@ -112,13 +119,19 @@ public abstract class Window : IDisposable {
         if (_actionRegistry is null || _controlRegistry is null || _resolvedWindowConfig is null)
             return;
 
-        foreach (var config in ResolveControlConfigs(_resolvedWindowConfig, _resolvedTheme)) {
+        ClearConfiguredControls();
+        HasConfiguredContentControls = false;
+
+        foreach (var config in WindowDefinitionMerger.MergeControls(_resolvedWindowConfig.Controls, _resolvedTheme)) {
             var control = ControlFactory.Create(_controlRegistry, _actionRegistry, _ctx, config);
             _ctx.UIElementManager.Add(control);
+            _configuredControls.Add(control);
 
             if (control.Layer == VisualLayer.Content)
                 HasConfiguredContentControls = true;
         }
+
+        _ctx.RequestRender();
     }
 
     private WindowConfig ResolveWindowConfig() {
@@ -137,21 +150,26 @@ public abstract class Window : IDisposable {
         return null;
     }
 
-    private static FrameConfig ResolveFrameConfig(WindowConfig config, WindowTheme? theme) {
-        if (theme is not null)
-            return theme.Frame;
+    private void OpenWindowDefinition(string name) {
+        if (_windowRegistry?.TryGet(name, out var config) != true || config is null)
+            throw new InvalidOperationException($"No window definition named '{name}' is registered.");
 
-        return config.Frame;
+        _resolvedWindowConfig = config;
+        _resolvedTheme = ResolveWindowTheme(config);
+        HasConfiguredContentControls = false;
+
+        var frameConfig = WindowDefinitionMerger.MergeFrame(config.Frame, _resolvedTheme);
+        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, _ctx.DpiScale);
+        _ctx.SetFrame(frame);
+        InitializeConfiguredControls();
     }
 
-    private static IEnumerable<ControlConfig> ResolveControlConfigs(WindowConfig config, WindowTheme? theme) {
-        if (theme?.Controls is not null) {
-            foreach (var themeControl in theme.Controls)
-                yield return themeControl;
+    private void ClearConfiguredControls() {
+        foreach (var visual in _configuredControls) {
+            _ctx.UIElementManager.Remove(visual);
         }
 
-        foreach (var control in config.Controls)
-            yield return control;
+        _configuredControls.Clear();
     }
 
     public virtual void Dispose() {

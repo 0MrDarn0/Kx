@@ -13,6 +13,9 @@ public interface IUIElementManager {
     bool MouseUp(Point location);
     bool MouseWheel(int delta, Point location);
     void Add(IVisual element);
+    void Remove(IVisual element);
+    void SetFocus(IVisual element);
+    void ClearFocus();
     bool TryGet(string id, out IVisual? visual);
     void Dispose();
 }

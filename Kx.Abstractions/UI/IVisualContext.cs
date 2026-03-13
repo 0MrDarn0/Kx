@@ -3,6 +3,7 @@
 
 using Kx.Abstractions.WindowHost;
 using Kx.Abstractions.Events;
+using Kx.Abstractions.UI.Commands;
 
 namespace Kx.Abstractions.UI;
 
@@ -14,6 +15,7 @@ public interface IVisualContext {
     IUiDispatcher UiThread { get; }
     IUIElementManager UIElementManager { get; }
     IEventManager Events { get; }
+    IUiCommandRegistry Commands { get; }
 
     /// <summary>
     /// Requests a new render pass for the current window.
@@ -24,4 +26,9 @@ public interface IVisualContext {
     /// Requests that the current window should close.
     /// </summary>
     void CloseWindow();
+
+    /// <summary>
+    /// Opens a named window definition inside the current host window.
+    /// </summary>
+    void OpenWindow(string name);
 }

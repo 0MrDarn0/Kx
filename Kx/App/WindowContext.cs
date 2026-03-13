@@ -4,6 +4,7 @@
 using Kx.Abstractions.Events;
 using Kx.Abstractions.Rendering;
 using Kx.Abstractions.UI;
+using Kx.Abstractions.UI.Commands;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
@@ -28,9 +29,12 @@ public sealed class WindowContext : IVisualContext, IDisposable {
     public UpdaterPipelineRunner? Pipeline { get; private set; }
 
     private readonly object _frameLock = new();
+    private IUiCommandRegistry? _commandRegistry;
+    private Action<string>? _openWindowAction;
     public float DpiScale { get; set; } = 1f;
 
     IUIElementManager IVisualContext.UIElementManager => UIElementManager;
+    IUiCommandRegistry IVisualContext.Commands => _commandRegistry ?? throw new InvalidOperationException("No command registry has been registered for this context.");
 
     public WindowContext(
         IWindowSurface target,
@@ -73,6 +77,28 @@ public sealed class WindowContext : IVisualContext, IDisposable {
     /// </summary>
     public void CloseWindow() {
         WindowHost.CloseWindow();
+    }
+
+    /// <summary>
+    /// Opens a named window definition inside the current host window.
+    /// </summary>
+    public void OpenWindow(string name) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        if (_openWindowAction is null)
+            throw new InvalidOperationException("No window navigation handler has been registered for this context.");
+
+        _openWindowAction(name);
+    }
+
+    internal void SetOpenWindowAction(Action<string> openWindowAction) {
+        ArgumentNullException.ThrowIfNull(openWindowAction);
+        _openWindowAction = openWindowAction;
+    }
+
+    internal void SetCommandRegistry(IUiCommandRegistry commandRegistry) {
+        ArgumentNullException.ThrowIfNull(commandRegistry);
+        _commandRegistry = commandRegistry;
     }
 
     public void SetPipeline(UpdaterPipelineRunner pipeline) {

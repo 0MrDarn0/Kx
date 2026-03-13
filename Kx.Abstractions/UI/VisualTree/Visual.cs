@@ -60,6 +60,7 @@ public abstract class Visual : IVisual, IDisposable {
         _visible = new Property<bool>(ctx.UiThread, visible, Invalidate);
         _zIndex = new Property<int>(ctx.UiThread, 0, Invalidate);
         _layer = new Property<VisualLayer>(ctx.UiThread, VisualLayer.Content, Invalidate);
+        _initializing = false;
     }
 
     public virtual void Measure(float dpi) { }

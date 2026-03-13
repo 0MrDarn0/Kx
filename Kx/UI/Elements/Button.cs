@@ -14,6 +14,7 @@ public class Button : UIElement {
     public string Text { get; set; }
     public float FontSize { get; set; } = 14f;
     public bool IsEnabled { get; set; } = true;
+    public override bool CanFocus => IsEnabled;
 
     public event Action? Click;
 
