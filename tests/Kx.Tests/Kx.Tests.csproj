@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kx\Kx.csproj" />
-    <ProjectReference Include="..\Kx.Sdk\Kx.Sdk.csproj" />
+    <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
+    <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
   </ItemGroup>
 </Project>
