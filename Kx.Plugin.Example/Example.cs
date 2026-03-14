@@ -37,7 +37,7 @@ public sealed class Example : IPlugin {
         var themeRegistry = context.Services.Get<IThemeRegistry>();
         var windowRegistry = context.Services.Get<IWindowRegistry>();
 
-        stateStore.Set(TitleState, "Plugin Window (bound)");
+        stateStore.Set(TitleState, "  Plugin Window (bound)  ");
         stateStore.Set(TitleColorState, "#F5F5F5");
         stateStore.Set(TitleFontSizeState, 16f);
         stateStore.Set(BadgeTextState, "Plugin Content");
@@ -57,7 +57,8 @@ public sealed class Example : IPlugin {
                     BackgroundColor = "#1B1D22",
                     TitleBarColor = "#262A33",
                     BorderColor = "#4C7FFF",
-                    SeparatorColor = "#394052"
+                    SeparatorColor = "#394052",
+                    TitleColor = "#FFD166"
                 }
             },
             Controls = [
@@ -88,7 +89,7 @@ public sealed class Example : IPlugin {
                             Type = "Label",
                             Id = "example_title",
                             Text = "Plugin Window",
-                            TextBinding = TitleState.Path,
+                            TextBinding = TitleState.Path + "|trim|upper|prefix:[BOUND] ",
                             Color = "#F5F5F5",
                             ColorBinding = TitleColorState.Path,
                             FontSizeBinding = TitleFontSizeState.Path,
@@ -166,6 +167,13 @@ public sealed class Example : IPlugin {
                             Id = "example_open_window_button",
                             Text = "Open Alternate",
                             OnClick = "openWindow:Example.Alternate"
+                        },
+                        new ControlConfig {
+                            Type = "Label",
+                            Id = "example_hidden_hint",
+                            Text = "Shown when merge hint is hidden",
+                            Color = "#D9D9D9",
+                            VisibleBinding = MergeHintVisibleState.Path + "|not"
                         }
                     ]
                 }
@@ -237,7 +245,8 @@ public sealed class Example : IPlugin {
             Frame = new FrameConfig {
                 Default = new DefaultFrameConfig {
                     Title = "Merged Main Window",
-                    BorderColor = "#FF8C42"
+                    BorderColor = "#FF8C42",
+                    TitleColor = "#F5F5F5"
                 }
             },
             Controls = [

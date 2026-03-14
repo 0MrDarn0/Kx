@@ -75,7 +75,8 @@ windowRegistry.Register("MainWindow", new WindowConfig {
     Frame = new FrameConfig {
         Default = new DefaultFrameConfig {
             Title = "Merged Main Window",
-            BorderColor = "#FF8C42"
+            BorderColor = "#FF8C42",
+            TitleColor = "#F5F5F5"
         }
     },
     Controls = [
@@ -107,7 +108,8 @@ Current merge rules are:
 
 - theme frame is the base
 - window frame overrides theme fields
-- override detection currently depends on config default values
+- override detection now depends on explicit property assignment
+- a window can override a theme value back to the schema default value if that property was explicitly assigned
 
 ### Controls
 
@@ -256,6 +258,23 @@ Current binding-capable `ControlConfig` fields:
 - `OrientationBinding`
 - `SpacingBinding`
 
+Binding expression format:
+
+- `state.path`
+- `state.path|converter`
+- `state.path|converter|converter:argument`
+
+Current built-in converters:
+
+- `upper`
+- `lower`
+- `trim`
+- `not`
+- `default:value`
+- `prefix:value`
+- `suffix:value`
+- `equals:value`
+
 Example:
 
 ```csharp
@@ -263,7 +282,7 @@ new ControlConfig {
     Type = "Label",
     Id = "example_title",
     Text = "Plugin Window",
-    TextBinding = titleState.Path,
+    TextBinding = titleState.Path + "|trim|upper|prefix:[BOUND] ",
     Color = "#F5F5F5",
     ColorBinding = titleColorState.Path,
     FontSizeBinding = titleFontSizeState.Path
@@ -281,6 +300,27 @@ Current built-in bindings support:
 - `Button.FontSize`
 - `StackPanel.Orientation`
 - `StackPanel.Spacing`
+
+Example inverse visibility binding:
+
+```csharp
+new ControlConfig {
+    Type = "Label",
+    Id = "example_hidden_hint",
+    Text = "Shown when merge hint is hidden",
+    VisibleBinding = mergeHintVisibleState.Path + "|not"
+}
+```
+
+Example equality/default pipeline:
+
+```csharp
+new ControlConfig {
+    Type = "Label",
+    Id = "example_status_label",
+    TextBinding = statusState.Path + "|trim|default:unknown|equals:ready|upper"
+}
+```
 
 Additional example:
 
@@ -483,6 +523,8 @@ Put concrete per-window adjustments into:
 
 - `WindowConfig`
 
+Explicit assignments in `WindowConfig` are now the merge signal, even when the assigned value matches the schema default.
+
 ### Prefer shared payload DTOs
 Prefer:
 
@@ -513,7 +555,6 @@ If multiple controls or commands need to reflect the same value, prefer shared s
 Still worth keeping in mind:
 
 - action argument syntax is still string-based at the outermost level
-- merge override detection for frame values still depends on config defaults
 - targeting is improved, but still intentionally simple
 - bindings currently cover only a small built-in property set
 - no full binding/viewmodel layer for markup-defined controls yet

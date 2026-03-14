@@ -7,10 +7,6 @@ using Kx.Abstractions.UI.Themes;
 namespace Kx.App;
 
 internal static class WindowDefinitionMerger {
-    private static readonly FrameConfig _defaultFrame = new();
-    private static readonly DefaultFrameConfig _defaultDefaultFrame = new();
-    private static readonly ControlConfig _defaultControl = new();
-
     public static FrameConfig MergeFrame(FrameConfig windowFrame, WindowTheme? theme) {
         ArgumentNullException.ThrowIfNull(windowFrame);
 
@@ -31,44 +27,44 @@ internal static class WindowDefinitionMerger {
     }
 
     private static void ApplyFrameOverrides(FrameConfig target, FrameConfig source) {
-        if (source.Style != _defaultFrame.Style)
+        if (source.IsPropertySet(nameof(FrameConfig.Style)))
             target.Style = source.Style;
 
-        if (!string.Equals(source.TopLeft, _defaultFrame.TopLeft, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.TopLeft)))
             target.TopLeft = source.TopLeft;
-        if (!string.Equals(source.TopCenter, _defaultFrame.TopCenter, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.TopCenter)))
             target.TopCenter = source.TopCenter;
-        if (!string.Equals(source.TopRight, _defaultFrame.TopRight, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.TopRight)))
             target.TopRight = source.TopRight;
-        if (!string.Equals(source.RightCenter, _defaultFrame.RightCenter, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.RightCenter)))
             target.RightCenter = source.RightCenter;
-        if (!string.Equals(source.BottomRight, _defaultFrame.BottomRight, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.BottomRight)))
             target.BottomRight = source.BottomRight;
-        if (!string.Equals(source.BottomCenter, _defaultFrame.BottomCenter, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.BottomCenter)))
             target.BottomCenter = source.BottomCenter;
-        if (!string.Equals(source.BottomLeft, _defaultFrame.BottomLeft, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.BottomLeft)))
             target.BottomLeft = source.BottomLeft;
-        if (!string.Equals(source.LeftCenter, _defaultFrame.LeftCenter, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.LeftCenter)))
             target.LeftCenter = source.LeftCenter;
-        if (!string.Equals(source.FillBitmap, _defaultFrame.FillBitmap, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.FillBitmap)))
             target.FillBitmap = source.FillBitmap;
-        if (!string.Equals(source.FillColor, _defaultFrame.FillColor, StringComparison.Ordinal))
+        if (source.IsPropertySet(nameof(FrameConfig.FillColor)))
             target.FillColor = source.FillColor;
-        if (source.UseFillColor != _defaultFrame.UseFillColor)
+        if (source.IsPropertySet(nameof(FrameConfig.UseFillColor)))
             target.UseFillColor = source.UseFillColor;
-        if (source.TopWidthOffset != _defaultFrame.TopWidthOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.TopWidthOffset)))
             target.TopWidthOffset = source.TopWidthOffset;
-        if (source.BottomWidthOffset != _defaultFrame.BottomWidthOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.BottomWidthOffset)))
             target.BottomWidthOffset = source.BottomWidthOffset;
-        if (source.LeftHeightOffset != _defaultFrame.LeftHeightOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.LeftHeightOffset)))
             target.LeftHeightOffset = source.LeftHeightOffset;
-        if (source.RightHeightOffset != _defaultFrame.RightHeightOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.RightHeightOffset)))
             target.RightHeightOffset = source.RightHeightOffset;
-        if (source.FillPosOffset != _defaultFrame.FillPosOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.FillPosOffset)))
             target.FillPosOffset = source.FillPosOffset;
-        if (source.FillWidthOffset != _defaultFrame.FillWidthOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.FillWidthOffset)))
             target.FillWidthOffset = source.FillWidthOffset;
-        if (source.FillHeightOffset != _defaultFrame.FillHeightOffset)
+        if (source.IsPropertySet(nameof(FrameConfig.FillHeightOffset)))
             target.FillHeightOffset = source.FillHeightOffset;
 
         target.Default = MergeDefaultFrame(target.Default, source.Default);
@@ -77,37 +73,37 @@ internal static class WindowDefinitionMerger {
     private static DefaultFrameConfig MergeDefaultFrame(DefaultFrameConfig themeDefaults, DefaultFrameConfig windowDefaults) {
         var merged = CloneDefaultFrame(themeDefaults);
 
-        if (!string.Equals(windowDefaults.Title, _defaultDefaultFrame.Title, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.Title)))
             merged.Title = windowDefaults.Title;
-        if (!string.Equals(windowDefaults.BackgroundColor, _defaultDefaultFrame.BackgroundColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.BackgroundColor)))
             merged.BackgroundColor = windowDefaults.BackgroundColor;
-        if (!string.Equals(windowDefaults.TitleBarColor, _defaultDefaultFrame.TitleBarColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.TitleBarColor)))
             merged.TitleBarColor = windowDefaults.TitleBarColor;
-        if (!string.Equals(windowDefaults.BorderColor, _defaultDefaultFrame.BorderColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.BorderColor)))
             merged.BorderColor = windowDefaults.BorderColor;
-        if (!string.Equals(windowDefaults.SeparatorColor, _defaultDefaultFrame.SeparatorColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.SeparatorColor)))
             merged.SeparatorColor = windowDefaults.SeparatorColor;
-        if (!string.Equals(windowDefaults.TitleColor, _defaultDefaultFrame.TitleColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.TitleColor)))
             merged.TitleColor = windowDefaults.TitleColor;
-        if (!string.Equals(windowDefaults.CloseButtonColor, _defaultDefaultFrame.CloseButtonColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.CloseButtonColor)))
             merged.CloseButtonColor = windowDefaults.CloseButtonColor;
-        if (!string.Equals(windowDefaults.CloseButtonForegroundColor, _defaultDefaultFrame.CloseButtonForegroundColor, StringComparison.Ordinal))
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.CloseButtonForegroundColor)))
             merged.CloseButtonForegroundColor = windowDefaults.CloseButtonForegroundColor;
-        if (windowDefaults.BorderThickness != _defaultDefaultFrame.BorderThickness)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.BorderThickness)))
             merged.BorderThickness = windowDefaults.BorderThickness;
-        if (windowDefaults.CornerRadius != _defaultDefaultFrame.CornerRadius)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.CornerRadius)))
             merged.CornerRadius = windowDefaults.CornerRadius;
-        if (windowDefaults.TitleBarHeight != _defaultDefaultFrame.TitleBarHeight)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.TitleBarHeight)))
             merged.TitleBarHeight = windowDefaults.TitleBarHeight;
-        if (windowDefaults.TitlePadding != _defaultDefaultFrame.TitlePadding)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.TitlePadding)))
             merged.TitlePadding = windowDefaults.TitlePadding;
-        if (windowDefaults.TitleFontSize != _defaultDefaultFrame.TitleFontSize)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.TitleFontSize)))
             merged.TitleFontSize = windowDefaults.TitleFontSize;
-        if (windowDefaults.ContentPadding != _defaultDefaultFrame.ContentPadding)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.ContentPadding)))
             merged.ContentPadding = windowDefaults.ContentPadding;
-        if (windowDefaults.CloseButtonSize != _defaultDefaultFrame.CloseButtonSize)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.CloseButtonSize)))
             merged.CloseButtonSize = windowDefaults.CloseButtonSize;
-        if (windowDefaults.CloseButtonMargin != _defaultDefaultFrame.CloseButtonMargin)
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.CloseButtonMargin)))
             merged.CloseButtonMargin = windowDefaults.CloseButtonMargin;
 
         return merged;
@@ -137,61 +133,63 @@ internal static class WindowDefinitionMerger {
     private static ControlConfig MergeControl(ControlConfig themeControl, ControlConfig windowControl) {
         var merged = CloneControl(themeControl);
 
-        if (!string.IsNullOrWhiteSpace(windowControl.Type))
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Type)))
             merged.Type = windowControl.Type;
-        if (!string.IsNullOrWhiteSpace(windowControl.Id))
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Id)))
             merged.Id = windowControl.Id;
-        if (windowControl.Text is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Text)))
             merged.Text = windowControl.Text;
-        if (windowControl.TextBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.TextBinding)))
             merged.TextBinding = windowControl.TextBinding;
-        if (windowControl.SkinKey is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.SkinKey)))
             merged.SkinKey = windowControl.SkinKey;
-        if (windowControl.Color is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Color)))
             merged.Color = windowControl.Color;
-        if (windowControl.ColorBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.ColorBinding)))
             merged.ColorBinding = windowControl.ColorBinding;
-        if (windowControl.FontSizeBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.FontSizeBinding)))
             merged.FontSizeBinding = windowControl.FontSizeBinding;
-        if (windowControl.Bounds is not null)
-            merged.Bounds = CloneBounds(windowControl.Bounds);
-        if (windowControl.Margin is not null)
-            merged.Margin = CloneThickness(windowControl.Margin);
-        if (windowControl.Padding is not null)
-            merged.Padding = CloneThickness(windowControl.Padding);
-        if (windowControl.Dock is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Bounds)))
+            merged.Bounds = windowControl.Bounds is null ? null : CloneBounds(windowControl.Bounds);
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Margin)))
+            merged.Margin = windowControl.Margin is null ? null : CloneThickness(windowControl.Margin);
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Padding)))
+            merged.Padding = windowControl.Padding is null ? null : CloneThickness(windowControl.Padding);
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Dock)))
             merged.Dock = windowControl.Dock;
-        if (!string.Equals(windowControl.Layer, _defaultControl.Layer, StringComparison.OrdinalIgnoreCase))
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Layer)))
             merged.Layer = windowControl.Layer;
-        if (windowControl.VisibleBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.VisibleBinding)))
             merged.VisibleBinding = windowControl.VisibleBinding;
-        if (windowControl.EnabledBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.EnabledBinding)))
             merged.EnabledBinding = windowControl.EnabledBinding;
-        if (windowControl.OrientationBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.OrientationBinding)))
             merged.OrientationBinding = windowControl.OrientationBinding;
-        if (windowControl.SpacingBinding is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.SpacingBinding)))
             merged.SpacingBinding = windowControl.SpacingBinding;
-        if (windowControl.OnClick is not null)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.OnClick)))
             merged.OnClick = windowControl.OnClick;
-        if (windowControl.Font is not null)
-            merged.Font = CloneFont(windowControl.Font);
-        if (windowControl.GridRow != _defaultControl.GridRow)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Font)))
+            merged.Font = windowControl.Font is null ? null : CloneFont(windowControl.Font);
+        if (windowControl.IsPropertySet(nameof(ControlConfig.GridRow)))
             merged.GridRow = windowControl.GridRow;
-        if (windowControl.GridColumn != _defaultControl.GridColumn)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.GridColumn)))
             merged.GridColumn = windowControl.GridColumn;
-        if (windowControl.GridRowSpan != _defaultControl.GridRowSpan)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.GridRowSpan)))
             merged.GridRowSpan = windowControl.GridRowSpan;
-        if (windowControl.GridColumnSpan != _defaultControl.GridColumnSpan)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.GridColumnSpan)))
             merged.GridColumnSpan = windowControl.GridColumnSpan;
-        if (windowControl.Rows.Count != 0)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Rows)))
             merged.Rows = windowControl.Rows.Select(CloneGridRow).ToList();
-        if (windowControl.Columns.Count != 0)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Columns)))
             merged.Columns = windowControl.Columns.Select(CloneGridColumn).ToList();
-        if (windowControl.Children.Count != 0)
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Children)))
             merged.Children = MergeControlList(merged.Children, windowControl.Children).ToList();
 
-        foreach (var property in windowControl.Properties)
-            merged.Properties[property.Key] = property.Value;
+        if (windowControl.IsPropertySet(nameof(ControlConfig.Properties))) {
+            foreach (var property in windowControl.Properties)
+                merged.Properties[property.Key] = property.Value;
+        }
 
         return merged;
     }

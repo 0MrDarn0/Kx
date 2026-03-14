@@ -105,13 +105,15 @@ If the resolved `WindowConfig` specifies a theme name:
 
 1. `IThemeRegistry` is queried
 2. if found, the theme provides the base `Frame` and base `Controls`
-3. the window `Frame` overrides theme values when the window values differ from the config type defaults
+3. the window `Frame` overrides theme values when those properties were explicitly assigned in the window definition
 4. controls are merged by `Id`, including nested child controls
 5. unmatched window controls are appended after the themed controls
 
 If no theme is found, the window falls back to the frame defined in `WindowConfig`.
 
 This means themes act as reusable defaults, while window definitions can override only the specific frame values or control nodes they need to change.
+
+Overrides are now tracked by explicit property assignment instead of by comparing against schema defaults. This allows a window definition to intentionally override a theme value back to the schema default value.
 
 ## Shared UI model
 
@@ -268,6 +270,12 @@ In code, state access can now use either:
 - raw string paths
 - typed `UiStateKey<T>` helpers
 
+Markup binding expressions now support this format:
+
+- `state.path`
+- `state.path|converter`
+- `state.path|converter|converter:argument`
+
 Available binding fields on `ControlConfig`:
 
 - `TextBinding`
@@ -281,6 +289,22 @@ Available binding fields on `ControlConfig`:
 Bindings use the shared `IUiStateStore`.
 
 Value conversion for the built-in bindings is centralized in host-side state conversion helpers instead of being repeated inline per binding.
+
+Current built-in binding converters include:
+
+- `upper`
+- `lower`
+- `trim`
+- `not`
+- `default:value`
+- `prefix:value`
+- `suffix:value`
+- `equals:value`
+
+Example:
+
+- `TextBinding = "example.title|trim|upper|prefix:[BOUND] "`
+- `VisibleBinding = "example.mergeHintVisible|not"`
 
 Current built-in binding support includes:
 
@@ -361,7 +385,7 @@ The example theme contributes a nested control tree:
   - `Button`
   - additional buttons for built-in actions including enable/disable/focus/setColor
 
-The example now demonstrates both custom and built-in actions, a custom command executed through `runCommand` with the shared `TextUpdatePayload` schema, the new target-resolution syntax, a `MainWindow` definition that overrides parts of the registered theme through merge rules, and a first state-driven binding flow.
+The example now demonstrates both custom and built-in actions, a custom command executed through `runCommand` with the shared `TextUpdatePayload` schema, the new target-resolution syntax, a `MainWindow` definition that overrides parts of the registered theme through explicit merge rules, and a first state-driven binding flow.
 
 ## Automatic plugin deployment during build
 
@@ -390,7 +414,6 @@ Current notable limitations:
 - targeting is basic and id-based
 - shared payload schemas exist, but richer validation/helper layers are still minimal
 - bindings are currently path-based and support only a small set of built-in properties
-- theme/window merging currently relies on config defaults to detect window overrides, so explicitly overriding back to a schema default value is still limited
 - no general data binding layer for markup-defined controls yet
 
 ## Recommended next steps
@@ -398,9 +421,9 @@ Current notable limitations:
 Reasonable next framework steps are:
 
 1. improve binding ergonomics
-   - better converters
    - stronger typed state helpers
    - less stringly binding paths
+   - richer converter pipeline
 2. document example markup files once real theme/window YAML usage expands
 
 ## Summary

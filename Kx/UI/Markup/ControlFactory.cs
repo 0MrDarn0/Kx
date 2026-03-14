@@ -3,6 +3,7 @@
 
 using Kx.Abstractions.UI;
 using Kx.Abstractions.UI.Actions;
+using Kx.Abstractions.UI.Binding;
 using Kx.Abstractions.UI.Elements;
 using Kx.Abstractions.UI.Layout;
 using Kx.Abstractions.UI.Markup;
@@ -292,21 +293,27 @@ public static class ControlFactory {
         });
     }
 
-    private static void BindState(UIElement control, string path, Action<object?> apply) {
-        ApplyStateValue(control.Context, path, apply);
-        control.TrackDisposable(control.Context.State.Subscribe(path, value => ApplyStateValue(control.Context, value, apply)));
+    private static void BindState(UIElement control, string expression, Action<object?> apply) {
+        if (!UiBindingExpression.TryParse(expression, out var binding) || binding is null)
+            throw new InvalidOperationException($"The binding expression '{expression}' is invalid.");
+
+        ApplyStateValue(control.Context, binding, apply);
+        control.TrackDisposable(control.Context.State.Subscribe(binding.Path, value => ApplyStateValue(control.Context, binding, value, apply)));
     }
 
-    private static void ApplyStateValue(IVisualContext context, string path, Action<object?> apply) {
-        if (context.State.TryGet(path, out var value))
-            ApplyStateValue(context, value, apply);
+    private static void ApplyStateValue(IVisualContext context, UiBindingExpression binding, Action<object?> apply) {
+        if (context.State.TryGet(binding.Path, out var value))
+            ApplyStateValue(context, binding, value, apply);
     }
 
-    private static void ApplyStateValue(IVisualContext context, object? value, Action<object?> apply) {
+    private static void ApplyStateValue(IVisualContext context, UiBindingExpression binding, object? value, Action<object?> apply) {
+        if (!UiStateValueConverter.TryApplyBindingConverters(value, binding.Converters, out var convertedValue))
+            return;
+
         if (context.UiThread.InvokeRequired)
-            context.UiThread.BeginInvoke(new Action(() => apply(value)));
+            context.UiThread.BeginInvoke(new Action(() => apply(convertedValue)));
         else
-            apply(value);
+            apply(convertedValue);
     }
 
     private static bool TryParseAction(string? actionExpression, out string actionName, out string? argument) {
