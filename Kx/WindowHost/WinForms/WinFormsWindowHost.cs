@@ -3,8 +3,8 @@
 
 using System.Diagnostics;
 
-using Kx.Abstractions.Events;
-using Kx.Abstractions.WindowHost;
+using Kx.Sdk.Events;
+using Kx.Sdk.WindowHost;
 using Kx.Core.Interop;
 using Kx.Core.Localization;
 using Kx.Utility;
@@ -29,7 +29,7 @@ public class WinFormsWindowHost : Form, IWindowHost {
 
     private Keys _lastKeyDown = Keys.None;
     private DateTime _lastKeyDownTime = DateTime.MinValue;
-    private WindowState _lastState = Abstractions.Events.WindowState.Restored;
+    private Kx.Sdk.Events.WindowState _lastState = Kx.Sdk.Events.WindowState.Restored;
 
     private event Action<ResizeEvent>? _resized;
     private event Action<MouseEvent>? _mouseMove;
@@ -120,9 +120,9 @@ public class WinFormsWindowHost : Form, IWindowHost {
         _resized?.Invoke(new ResizeEvent(Width, Height));
 
         var newState = WindowState switch {
-            FormWindowState.Minimized => Abstractions.Events.WindowState.Minimized,
-            FormWindowState.Maximized => Abstractions.Events.WindowState.Maximized,
-            _ => Abstractions.Events.WindowState.Restored
+            FormWindowState.Minimized => Kx.Sdk.Events.WindowState.Minimized,
+            FormWindowState.Maximized => Kx.Sdk.Events.WindowState.Maximized,
+            _ => Kx.Sdk.Events.WindowState.Restored
         };
 
         if (newState != _lastState) {

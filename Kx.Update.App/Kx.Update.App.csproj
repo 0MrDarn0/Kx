@@ -17,23 +17,72 @@
                       PrivateAssets="all" />
   </ItemGroup>
 
-  <Target Name="CopyPluginExampleToAppOutput" AfterTargets="Build">
+  <Target Name="CopyPluginExampleToBuildOutput" AfterTargets="Build">
     <PropertyGroup>
-      <PluginExampleOutputDir>$(SolutionDir)Kx.Plugin.Example\bin\$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
+      <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>
+      <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
       <PluginExampleTargetDir>$(TargetDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
+      <PluginExampleMarkupTargetDir>$(PluginExampleTargetDir)Markup\</PluginExampleMarkupTargetDir>
+      <PluginExampleAppRootMarkupDir>$(TargetDir)Markup\</PluginExampleAppRootMarkupDir>
+      <PluginExampleLegacyThemesDir>$(PluginExampleTargetDir)Themes\</PluginExampleLegacyThemesDir>
+      <PluginExampleLegacyWindowsDir>$(PluginExampleTargetDir)Windows\</PluginExampleLegacyWindowsDir>
     </PropertyGroup>
 
+    <RemoveDir Directories="$(PluginExampleAppRootMarkupDir);$(PluginExampleLegacyThemesDir);$(PluginExampleLegacyWindowsDir)" />
     <MakeDir Directories="$(PluginExampleTargetDir)" />
+    <MakeDir Directories="$(PluginExampleMarkupTargetDir)" />
 
     <ItemGroup>
       <PluginExampleFiles Include="$(PluginExampleOutputDir)Kx.Plugin.Example.dll" />
       <PluginExampleFiles Include="$(PluginExampleOutputDir)Kx.Plugin.Example.pdb" Condition="Exists('$(PluginExampleOutputDir)Kx.Plugin.Example.pdb')" />
       <PluginExampleFiles Include="$(PluginExampleOutputDir)Plugin.yaml" />
+      <PluginExampleMarkupFiles Include="$(PluginExampleOutputDir)Markup\**\*.yaml" />
     </ItemGroup>
 
     <Copy SourceFiles="@(PluginExampleFiles)"
+          DestinationFiles="@(PluginExampleFiles->'$(PluginExampleTargetDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(PluginExampleMarkupFiles)"
+          DestinationFiles="@(PluginExampleMarkupFiles->'$(PluginExampleMarkupTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyPluginExampleToPublishOutput" AfterTargets="Publish">
+    <PropertyGroup>
+      <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>
+      <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
+      <PluginExampleTargetDir>$(PublishDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
+      <PluginExampleMarkupTargetDir>$(PluginExampleTargetDir)Markup\</PluginExampleMarkupTargetDir>
+      <PluginExamplePublishRootMarkupDir>$(PublishDir)Markup\</PluginExamplePublishRootMarkupDir>
+    </PropertyGroup>
+
+    <RemoveDir Directories="$(PluginExamplePublishRootMarkupDir)" />
+    <MakeDir Directories="$(PluginExampleTargetDir)" />
+    <MakeDir Directories="$(PluginExampleMarkupTargetDir)" />
+
+    <ItemGroup>
+      <PluginExamplePublishFiles Include="$(PluginExampleOutputDir)*.*"
+                                 Exclude="$(PluginExampleOutputDir)Markup\**\*;$(PluginExampleOutputDir)*.pdb" />
+      <PluginExamplePublishMarkupFiles Include="$(PluginExampleOutputDir)Markup\**\*.yaml" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(PluginExamplePublishFiles)"
           DestinationFolder="$(PluginExampleTargetDir)"
           SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(PluginExamplePublishMarkupFiles)"
+          DestinationFiles="@(PluginExamplePublishMarkupFiles->'$(PluginExampleMarkupTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <ItemGroup>
+      <PublishRootArtifactsToDelete Include="$(PublishDir)Plugin.yaml" Condition="Exists('$(PublishDir)Plugin.yaml')" />
+      <PublishRootArtifactsToDelete Include="$(PublishDir)Kx.pdb" Condition="Exists('$(PublishDir)Kx.pdb')" />
+      <PublishRootArtifactsToDelete Include="$(PublishDir)Kx.Sdk.pdb" Condition="Exists('$(PublishDir)Kx.Sdk.pdb')" />
+      <PublishRootArtifactsToDelete Include="$(PublishDir)libSkiaSharp.pdb" Condition="Exists('$(PublishDir)libSkiaSharp.pdb')" />
+    </ItemGroup>
+
+    <Delete Files="@(PublishRootArtifactsToDelete)" />
   </Target>
 
 </Project>

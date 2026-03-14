@@ -2,7 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using Kx.Abstractions.Logging;
+using Kx.Sdk.Logging;
 
 namespace Kx.Core.Logging;
 

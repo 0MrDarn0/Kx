@@ -1,4 +1,4 @@
-using Kx.Abstractions.UI.Actions;
+using Kx.Sdk.UI.Actions;
 using Kx.UI.Elements.Panel;
 using Kx.Tests.TestInfrastructure;
 

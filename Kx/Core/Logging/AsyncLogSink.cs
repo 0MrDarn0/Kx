@@ -2,8 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Threading.Channels;
-using Kx.Abstractions.Lifecycle;
-using Kx.Abstractions.Logging;
+using Kx.Sdk.Lifecycle;
+using Kx.Sdk.Logging;
 
 namespace Kx.Core.Logging;
 

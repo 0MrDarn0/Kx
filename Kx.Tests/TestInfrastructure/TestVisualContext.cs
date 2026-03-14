@@ -1,8 +1,8 @@
-using Kx.Abstractions.Events;
-using Kx.Abstractions.UI;
-using Kx.Abstractions.UI.Commands;
-using Kx.Abstractions.UI.State;
-using Kx.Abstractions.WindowHost;
+using Kx.Sdk.Events;
+using Kx.Sdk.UI;
+using Kx.Sdk.UI.Commands;
+using Kx.Sdk.UI.State;
+using Kx.Sdk.WindowHost;
 using Kx.Core.Event;
 using Kx.UI.Commands;
 using Kx.UI.Manager;

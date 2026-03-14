@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.Events;
-using Kx.Abstractions.Rendering;
-using Kx.Abstractions.UI;
-using Kx.Abstractions.UI.Commands;
-using Kx.Abstractions.UI.State;
-using Kx.Abstractions.WindowHost;
+using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
+using Kx.Sdk.UI;
+using Kx.Sdk.UI.Commands;
+using Kx.Sdk.UI.State;
+using Kx.Sdk.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
 using Kx.Core.Localization;

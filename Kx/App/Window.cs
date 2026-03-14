@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.Events;
-using Kx.Abstractions.Logging;
-using Kx.Abstractions.UI.Actions;
-using Kx.Abstractions.UI.Commands;
-using Kx.Abstractions.UI.Elements;
-using Kx.Abstractions.UI.Markup;
-using Kx.Abstractions.UI.State;
-using Kx.Abstractions.UI.Themes;
-using Kx.Abstractions.UI.VisualTree;
-using Kx.Abstractions.WindowHost;
+using Kx.Sdk.Events;
+using Kx.Sdk.Logging;
+using Kx.Sdk.UI.Actions;
+using Kx.Sdk.UI.Commands;
+using Kx.Sdk.UI.Elements;
+using Kx.Sdk.UI.Markup;
+using Kx.Sdk.UI.State;
+using Kx.Sdk.UI.Themes;
+using Kx.Sdk.UI.VisualTree;
+using Kx.Sdk.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
 using Kx.UI.Markup;

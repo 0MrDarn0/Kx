@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.Events;
-using Kx.Abstractions.UI.Actions;
-using Kx.Abstractions.UI.Commands;
-using Kx.Abstractions.UI.Payloads;
-using Kx.Abstractions.UI.VisualTree;
+using Kx.Sdk.Events;
+using Kx.Sdk.UI.Actions;
+using Kx.Sdk.UI.Commands;
+using Kx.Sdk.UI.Payloads;
+using Kx.Sdk.UI.VisualTree;
 
 using SkiaSharp;
 

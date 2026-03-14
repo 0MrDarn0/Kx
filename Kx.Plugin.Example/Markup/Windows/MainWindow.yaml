@@ -1,0 +1,17 @@
+theme: Example.Dark
+frame:
+  default:
+    title: Merged Main Window
+    borderColor: "#FF8C42"
+    titleColor: "#F5F5F5"
+controls:
+  - id: example_panel
+    children:
+      - id: example_title
+        text: Plugin Window (merged)
+        color: "#FFD166"
+      - type: Label
+        id: example_merge_hint
+        text: Added by WindowConfig merge
+        color: "#8BD3FF"
+        visibleBinding: example.mergeHintVisible

@@ -3,15 +3,15 @@
 
 using System.Drawing;
 
-using Kx.Abstractions.Plugin;
-using Kx.Abstractions.UI;
-using Kx.Abstractions.UI.Actions;
-using Kx.Abstractions.UI.Commands;
-using Kx.Abstractions.UI.Elements;
-using Kx.Abstractions.UI.Markup;
-using Kx.Abstractions.UI.Payloads;
-using Kx.Abstractions.UI.State;
-using Kx.Abstractions.UI.Themes;
+using Kx.Sdk.Plugin;
+using Kx.Sdk.UI;
+using Kx.Sdk.UI.Actions;
+using Kx.Sdk.UI.Commands;
+using Kx.Sdk.UI.Elements;
+using Kx.Sdk.UI.Markup;
+using Kx.Sdk.UI.Payloads;
+using Kx.Sdk.UI.State;
+using Kx.Sdk.UI.Themes;
 
 using SkiaSharp;
 
@@ -49,230 +49,11 @@ public sealed class Example : IPlugin {
         controlRegistry.Register("ExampleBadge", (uiContext, config) => new ExampleBadge(uiContext, config.Id, config.Text, config.Properties.TryGetValue("textState", out var textState) ? textState : null));
         actionRegistry.Register("example.toggleVisibility", actionContext => ToggleVisibility(actionContext));
         commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(stateStore, commandContext));
-        themeRegistry.Register("Example.Dark", new WindowTheme {
-            Frame = new FrameConfig {
-                Style = FrameStyle.Default,
-                Default = new DefaultFrameConfig {
-                    Title = "Example Plugin Window",
-                    BackgroundColor = "#1B1D22",
-                    TitleBarColor = "#262A33",
-                    BorderColor = "#4C7FFF",
-                    SeparatorColor = "#394052",
-                    TitleColor = "#FFD166"
-                }
-            },
-            Controls = [
-                new ControlConfig {
-                    Type = "StackPanel",
-                    Id = "example_panel",
-                    Layer = "Content",
-                    Padding = new ThicknessConfig {
-                        Left = 12,
-                        Top = 12,
-                        Right = 12,
-                        Bottom = 12
-                    },
-                    Bounds = new BoundsConfig {
-                        X = 24,
-                        Y = 24,
-                        Width = 220,
-                        Height = 360
-                    },
-                    Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                        ["orientation"] = "Vertical",
-                        ["spacing"] = "8"
-                    },
-                    OrientationBinding = PanelOrientationState.Path,
-                    SpacingBinding = PanelSpacingState.Path,
-                    Children = [
-                        new ControlConfig {
-                            Type = "Label",
-                            Id = "example_title",
-                            Text = "Plugin Window",
-                            TextBinding = TitleState.Path + "|trim|upper|prefix:[BOUND] ",
-                            Color = "#F5F5F5",
-                            ColorBinding = TitleColorState.Path,
-                            FontSizeBinding = TitleFontSizeState.Path,
-                            Font = new FontConfig {
-                                Name = "Segoe UI",
-                                Size = 16,
-                                Style = "Bold"
-                            }
-                        },
-                        new ControlConfig {
-                            Type = "ExampleBadge",
-                            Id = "example_badge",
-                            Text = "Plugin Content",
-                            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                                ["textState"] = BadgeTextState.Path
-                            }
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_toggle_button",
-                            Text = "Toggle Badge",
-                            FontSizeBinding = ButtonFontSizeState.Path,
-                            OnClick = "example.toggleVisibility:id:example_badge"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_hide_button",
-                            Text = "Hide Badge",
-                            OnClick = "hide:id:example_badge"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_show_button",
-                            Text = "Show Badge",
-                            OnClick = "show:id:example_badge"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_set_text_button",
-                            Text = "Rename Title",
-                            OnClick = "setText:id:example_title|Updated by markup"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_set_color_button",
-                            Text = "Highlight Title",
-                            OnClick = "setColor:{\"targetId\":\"id:example_title\",\"color\":\"#FFD166\"}"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_disable_toggle_button",
-                            Text = "Disable Toggle",
-                            OnClick = "disable:{\"targetId\":\"id:example_toggle_button\",\"enabled\":false}"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_enable_toggle_button",
-                            Text = "Enable Toggle",
-                            OnClick = "enable:id:example_toggle_button"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_focus_toggle_button",
-                            Text = "Focus Toggle",
-                            OnClick = "focus:id:example_toggle_button"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_command_button",
-                            Text = "Rename via Command",
-                            OnClick = "runCommand:example.renameBadge|{\"targetId\":\"example_badge\",\"text\":\"Updated by command\"}"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "example_open_window_button",
-                            Text = "Open Alternate",
-                            OnClick = "openWindow:Example.Alternate"
-                        },
-                        new ControlConfig {
-                            Type = "Label",
-                            Id = "example_hidden_hint",
-                            Text = "Shown when merge hint is hidden",
-                            Color = "#D9D9D9",
-                            VisibleBinding = MergeHintVisibleState.Path + "|not"
-                        }
-                    ]
-                }
-            ]
-        });
+        RegisterTheme(themeRegistry, "Example.Dark", "Themes", "Example.Dark.yaml");
+        RegisterTheme(themeRegistry, "Example.Alternate", "Themes", "Example.Alternate.yaml");
 
-        themeRegistry.Register("Example.Alternate", new WindowTheme {
-            Frame = new FrameConfig {
-                Style = FrameStyle.Default,
-                Default = new DefaultFrameConfig {
-                    Title = "Alternate Plugin Window",
-                    BackgroundColor = "#151821",
-                    TitleBarColor = "#212634",
-                    BorderColor = "#77C17A",
-                    SeparatorColor = "#394052"
-                }
-            },
-            Controls = [
-                new ControlConfig {
-                    Type = "StackPanel",
-                    Id = "alternate_panel",
-                    Layer = "Content",
-                    Padding = new ThicknessConfig {
-                        Left = 12,
-                        Top = 12,
-                        Right = 12,
-                        Bottom = 12
-                    },
-                    Bounds = new BoundsConfig {
-                        X = 24,
-                        Y = 24,
-                        Width = 240,
-                        Height = 160
-                    },
-                    Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
-                        ["orientation"] = "Vertical",
-                        ["spacing"] = "8"
-                    },
-                    Children = [
-                        new ControlConfig {
-                            Type = "Label",
-                            Id = "alternate_title",
-                            Text = "Alternate View",
-                            Color = "#E9FFE9",
-                            Font = new FontConfig {
-                                Name = "Segoe UI",
-                                Size = 16,
-                                Style = "Bold"
-                            }
-                        },
-                        new ControlConfig {
-                            Type = "ExampleBadge",
-                            Id = "alternate_badge",
-                            Text = "Second Window"
-                        },
-                        new ControlConfig {
-                            Type = "Button",
-                            Id = "alternate_back_button",
-                            Text = "Back",
-                            OnClick = "openWindow:MainWindow"
-                        }
-                    ]
-                }
-            ]
-        });
-
-        windowRegistry.Register("MainWindow", new WindowConfig {
-            Theme = "Example.Dark",
-            Frame = new FrameConfig {
-                Default = new DefaultFrameConfig {
-                    Title = "Merged Main Window",
-                    BorderColor = "#FF8C42",
-                    TitleColor = "#F5F5F5"
-                }
-            },
-            Controls = [
-                new ControlConfig {
-                    Id = "example_panel",
-                    Children = [
-                        new ControlConfig {
-                            Id = "example_title",
-                            Text = "Plugin Window (merged)",
-                            Color = "#FFD166"
-                        },
-                        new ControlConfig {
-                            Type = "Label",
-                            Id = "example_merge_hint",
-                            Text = "Added by WindowConfig merge",
-                            Color = "#8BD3FF",
-                            VisibleBinding = MergeHintVisibleState.Path
-                        }
-                    ]
-                }
-            ]
-        });
-
-        windowRegistry.Register("Example.Alternate", new WindowConfig {
-            Theme = "Example.Alternate"
-        });
+        RegisterWindow(windowRegistry, "MainWindow", "Windows", "MainWindow.yaml");
+        RegisterWindow(windowRegistry, "Example.Alternate", "Windows", "Example.Alternate.yaml");
 
         context.Logger.Info($"{Name} initialized");
         context.Logger.Info($"ApiVersion: {context.ApiVersion}");
@@ -294,6 +75,31 @@ public sealed class Example : IPlugin {
             return;
 
         stateStore.Set(BadgeTextState, payload.Text);
+    }
+
+    private static void RegisterTheme(IThemeRegistry themeRegistry, string name, params string[] relativePathSegments) {
+        ArgumentNullException.ThrowIfNull(themeRegistry);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        themeRegistry.Register(name, MarkupYamlLoader.Load<WindowTheme>(GetMarkupPath(relativePathSegments)));
+    }
+
+    private static void RegisterWindow(IWindowRegistry windowRegistry, string name, params string[] relativePathSegments) {
+        ArgumentNullException.ThrowIfNull(windowRegistry);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        windowRegistry.Register(name, MarkupYamlLoader.Load<WindowConfig>(GetMarkupPath(relativePathSegments)));
+    }
+
+    private static string GetMarkupPath(params string[] relativePathSegments) {
+        var segments = new string[relativePathSegments.Length + 2];
+        segments[0] = Path.GetDirectoryName(typeof(Example).Assembly.Location) ?? AppContext.BaseDirectory;
+        segments[1] = "Markup";
+
+        for (int i = 0; i < relativePathSegments.Length; i++)
+            segments[i + 2] = relativePathSegments[i];
+
+        return Path.Combine(segments);
     }
 
     private sealed class ExampleBadge : UIElement {

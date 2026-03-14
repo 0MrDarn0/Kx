@@ -9,25 +9,25 @@ The current UI framework allows applications and plugins to contribute:
 - themes
 - markup actions
 
-The long-term direction is that plugins can build against `Kx.Abstractions` only, without needing the full `Kx` source.
+The long-term direction is that plugins can build against `Kx.Sdk` only, without needing the full `Kx` source.
 
 ## Main idea
 
 The system is split into two parts:
 
-### `Kx.Abstractions`
+### `Kx.Sdk`
 Contains the plugin-facing contracts and shared UI base types.
 
 Important areas:
 
-- `Kx.Abstractions.UI.Elements`
-- `Kx.Abstractions.UI.Markup`
-- `Kx.Abstractions.UI.Themes`
-- `Kx.Abstractions.UI.Actions`
-- `Kx.Abstractions.UI.Commands`
-- `Kx.Abstractions.UI.Payloads`
-- `Kx.Abstractions.UI.State`
-- `Kx.Abstractions.UI.VisualTree`
+- `Kx.Sdk.UI.Elements`
+- `Kx.Sdk.UI.Markup`
+- `Kx.Sdk.UI.Themes`
+- `Kx.Sdk.UI.Actions`
+- `Kx.Sdk.UI.Commands`
+- `Kx.Sdk.UI.Payloads`
+- `Kx.Sdk.UI.State`
+- `Kx.Sdk.UI.VisualTree`
 
 This is the SDK surface a plugin should target.
 
@@ -115,9 +115,11 @@ This means themes act as reusable defaults, while window definitions can overrid
 
 Overrides are now tracked by explicit property assignment instead of by comparing against schema defaults. This allows a window definition to intentionally override a theme value back to the schema default value.
 
+The example plugin now also demonstrates loading real theme and window definitions from YAML files at startup instead of registering those definitions only through inline C# object graphs.
+
 ## Shared UI model
 
-The shared UI model now lives largely in `Kx.Abstractions`.
+The shared UI model now lives largely in `Kx.Sdk`.
 
 Important types:
 
@@ -197,7 +199,7 @@ Used to store named UI state values and notify bindings when a state path change
 Typed helper keys are available through `UiStateKey<T>`, which reduces repeated raw string paths in plugin and host code while keeping the markup-facing binding fields string-based.
 
 ### Shared payload schemas
-Common payload DTOs now live in `Kx.Abstractions.UI.Payloads`.
+Common payload DTOs now live in `Kx.Sdk.UI.Payloads`.
 
 Current shared schemas include:
 
@@ -240,6 +242,7 @@ Important config types:
 - `ControlConfig`
 - `WindowConfig`
 - `WindowTheme`
+- `MarkupYamlLoader`
 - `BoundsConfig`
 - `ThicknessConfig`
 - `GridLengthConfig`
@@ -260,6 +263,19 @@ A `ControlConfig` can now describe:
 - action binding via `OnClick`
 - state bindings via `TextBinding`, `ColorBinding`, `VisibleBinding`, and `EnabledBinding`
 - additional bindings via `FontSizeBinding`, `OrientationBinding`, and `SpacingBinding`
+
+## YAML loading
+
+Plugins can load real UI definitions from YAML through `MarkupYamlLoader` in `Kx.Sdk.UI.Markup`.
+
+The example plugin loads these files from its deployed `Markup` folder:
+
+- `Markup/Themes/Example.Dark.yaml`
+- `Markup/Themes/Example.Alternate.yaml`
+- `Markup/Windows/MainWindow.yaml`
+- `Markup/Windows/Example.Alternate.yaml`
+
+This keeps the plugin-facing registration flow compatible with the registry model while making the authored UI definitions external and inspectable.
 
 ## State and bindings
 
@@ -385,7 +401,7 @@ The example theme contributes a nested control tree:
   - `Button`
   - additional buttons for built-in actions including enable/disable/focus/setColor
 
-The example now demonstrates both custom and built-in actions, a custom command executed through `runCommand` with the shared `TextUpdatePayload` schema, the new target-resolution syntax, a `MainWindow` definition that overrides parts of the registered theme through explicit merge rules, and a first state-driven binding flow.
+The example now demonstrates both custom and built-in actions, a custom command executed through `runCommand` with the shared `TextUpdatePayload` schema, the new target-resolution syntax, a `MainWindow` definition that overrides parts of the registered theme through explicit merge rules, a first state-driven binding flow, and real YAML-based theme/window loading through `MarkupYamlLoader`.
 
 ## Automatic plugin deployment during build
 
@@ -440,6 +456,6 @@ The framework currently supports plugin-driven:
 
 The most important architectural point is:
 
-- contracts live in `Kx.Abstractions`
+- contracts live in `Kx.Sdk`
 - runtime implementation lives in `Kx`
-- plugins can increasingly work against `Kx.Abstractions` only
+- plugins can increasingly work against `Kx.Sdk` only

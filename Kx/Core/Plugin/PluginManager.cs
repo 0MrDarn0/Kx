@@ -3,10 +3,10 @@
 
 using System.Diagnostics;
 
-using Kx.Abstractions.DI;
-using Kx.Abstractions.Lifecycle;
-using Kx.Abstractions.Logging;
-using Kx.Abstractions.Plugin;
+using Kx.Sdk.DI;
+using Kx.Sdk.Lifecycle;
+using Kx.Sdk.Logging;
+using Kx.Sdk.Plugin;
 
 namespace Kx.Core.Plugin;
 

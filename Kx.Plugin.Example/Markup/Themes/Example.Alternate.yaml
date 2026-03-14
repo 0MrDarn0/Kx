@@ -1,0 +1,41 @@
+frame:
+  style: Default
+  default:
+    title: Alternate Plugin Window
+    backgroundColor: "#151821"
+    titleBarColor: "#212634"
+    borderColor: "#77C17A"
+    separatorColor: "#394052"
+controls:
+  - type: StackPanel
+    id: alternate_panel
+    layer: Content
+    padding:
+      left: 12
+      top: 12
+      right: 12
+      bottom: 12
+    bounds:
+      x: 24
+      y: 24
+      width: 240
+      height: 160
+    properties:
+      orientation: Vertical
+      spacing: "8"
+    children:
+      - type: Label
+        id: alternate_title
+        text: Alternate View
+        color: "#E9FFE9"
+        font:
+          name: Segoe UI
+          size: 16
+          style: Bold
+      - type: ExampleBadge
+        id: alternate_badge
+        text: Second Window
+      - type: Button
+        id: alternate_back_button
+        text: Back
+        onClick: openWindow:MainWindow

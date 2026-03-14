@@ -1,4 +1,4 @@
-using Kx.Abstractions.UI.Binding;
+using Kx.Sdk.UI.Binding;
 
 namespace Kx.Tests;
 

@@ -3,7 +3,7 @@
 
 using System.Collections.Concurrent;
 
-using Kx.Abstractions.UI.State;
+using Kx.Sdk.UI.State;
 
 namespace Kx.UI.State;
 

@@ -3,7 +3,7 @@
 
 using System.Diagnostics;
 using System.Reflection;
-using Kx.Abstractions.Plugin;
+using Kx.Sdk.Plugin;
 using Kx.Utility;
 
 namespace Kx.Core.Plugin;

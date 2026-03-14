@@ -1,12 +1,12 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.UI.Themes;
+using Kx.Sdk.UI.Themes;
 using Kx.Utility;
 
 using SkiaSharp;
 
-using uFrameStyle = Kx.Abstractions.UI.Themes.FrameStyle;
+using uFrameStyle = Kx.Sdk.UI.Themes.FrameStyle;
 
 namespace Kx.UI.Themes;
 

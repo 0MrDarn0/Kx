@@ -4,7 +4,7 @@
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Kx.Abstractions.Updater;
+using Kx.Sdk.Updater;
 
 
 

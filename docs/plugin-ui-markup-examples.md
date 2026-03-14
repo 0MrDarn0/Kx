@@ -17,6 +17,11 @@ It focuses on:
 - typed payloads
 - target resolution
 
+The example plugin now ships real YAML assets under:
+
+- `Kx.Plugin.Example/Markup/Themes`
+- `Kx.Plugin.Example/Markup/Windows`
+
 ## 1. Theme registration
 
 A theme provides reusable defaults for:
@@ -57,6 +62,10 @@ themeRegistry.Register("Example.Dark", new WindowTheme {
     ]
 });
 ```
+
+Real YAML example:
+
+`Kx.Plugin.Example/Markup/Themes/Example.Dark.yaml`
 
 ## 2. Window definition registration
 
@@ -99,6 +108,10 @@ windowRegistry.Register("MainWindow", new WindowConfig {
     ]
 });
 ```
+
+Real YAML example:
+
+`Kx.Plugin.Example/Markup/Windows/MainWindow.yaml`
 
 ## 3. Merge behavior
 
@@ -246,6 +259,19 @@ stateStore.Set(panelOrientationState, "Vertical");
 stateStore.Set(buttonFontSizeState, 14f);
 ```
 
+## 8a. Loader usage
+
+The example plugin now loads theme and window definitions from the deployed plugin folder through `MarkupYamlLoader`.
+
+Example:
+
+```csharp
+themeRegistry.Register("Example.Dark", MarkupYamlLoader.Load<WindowTheme>(GetMarkupPath("Themes", "Example.Dark.yaml")));
+windowRegistry.Register("MainWindow", MarkupYamlLoader.Load<WindowConfig>(GetMarkupPath("Windows", "MainWindow.yaml")));
+```
+
+This keeps the runtime registry flow the same while moving the authored UI definitions into real YAML files.
+
 ## 9. Markup bindings
 
 Current binding-capable `ControlConfig` fields:
@@ -344,7 +370,7 @@ new ControlConfig {
 
 ## 10. Shared payload schemas
 
-Common payload DTOs live in `Kx.Abstractions.UI.Payloads`.
+Common payload DTOs live in `Kx.Sdk.UI.Payloads`.
 
 Current shared payloads:
 

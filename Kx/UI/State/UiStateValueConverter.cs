@@ -2,7 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using SkiaSharp;
-using Kx.Abstractions.UI.Binding;
+using Kx.Sdk.UI.Binding;
 
 namespace Kx.UI.State;
 

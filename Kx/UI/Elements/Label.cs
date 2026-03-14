@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.UI;
-using Kx.Abstractions.UI.Binding;
-using Kx.Abstractions.UI.Elements;
+using Kx.Sdk.UI;
+using Kx.Sdk.UI.Binding;
+using Kx.Sdk.UI.Elements;
 using Kx.Core.Extensions;
 
 using SkiaSharp;

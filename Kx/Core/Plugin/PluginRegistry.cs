@@ -2,7 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Runtime.Loader;
-using Kx.Abstractions.Plugin;
+using Kx.Sdk.Plugin;
 
 namespace Kx.Core.Plugin;
 

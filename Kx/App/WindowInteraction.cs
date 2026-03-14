@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.Events;
-using Kx.Abstractions.WindowHost;
+using Kx.Sdk.Events;
+using Kx.Sdk.WindowHost;
 
 namespace Kx.App;
 

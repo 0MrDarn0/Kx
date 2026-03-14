@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Abstractions.Events;
+using Kx.Sdk.Events;
 using Kx.Core.Event;
-using Kx.Abstractions.Updater;
+using Kx.Sdk.Updater;
 
 namespace Kx.Core.Pipeline;
 

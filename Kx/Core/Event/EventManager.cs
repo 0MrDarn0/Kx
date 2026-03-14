@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-using Kx.Abstractions.Events;
+using Kx.Sdk.Events;
 
 namespace Kx.Core.Event {
     /// <summary>
