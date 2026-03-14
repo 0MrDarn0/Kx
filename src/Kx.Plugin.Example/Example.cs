@@ -18,14 +18,14 @@ using SkiaSharp;
 namespace Kx.Plugin;
 
 public sealed class Example : IPlugin {
-    private static readonly UiStateKey<string> TitleState = new("example.title");
-    private static readonly UiStateKey<string> TitleColorState = new("example.titleColor");
-    private static readonly UiStateKey<float> TitleFontSizeState = new("example.titleFontSize");
-    private static readonly UiStateKey<string> BadgeTextState = new("example.badgeText");
-    private static readonly UiStateKey<bool> MergeHintVisibleState = new("example.mergeHintVisible");
-    private static readonly UiStateKey<float> PanelSpacingState = new("example.panelSpacing");
-    private static readonly UiStateKey<string> PanelOrientationState = new("example.panelOrientation");
-    private static readonly UiStateKey<float> ButtonFontSizeState = new("example.buttonFontSize");
+    private static readonly UiStateKey<string> _titleState = new("example.title");
+    private static readonly UiStateKey<string> _titleColorState = new("example.titleColor");
+    private static readonly UiStateKey<float> _titleFontSizeState = new("example.titleFontSize");
+    private static readonly UiStateKey<string> _badgeTextState = new("example.badgeText");
+    private static readonly UiStateKey<bool> _mergeHintVisibleState = new("example.mergeHintVisible");
+    private static readonly UiStateKey<float> _panelSpacingState = new("example.panelSpacing");
+    private static readonly UiStateKey<string> _panelOrientationState = new("example.panelOrientation");
+    private static readonly UiStateKey<float> _buttonFontSizeState = new("example.buttonFontSize");
 
     public string Name => "Example";
 
@@ -37,14 +37,14 @@ public sealed class Example : IPlugin {
         var themeRegistry = context.Services.Get<IThemeRegistry>();
         var windowRegistry = context.Services.Get<IWindowRegistry>();
 
-        stateStore.Set(TitleState, "  Plugin Window (bound)  ");
-        stateStore.Set(TitleColorState, "#F5F5F5");
-        stateStore.Set(TitleFontSizeState, 16f);
-        stateStore.Set(BadgeTextState, "Plugin Content");
-        stateStore.Set(MergeHintVisibleState, true);
-        stateStore.Set(PanelSpacingState, 8f);
-        stateStore.Set(PanelOrientationState, "Vertical");
-        stateStore.Set(ButtonFontSizeState, 14f);
+        stateStore.Set(_titleState, "  Plugin Window (bound)  ");
+        stateStore.Set(_titleColorState, "#F5F5F5");
+        stateStore.Set(_titleFontSizeState, 16f);
+        stateStore.Set(_badgeTextState, "Plugin Content");
+        stateStore.Set(_mergeHintVisibleState, true);
+        stateStore.Set(_panelSpacingState, 8f);
+        stateStore.Set(_panelOrientationState, "Vertical");
+        stateStore.Set(_buttonFontSizeState, 14f);
 
         controlRegistry.Register("ExampleBadge", (uiContext, config) => new ExampleBadge(uiContext, config.Id, config.Text, config.Properties.TryGetValue("textState", out var textState) ? textState : null));
         actionRegistry.Register("example.toggleVisibility", actionContext => ToggleVisibility(actionContext));
@@ -74,7 +74,7 @@ public sealed class Example : IPlugin {
         if (!commandContext.Payload.TryDeserialize<TextUpdatePayload>(out var payload) || payload is null)
             return;
 
-        stateStore.Set(BadgeTextState, payload.Text);
+        stateStore.Set(_badgeTextState, payload.Text);
     }
 
     private static void RegisterTheme(IThemeRegistry themeRegistry, string name, params string[] relativePathSegments) {
