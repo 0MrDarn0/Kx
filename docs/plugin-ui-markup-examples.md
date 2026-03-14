@@ -13,6 +13,7 @@ It focuses on:
 - built-in actions
 - custom actions
 - commands
+- state bindings
 - typed payloads
 - target resolution
 
@@ -213,7 +214,95 @@ OnClick = "openWindow:Example.Alternate"
 OnClick = "publishEvent:SomethingHappened"
 ```
 
-## 8. Shared payload schemas
+## 8. State seeding
+
+Plugins can seed initial UI state through `IUiStateStore`.
+
+Preferred code-side usage is now via typed keys:
+
+Example:
+
+```csharp
+var stateStore = context.Services.Get<IUiStateStore>();
+
+UiStateKey<string> titleState = new("example.title");
+UiStateKey<string> titleColorState = new("example.titleColor");
+UiStateKey<float> titleFontSizeState = new("example.titleFontSize");
+UiStateKey<string> badgeTextState = new("example.badgeText");
+UiStateKey<bool> mergeHintVisibleState = new("example.mergeHintVisible");
+UiStateKey<float> panelSpacingState = new("example.panelSpacing");
+UiStateKey<string> panelOrientationState = new("example.panelOrientation");
+UiStateKey<float> buttonFontSizeState = new("example.buttonFontSize");
+
+stateStore.Set(titleState, "Plugin Window (bound)");
+stateStore.Set(titleColorState, "#F5F5F5");
+stateStore.Set(titleFontSizeState, 16f);
+stateStore.Set(badgeTextState, "Plugin Content");
+stateStore.Set(mergeHintVisibleState, true);
+stateStore.Set(panelSpacingState, 8f);
+stateStore.Set(panelOrientationState, "Vertical");
+stateStore.Set(buttonFontSizeState, 14f);
+```
+
+## 9. Markup bindings
+
+Current binding-capable `ControlConfig` fields:
+
+- `TextBinding`
+- `ColorBinding`
+- `VisibleBinding`
+- `EnabledBinding`
+- `FontSizeBinding`
+- `OrientationBinding`
+- `SpacingBinding`
+
+Example:
+
+```csharp
+new ControlConfig {
+    Type = "Label",
+    Id = "example_title",
+    Text = "Plugin Window",
+    TextBinding = titleState.Path,
+    Color = "#F5F5F5",
+    ColorBinding = titleColorState.Path,
+    FontSizeBinding = titleFontSizeState.Path
+}
+```
+
+Current built-in bindings support:
+
+- `Label.Text`
+- `Label.Color`
+- `Label.Font` size
+- `UIElement.Visible`
+- `Button.Text`
+- `Button.IsEnabled`
+- `Button.FontSize`
+- `StackPanel.Orientation`
+- `StackPanel.Spacing`
+
+Additional example:
+
+```csharp
+new ControlConfig {
+    Type = "StackPanel",
+    Id = "example_panel",
+    OrientationBinding = panelOrientationState.Path,
+    SpacingBinding = panelSpacingState.Path,
+    Children = [
+        new ControlConfig {
+            Type = "Button",
+            Id = "example_toggle_button",
+            Text = "Toggle Badge",
+            FontSizeBinding = buttonFontSizeState.Path,
+            OnClick = "example.toggleVisibility:id:example_badge"
+        }
+    ]
+}
+```
+
+## 10. Shared payload schemas
 
 Common payload DTOs live in `Kx.Abstractions.UI.Payloads`.
 
@@ -229,7 +318,7 @@ Current shared payloads:
 
 These can be used in JSON payloads for built-in actions, commands, and events.
 
-## 9. JSON payload examples for built-in actions
+## 11. JSON payload examples for built-in actions
 
 ### Show / hide
 
@@ -263,7 +352,7 @@ OnClick = "setColor:{\"targetId\":\"id:example_title\",\"color\":\"#FFD166\"}"
 OnClick = "openWindow:{\"windowName\":\"Example.Alternate\"}"
 ```
 
-## 10. Custom action example
+## 12. Custom action example
 
 A plugin can register its own action:
 
@@ -288,12 +377,12 @@ private static void ToggleVisibility(IMarkupActionContext actionContext) {
 }
 ```
 
-## 11. Custom command example
+## 13. Custom command example
 
 A plugin can register a command:
 
 ```csharp
-commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(commandContext));
+commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(stateStore, commandContext));
 ```
 
 And invoke it from markup:
@@ -305,18 +394,44 @@ OnClick = "runCommand:example.renameBadge|{\"targetId\":\"example_badge\",\"text
 Example implementation:
 
 ```csharp
-private static void RenameBadge(IUiCommandContext commandContext) {
+private static void RenameBadge(IUiStateStore stateStore, IUiCommandContext commandContext) {
     if (!commandContext.Payload.TryDeserialize<TextUpdatePayload>(out var payload) || payload is null)
         return;
 
-    if (!commandContext.VisualContext.UIElementManager.TryGet(payload.TargetId, out var visual) || visual is not ExampleBadge badge)
-        return;
-
-    badge.SetText(payload.Text);
+    stateStore.Set(badgeTextState, payload.Text);
 }
 ```
 
-## 12. Typed event payload example
+## 14. Plugin-owned control state example
+
+Custom plugin controls can also subscribe to `IVisualContext.State` directly when they need behavior beyond the built-in binding set.
+
+Example:
+
+```csharp
+private sealed class ExampleBadge : UIElement {
+    private string _text;
+
+    public ExampleBadge(IVisualContext context, string id, string? text, string? textStatePath) : base(context, id) {
+        _text = string.IsNullOrWhiteSpace(text) ? "Example" : text;
+
+        if (string.IsNullOrWhiteSpace(textStatePath))
+            return;
+
+        UiStateKey<string> badgeTextState = new(textStatePath);
+
+        if (Context.State.TryGet(badgeTextState, out var currentText) && currentText is not null)
+            _text = currentText;
+
+        TrackDisposable(Context.State.Subscribe(badgeTextState, boundText => {
+            if (boundText is not null)
+                SetText(boundText);
+        }));
+    }
+}
+```
+
+## 15. Typed event payload example
 
 Markup can publish typed event payloads:
 
@@ -334,7 +449,7 @@ context.VisualContext.Events.Register<MarkupActionEvent>(e => {
 });
 ```
 
-## 13. Alternate window example
+## 16. Alternate window example
 
 A second registered window definition can be opened via action:
 
@@ -356,7 +471,7 @@ Back-navigation:
 OnClick = "openWindow:MainWindow"
 ```
 
-## 14. Current practical recommendations
+## 17. Current practical recommendations
 
 ### Prefer themes for defaults
 Put reusable base styling and reusable base controls into:
@@ -380,6 +495,9 @@ Prefer:
 
 instead of plugin-local mini payload records where possible.
 
+### Prefer typed state keys in code
+Prefer `UiStateKey<T>` for code-side state access and subscriptions, then pass `key.Path` into markup binding fields where needed.
+
 ### Prefer custom commands for behavior
 If the behavior is application- or plugin-specific, prefer:
 
@@ -387,11 +505,15 @@ If the behavior is application- or plugin-specific, prefer:
 
 instead of endlessly growing the built-in action list.
 
-## 15. Current limitations
+### Prefer state paths for UI synchronization
+If multiple controls or commands need to reflect the same value, prefer shared state paths over direct per-control updates.
+
+## 18. Current limitations
 
 Still worth keeping in mind:
 
 - action argument syntax is still string-based at the outermost level
 - merge override detection for frame values still depends on config defaults
 - targeting is improved, but still intentionally simple
+- bindings currently cover only a small built-in property set
 - no full binding/viewmodel layer for markup-defined controls yet

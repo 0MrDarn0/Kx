@@ -30,6 +30,7 @@ public abstract class Visual : IVisual, IDisposable {
 
     private readonly Property<VisualLayer> _layer;
     private readonly IVisualContext _ctx;
+    private readonly List<IDisposable> _trackedDisposables = [];
 
     public VisualLayer Layer {
         get => _layer.Value;
@@ -86,6 +87,20 @@ public abstract class Visual : IVisual, IDisposable {
         IsFocused = isFocused;
     }
 
+    /// <summary>
+    /// Tracks a disposable resource for the lifetime of this visual.
+    /// </summary>
+    public void TrackDisposable(IDisposable disposable) {
+        ArgumentNullException.ThrowIfNull(disposable);
+
+        if (_disposed) {
+            disposable.Dispose();
+            return;
+        }
+
+        _trackedDisposables.Add(disposable);
+    }
+
     public void Dispose() {
         Dispose(true);
         GC.SuppressFinalize(this);
@@ -94,6 +109,13 @@ public abstract class Visual : IVisual, IDisposable {
     protected virtual void Dispose(bool disposing) {
         if (_disposed)
             return;
+
+        if (disposing) {
+            foreach (var disposable in _trackedDisposables)
+                disposable.Dispose();
+
+            _trackedDisposables.Clear();
+        }
 
         _disposed = true;
     }

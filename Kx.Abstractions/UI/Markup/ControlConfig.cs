@@ -7,13 +7,20 @@ public class ControlConfig {
     public string Type { get; set; } = string.Empty;
     public string Id { get; set; } = string.Empty;
     public string? Text { get; set; }
+    public string? TextBinding { get; set; }
     public string? SkinKey { get; set; }
     public string? Color { get; set; }
+    public string? ColorBinding { get; set; }
+    public string? FontSizeBinding { get; set; }
     public BoundsConfig? Bounds { get; set; }
     public ThicknessConfig? Margin { get; set; }
     public ThicknessConfig? Padding { get; set; }
     public string? Dock { get; set; }
     public string Layer { get; set; } = "Content";
+    public string? VisibleBinding { get; set; }
+    public string? EnabledBinding { get; set; }
+    public string? OrientationBinding { get; set; }
+    public string? SpacingBinding { get; set; }
     public string? OnClick { get; set; }
     public FontConfig? Font { get; set; }
     public int GridRow { get; set; }

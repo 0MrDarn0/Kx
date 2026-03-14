@@ -7,6 +7,7 @@ using Kx.Abstractions.Logging;
 using Kx.Abstractions.UI.Actions;
 using Kx.Abstractions.UI.Commands;
 using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.State;
 using Kx.Abstractions.UI.Themes;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.DI;
@@ -17,6 +18,7 @@ using Kx.UI.Actions;
 using Kx.UI.Commands;
 using Kx.UI.Markup;
 using Kx.UI.Platform;
+using Kx.UI.State;
 using Kx.UI.Themes;
 using Kx.Utility;
 
@@ -113,6 +115,7 @@ public sealed class Runtime {
     private void ConfigureServices() {
         var actionRegistry = new MarkupActionRegistry();
         var commandRegistry = new UiCommandRegistry();
+        var stateStore = new UiStateStore();
         var controlRegistry = new ControlRegistry();
         var themeRegistry = new ThemeRegistry();
         var windowRegistry = new WindowRegistry();
@@ -123,6 +126,7 @@ public sealed class Runtime {
         _services.Register<IWindowHost>(_windowHost);
         _services.Register<IMarkupActionRegistry>(actionRegistry);
         _services.Register<IUiCommandRegistry>(commandRegistry);
+        _services.Register<IUiStateStore>(stateStore);
         _services.Register<IControlRegistry>(controlRegistry);
         _services.Register<IThemeRegistry>(themeRegistry);
         _services.Register<IWindowRegistry>(windowRegistry);

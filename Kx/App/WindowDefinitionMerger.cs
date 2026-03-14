@@ -143,10 +143,16 @@ internal static class WindowDefinitionMerger {
             merged.Id = windowControl.Id;
         if (windowControl.Text is not null)
             merged.Text = windowControl.Text;
+        if (windowControl.TextBinding is not null)
+            merged.TextBinding = windowControl.TextBinding;
         if (windowControl.SkinKey is not null)
             merged.SkinKey = windowControl.SkinKey;
         if (windowControl.Color is not null)
             merged.Color = windowControl.Color;
+        if (windowControl.ColorBinding is not null)
+            merged.ColorBinding = windowControl.ColorBinding;
+        if (windowControl.FontSizeBinding is not null)
+            merged.FontSizeBinding = windowControl.FontSizeBinding;
         if (windowControl.Bounds is not null)
             merged.Bounds = CloneBounds(windowControl.Bounds);
         if (windowControl.Margin is not null)
@@ -157,6 +163,14 @@ internal static class WindowDefinitionMerger {
             merged.Dock = windowControl.Dock;
         if (!string.Equals(windowControl.Layer, _defaultControl.Layer, StringComparison.OrdinalIgnoreCase))
             merged.Layer = windowControl.Layer;
+        if (windowControl.VisibleBinding is not null)
+            merged.VisibleBinding = windowControl.VisibleBinding;
+        if (windowControl.EnabledBinding is not null)
+            merged.EnabledBinding = windowControl.EnabledBinding;
+        if (windowControl.OrientationBinding is not null)
+            merged.OrientationBinding = windowControl.OrientationBinding;
+        if (windowControl.SpacingBinding is not null)
+            merged.SpacingBinding = windowControl.SpacingBinding;
         if (windowControl.OnClick is not null)
             merged.OnClick = windowControl.OnClick;
         if (windowControl.Font is not null)
@@ -233,13 +247,20 @@ internal static class WindowDefinitionMerger {
             Type = source.Type,
             Id = source.Id,
             Text = source.Text,
+            TextBinding = source.TextBinding,
             SkinKey = source.SkinKey,
             Color = source.Color,
+            ColorBinding = source.ColorBinding,
+            FontSizeBinding = source.FontSizeBinding,
             Bounds = source.Bounds is null ? null : CloneBounds(source.Bounds),
             Margin = source.Margin is null ? null : CloneThickness(source.Margin),
             Padding = source.Padding is null ? null : CloneThickness(source.Padding),
             Dock = source.Dock,
             Layer = source.Layer,
+            VisibleBinding = source.VisibleBinding,
+            EnabledBinding = source.EnabledBinding,
+            OrientationBinding = source.OrientationBinding,
+            SpacingBinding = source.SpacingBinding,
             OnClick = source.OnClick,
             Font = source.Font is null ? null : CloneFont(source.Font),
             GridRow = source.GridRow,

@@ -5,6 +5,7 @@ using Kx.Abstractions.Events;
 using Kx.Abstractions.Rendering;
 using Kx.Abstractions.UI;
 using Kx.Abstractions.UI.Commands;
+using Kx.Abstractions.UI.State;
 using Kx.Abstractions.WindowHost;
 using Kx.Core.Configuration;
 using Kx.Core.Event;
@@ -30,11 +31,13 @@ public sealed class WindowContext : IVisualContext, IDisposable {
 
     private readonly object _frameLock = new();
     private IUiCommandRegistry? _commandRegistry;
+    private IUiStateStore? _stateStore;
     private Action<string>? _openWindowAction;
     public float DpiScale { get; set; } = 1f;
 
     IUIElementManager IVisualContext.UIElementManager => UIElementManager;
     IUiCommandRegistry IVisualContext.Commands => _commandRegistry ?? throw new InvalidOperationException("No command registry has been registered for this context.");
+    IUiStateStore IVisualContext.State => _stateStore ?? throw new InvalidOperationException("No state store has been registered for this context.");
 
     public WindowContext(
         IWindowSurface target,
@@ -99,6 +102,11 @@ public sealed class WindowContext : IVisualContext, IDisposable {
     internal void SetCommandRegistry(IUiCommandRegistry commandRegistry) {
         ArgumentNullException.ThrowIfNull(commandRegistry);
         _commandRegistry = commandRegistry;
+    }
+
+    internal void SetStateStore(IUiStateStore stateStore) {
+        ArgumentNullException.ThrowIfNull(stateStore);
+        _stateStore = stateStore;
     }
 
     public void SetPipeline(UpdaterPipelineRunner pipeline) {

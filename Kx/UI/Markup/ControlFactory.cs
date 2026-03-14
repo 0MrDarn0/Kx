@@ -6,7 +6,9 @@ using Kx.Abstractions.UI.Actions;
 using Kx.Abstractions.UI.Elements;
 using Kx.Abstractions.UI.Layout;
 using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.State;
 using Kx.Abstractions.UI.VisualTree;
+using Kx.UI.State;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 
@@ -72,6 +74,8 @@ public static class ControlFactory {
                 ApplyStackPanelProperties(stackPanel, config);
                 break;
         }
+
+        ApplyBindings(control, config);
     }
 
     private static void ApplyContainerProperties(IControlRegistry registry, IMarkupActionRegistry actionRegistry, IVisualContext context, UIElement control, ControlConfig config) {
@@ -83,6 +87,29 @@ public static class ControlFactory {
 
             case Kx.UI.Elements.Panel.Panel panel:
                 AddChildren(registry, actionRegistry, context, panel, config.Children);
+                break;
+        }
+    }
+
+    private static void ApplyBindings(UIElement control, ControlConfig config) {
+        BindVisibility(control, config.VisibleBinding);
+
+        switch (control) {
+            case Kx.UI.Elements.Label label:
+                BindText(label, config.TextBinding);
+                BindColor(label, config.ColorBinding);
+                BindFontSize(label, config.FontSizeBinding);
+                break;
+
+            case Kx.UI.Elements.Button button:
+                BindText(button, config.TextBinding);
+                BindEnabled(button, config.EnabledBinding);
+                BindFontSize(button, config.FontSizeBinding);
+                break;
+
+            case StackPanel stackPanel:
+                BindOrientation(stackPanel, config.OrientationBinding);
+                BindSpacing(stackPanel, config.SpacingBinding);
                 break;
         }
     }
@@ -158,6 +185,128 @@ public static class ControlFactory {
         var context = new Kx.UI.Actions.MarkupActionContext(source.Context, source, actionName, argument);
         if (!actionRegistry.TryExecute(context))
             throw new InvalidOperationException($"No markup action has been registered for '{actionName}'.");
+    }
+
+    private static void BindText(Kx.UI.Elements.Label label, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(label, path, value => {
+            if (UiStateValueConverter.TryGetText(value, out var text))
+                label.Text.Value = text;
+        });
+    }
+
+    private static void BindFontSize(Kx.UI.Elements.Label label, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(label, path, value => {
+            if (!UiStateValueConverter.TryGetFloat(value, out var fontSize))
+                return;
+
+            label.Font.Value = new SKFont(label.Font.Value.Typeface, fontSize);
+        });
+    }
+
+    private static void BindFontSize(Kx.UI.Elements.Button button, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(button, path, value => {
+            if (!UiStateValueConverter.TryGetFloat(value, out var fontSize))
+                return;
+
+            button.FontSize = fontSize;
+            button.Context.RequestRender();
+        });
+    }
+
+    private static void BindText(Kx.UI.Elements.Button button, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(button, path, value => {
+            if (UiStateValueConverter.TryGetText(value, out var text)) {
+                button.Text = text;
+                button.Context.RequestRender();
+            }
+        });
+    }
+
+    private static void BindOrientation(StackPanel stackPanel, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(stackPanel, path, value => {
+            if (!UiStateValueConverter.TryGetOrientation(value, out var orientation))
+                return;
+
+            stackPanel.Orientation = orientation;
+            stackPanel.Context.RequestRender();
+        });
+    }
+
+    private static void BindSpacing(StackPanel stackPanel, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(stackPanel, path, value => {
+            if (!UiStateValueConverter.TryGetFloat(value, out var spacing))
+                return;
+
+            stackPanel.Spacing = spacing;
+            stackPanel.Context.RequestRender();
+        });
+    }
+
+    private static void BindColor(Kx.UI.Elements.Label label, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(label, path, value => {
+            if (UiStateValueConverter.TryGetColor(value, out var color))
+                label.Color.Value = color;
+        });
+    }
+
+    private static void BindVisibility(UIElement control, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(control, path, value => {
+            if (UiStateValueConverter.TryGetBool(value, out var visible))
+                control.Visible = visible;
+        });
+    }
+
+    private static void BindEnabled(Kx.UI.Elements.Button button, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(button, path, value => {
+            if (UiStateValueConverter.TryGetBool(value, out var enabled)) {
+                button.IsEnabled = enabled;
+                button.Context.RequestRender();
+            }
+        });
+    }
+
+    private static void BindState(UIElement control, string path, Action<object?> apply) {
+        ApplyStateValue(control.Context, path, apply);
+        control.TrackDisposable(control.Context.State.Subscribe(path, value => ApplyStateValue(control.Context, value, apply)));
+    }
+
+    private static void ApplyStateValue(IVisualContext context, string path, Action<object?> apply) {
+        if (context.State.TryGet(path, out var value))
+            ApplyStateValue(context, value, apply);
+    }
+
+    private static void ApplyStateValue(IVisualContext context, object? value, Action<object?> apply) {
+        if (context.UiThread.InvokeRequired)
+            context.UiThread.BeginInvoke(new Action(() => apply(value)));
+        else
+            apply(value);
     }
 
     private static bool TryParseAction(string? actionExpression, out string actionName, out string? argument) {

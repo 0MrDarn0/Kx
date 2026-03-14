@@ -10,6 +10,7 @@ using Kx.Abstractions.UI.Commands;
 using Kx.Abstractions.UI.Elements;
 using Kx.Abstractions.UI.Markup;
 using Kx.Abstractions.UI.Payloads;
+using Kx.Abstractions.UI.State;
 using Kx.Abstractions.UI.Themes;
 
 using SkiaSharp;
@@ -17,18 +18,37 @@ using SkiaSharp;
 namespace Kx.Plugin;
 
 public sealed class Example : IPlugin {
+    private static readonly UiStateKey<string> TitleState = new("example.title");
+    private static readonly UiStateKey<string> TitleColorState = new("example.titleColor");
+    private static readonly UiStateKey<float> TitleFontSizeState = new("example.titleFontSize");
+    private static readonly UiStateKey<string> BadgeTextState = new("example.badgeText");
+    private static readonly UiStateKey<bool> MergeHintVisibleState = new("example.mergeHintVisible");
+    private static readonly UiStateKey<float> PanelSpacingState = new("example.panelSpacing");
+    private static readonly UiStateKey<string> PanelOrientationState = new("example.panelOrientation");
+    private static readonly UiStateKey<float> ButtonFontSizeState = new("example.buttonFontSize");
+
     public string Name => "Example";
 
     public void Initialize(IPluginContext context) {
         var controlRegistry = context.Services.Get<IControlRegistry>();
         var actionRegistry = context.Services.Get<IMarkupActionRegistry>();
         var commandRegistry = context.Services.Get<IUiCommandRegistry>();
+        var stateStore = context.Services.Get<IUiStateStore>();
         var themeRegistry = context.Services.Get<IThemeRegistry>();
         var windowRegistry = context.Services.Get<IWindowRegistry>();
 
-        controlRegistry.Register("ExampleBadge", (uiContext, config) => new ExampleBadge(uiContext, config.Id, config.Text));
+        stateStore.Set(TitleState, "Plugin Window (bound)");
+        stateStore.Set(TitleColorState, "#F5F5F5");
+        stateStore.Set(TitleFontSizeState, 16f);
+        stateStore.Set(BadgeTextState, "Plugin Content");
+        stateStore.Set(MergeHintVisibleState, true);
+        stateStore.Set(PanelSpacingState, 8f);
+        stateStore.Set(PanelOrientationState, "Vertical");
+        stateStore.Set(ButtonFontSizeState, 14f);
+
+        controlRegistry.Register("ExampleBadge", (uiContext, config) => new ExampleBadge(uiContext, config.Id, config.Text, config.Properties.TryGetValue("textState", out var textState) ? textState : null));
         actionRegistry.Register("example.toggleVisibility", actionContext => ToggleVisibility(actionContext));
-        commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(commandContext));
+        commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(stateStore, commandContext));
         themeRegistry.Register("Example.Dark", new WindowTheme {
             Frame = new FrameConfig {
                 Style = FrameStyle.Default,
@@ -61,12 +81,17 @@ public sealed class Example : IPlugin {
                         ["orientation"] = "Vertical",
                         ["spacing"] = "8"
                     },
+                    OrientationBinding = PanelOrientationState.Path,
+                    SpacingBinding = PanelSpacingState.Path,
                     Children = [
                         new ControlConfig {
                             Type = "Label",
                             Id = "example_title",
                             Text = "Plugin Window",
+                            TextBinding = TitleState.Path,
                             Color = "#F5F5F5",
+                            ColorBinding = TitleColorState.Path,
+                            FontSizeBinding = TitleFontSizeState.Path,
                             Font = new FontConfig {
                                 Name = "Segoe UI",
                                 Size = 16,
@@ -76,12 +101,16 @@ public sealed class Example : IPlugin {
                         new ControlConfig {
                             Type = "ExampleBadge",
                             Id = "example_badge",
-                            Text = "Plugin Content"
+                            Text = "Plugin Content",
+                            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                                ["textState"] = BadgeTextState.Path
+                            }
                         },
                         new ControlConfig {
                             Type = "Button",
                             Id = "example_toggle_button",
                             Text = "Toggle Badge",
+                            FontSizeBinding = ButtonFontSizeState.Path,
                             OnClick = "example.toggleVisibility:id:example_badge"
                         },
                         new ControlConfig {
@@ -224,7 +253,8 @@ public sealed class Example : IPlugin {
                             Type = "Label",
                             Id = "example_merge_hint",
                             Text = "Added by WindowConfig merge",
-                            Color = "#8BD3FF"
+                            Color = "#8BD3FF",
+                            VisibleBinding = MergeHintVisibleState.Path
                         }
                     ]
                 }
@@ -250,18 +280,32 @@ public sealed class Example : IPlugin {
         visual.Visible = !visual.Visible;
     }
 
-    private static void RenameBadge(IUiCommandContext commandContext) {
+    private static void RenameBadge(IUiStateStore stateStore, IUiCommandContext commandContext) {
         if (!commandContext.Payload.TryDeserialize<TextUpdatePayload>(out var payload) || payload is null)
             return;
 
-        if (!commandContext.VisualContext.UIElementManager.TryGet(payload.TargetId, out var visual) || visual is not ExampleBadge badge)
-            return;
-
-        badge.SetText(payload.Text);
+        stateStore.Set(BadgeTextState, payload.Text);
     }
 
-    private sealed class ExampleBadge(IVisualContext context, string id, string? text) : UIElement(context, id) {
-        private string _text = string.IsNullOrWhiteSpace(text) ? "Example" : text;
+    private sealed class ExampleBadge : UIElement {
+        private string _text;
+
+        public ExampleBadge(IVisualContext context, string id, string? text, string? textStatePath) : base(context, id) {
+            _text = string.IsNullOrWhiteSpace(text) ? "Example" : text;
+
+            if (string.IsNullOrWhiteSpace(textStatePath))
+                return;
+
+            var stateKey = new UiStateKey<string>(textStatePath);
+
+            if (Context.State.TryGet(stateKey, out var currentText) && currentText is not null)
+                _text = currentText;
+
+            TrackDisposable(Context.State.Subscribe(stateKey, boundText => {
+                if (boundText is not null)
+                    SetText(boundText);
+            }));
+        }
 
         public void SetText(string text) {
             _text = string.IsNullOrWhiteSpace(text) ? "Example" : text;

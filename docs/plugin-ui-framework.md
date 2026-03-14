@@ -26,6 +26,7 @@ Important areas:
 - `Kx.Abstractions.UI.Actions`
 - `Kx.Abstractions.UI.Commands`
 - `Kx.Abstractions.UI.Payloads`
+- `Kx.Abstractions.UI.State`
 - `Kx.Abstractions.UI.VisualTree`
 
 This is the SDK surface a plugin should target.
@@ -43,6 +44,7 @@ Important host pieces:
 - `ThemeRegistry`
 - `MarkupActionRegistry`
 - `UiCommandRegistry`
+- `UiStateStore`
 - `ControlFactory`
 - `FrameResource`
 
@@ -56,6 +58,7 @@ Important services registered in DI:
 
 - `IMarkupActionRegistry`
 - `IUiCommandRegistry`
+- `IUiStateStore`
 - `IControlRegistry`
 - `IThemeRegistry`
 - `IWindowRegistry`
@@ -184,6 +187,13 @@ Commands are useful when markup should trigger application or plugin behavior wi
 
 `IUiCommandContext` now also exposes `Payload`, which supports typed deserialization of JSON command payloads while keeping the raw string argument available.
 
+### `IUiStateStore`
+Used to store named UI state values and notify bindings when a state path changes.
+
+`IVisualContext` exposes the active state store through `State`, which allows both host controls and plugin controls to react to shared state paths.
+
+Typed helper keys are available through `UiStateKey<T>`, which reduces repeated raw string paths in plugin and host code while keeping the markup-facing binding fields string-based.
+
 ### Shared payload schemas
 Common payload DTOs now live in `Kx.Abstractions.UI.Payloads`.
 
@@ -217,6 +227,7 @@ It currently applies:
 - children for nested control trees
 - button click actions via `IMarkupActionRegistry`
 - command bridging via `runCommand`
+- state-driven bindings for text, color, visibility, enabled state, font size, and stack-panel layout properties
 
 This means markup definitions can now build nested control hierarchies, not only flat root controls.
 
@@ -245,6 +256,45 @@ A `ControlConfig` can now describe:
 - grid placement
 - nested children
 - action binding via `OnClick`
+- state bindings via `TextBinding`, `ColorBinding`, `VisibleBinding`, and `EnabledBinding`
+- additional bindings via `FontSizeBinding`, `OrientationBinding`, and `SpacingBinding`
+
+## State and bindings
+
+The current binding layer is intentionally small and path-based.
+
+In code, state access can now use either:
+
+- raw string paths
+- typed `UiStateKey<T>` helpers
+
+Available binding fields on `ControlConfig`:
+
+- `TextBinding`
+- `ColorBinding`
+- `VisibleBinding`
+- `EnabledBinding`
+- `FontSizeBinding`
+- `OrientationBinding`
+- `SpacingBinding`
+
+Bindings use the shared `IUiStateStore`.
+
+Value conversion for the built-in bindings is centralized in host-side state conversion helpers instead of being repeated inline per binding.
+
+Current built-in binding support includes:
+
+- `Label.Text`
+- `Label.Color`
+- `Label.Font` size
+- `UIElement.Visible`
+- `Button.Text`
+- `Button.IsEnabled`
+- `Button.FontSize`
+- `StackPanel.Orientation`
+- `StackPanel.Spacing`
+
+Direct values in `ControlConfig` still act as defaults. If a state path already has a value, the binding overwrites the direct value at runtime.
 
 ## Actions
 
@@ -311,7 +361,7 @@ The example theme contributes a nested control tree:
   - `Button`
   - additional buttons for built-in actions including enable/disable/focus/setColor
 
-The example now demonstrates both custom and built-in actions, a custom command executed through `runCommand` with the shared `TextUpdatePayload` schema, the new target-resolution syntax, and a `MainWindow` definition that overrides parts of the registered theme through merge rules.
+The example now demonstrates both custom and built-in actions, a custom command executed through `runCommand` with the shared `TextUpdatePayload` schema, the new target-resolution syntax, a `MainWindow` definition that overrides parts of the registered theme through merge rules, and a first state-driven binding flow.
 
 ## Automatic plugin deployment during build
 
@@ -339,6 +389,7 @@ Current notable limitations:
 - command payloads and published event payloads are available as typed JSON, but action arguments are still string-based
 - targeting is basic and id-based
 - shared payload schemas exist, but richer validation/helper layers are still minimal
+- bindings are currently path-based and support only a small set of built-in properties
 - theme/window merging currently relies on config defaults to detect window overrides, so explicitly overriding back to a schema default value is still limited
 - no general data binding layer for markup-defined controls yet
 
@@ -346,7 +397,10 @@ Current notable limitations:
 
 Reasonable next framework steps are:
 
-1. add richer markup binding/commands
+1. improve binding ergonomics
+   - better converters
+   - stronger typed state helpers
+   - less stringly binding paths
 2. document example markup files once real theme/window YAML usage expands
 
 ## Summary

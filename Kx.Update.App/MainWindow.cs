@@ -6,6 +6,7 @@ using Kx.Abstractions.UI.Actions;
 using Kx.Abstractions.UI.Commands;
 using Kx.Abstractions.UI.Layout;
 using Kx.Abstractions.UI.Markup;
+using Kx.Abstractions.UI.State;
 using Kx.Abstractions.UI.Themes;
 using Kx.Abstractions.WindowHost;
 using Kx.App;
@@ -17,8 +18,8 @@ namespace Kx.Update.App;
 
 
 public sealed class MainWindow : Window {
-    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
-        : base(host, tray, log, actionRegistry, commandRegistry, controlRegistry, themeRegistry, windowRegistry) {
+    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
+        : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, themeRegistry, windowRegistry) {
     }
 
     protected override void OnInitialize() {

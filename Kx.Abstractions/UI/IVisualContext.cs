@@ -4,6 +4,7 @@
 using Kx.Abstractions.WindowHost;
 using Kx.Abstractions.Events;
 using Kx.Abstractions.UI.Commands;
+using Kx.Abstractions.UI.State;
 
 namespace Kx.Abstractions.UI;
 
@@ -16,6 +17,7 @@ public interface IVisualContext {
     IUIElementManager UIElementManager { get; }
     IEventManager Events { get; }
     IUiCommandRegistry Commands { get; }
+    IUiStateStore State { get; }
 
     /// <summary>
     /// Requests a new render pass for the current window.
