@@ -21,5 +21,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
     <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
+    <ProjectReference Include="..\..\src\Kx.Update.App\Kx.Update.App.csproj" />
   </ItemGroup>
 </Project>

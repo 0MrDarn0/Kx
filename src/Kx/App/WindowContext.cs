@@ -23,7 +23,7 @@ public sealed class WindowContext : IVisualContext, IDisposable {
     public IWindowHost WindowHost { get; }
     public IResourceProvider Resources { get; }
     public IEventManager Events { get; }
-    public AppConfig Config { get; }
+    public RuntimeConfig Config { get; }
     public UIElementManager UIElementManager { get; } = new();
     public FrameResource? Frame { get; private set; }
     public IWindowRenderer Renderer { get; private set; } = null!;
@@ -48,7 +48,7 @@ public sealed class WindowContext : IVisualContext, IDisposable {
         UiThread = uiThread;
         WindowHost = windowHost;
         DpiScale = Math.Max(1f, Target.DeviceDpi / 96f);
-        Config = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
+        Config = ConfigLoader.Load<RuntimeConfig>(Paths.GetConfig("app.yaml"));
         Resources = new FileResourceProvider(Paths.ResFolder);
         UIElementManager = new UIElementManager();
         Events = eventManager ?? new EventManager();

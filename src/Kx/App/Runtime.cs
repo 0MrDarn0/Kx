@@ -2,24 +2,9 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Sdk.DI;
-using Kx.Sdk.Lifecycle;
-using Kx.Sdk.Logging;
-using Kx.Sdk.UI.Actions;
-using Kx.Sdk.UI.Commands;
-using Kx.Sdk.UI.Markup;
-using Kx.Sdk.UI.State;
-using Kx.Sdk.UI.Themes;
 using Kx.Sdk.WindowHost;
 using Kx.Core.DI;
-using Kx.Core.Lifecycle;
-using Kx.Core.Logging;
 using Kx.Core.Plugin;
-using Kx.UI.Actions;
-using Kx.UI.Commands;
-using Kx.UI.Markup;
-using Kx.UI.Platform;
-using Kx.UI.State;
-using Kx.UI.Themes;
 using Kx.Utility;
 
 namespace Kx.App;
@@ -27,7 +12,13 @@ namespace Kx.App;
 public sealed class Runtime {
 
     private readonly MsDiContainer _services = new();
+    private readonly PluginRuntimeComposition _pluginComposition;
+    private readonly RuntimeUiComposition _uiComposition;
+    private readonly RuntimeLoggingComposition _loggingComposition;
+    private readonly RuntimeShellComposition _shellComposition;
     private readonly PluginManager _pluginManager;
+    private readonly RuntimeLifecycleCoordinator _lifecycleCoordinator;
+    private readonly RuntimeWindowCoordinator _windowCoordinator;
     private readonly IWindowHost _windowHost;
     private Action<IServiceRegistry>? _configureAppServices;
     private Task? _startTask;
@@ -37,7 +28,13 @@ public sealed class Runtime {
 
     public Runtime(IWindowHost windowHost) {
         _windowHost = windowHost;
-        _pluginManager = new PluginManager(_services);
+        _pluginComposition = new PluginRuntimeComposition();
+        _uiComposition = new RuntimeUiComposition();
+        _loggingComposition = new RuntimeLoggingComposition();
+        _shellComposition = new RuntimeShellComposition();
+        _pluginManager = new PluginManager(_services, _pluginComposition.Policy);
+        _lifecycleCoordinator = new RuntimeLifecycleCoordinator(_services, _pluginManager);
+        _windowCoordinator = new RuntimeWindowCoordinator(_services, _windowHost);
     }
 
     public void Start() {
@@ -62,13 +59,8 @@ public sealed class Runtime {
         _started = true;
         ConfigurePaths();
         ConfigureServices();
-        _pluginManager.ConfigureServices();
-        _services.Build();
-
-        InitializePlugins();
-        await StartupAsync();
-        InitializeUI();
-        _windowHost.ShowWindow();
+        await _lifecycleCoordinator.StartAsync();
+        _window = _windowCoordinator.Show(_windowType!, ShutdownAsync);
     }
 
     public void RegisterWindow<TWindow>() where TWindow : Window {
@@ -97,13 +89,8 @@ public sealed class Runtime {
         _windowType = windowType;
     }
 
-
     public async Task ShutdownAsync() {
-        await _services.Get<ShutdownManager>().ShutdownAsync();
-    }
-
-    private async Task StartupAsync() {
-        await _services.Get<StartupManager>().StartupAsync();
+        await _lifecycleCoordinator.ShutdownAsync();
     }
 
     private static void ConfigurePaths() {
@@ -113,69 +100,7 @@ public sealed class Runtime {
     }
 
     private void ConfigureServices() {
-        var actionRegistry = new MarkupActionRegistry();
-        var commandRegistry = new UiCommandRegistry();
-        var stateStore = new UiStateStore();
-        var controlRegistry = new ControlRegistry();
-        var themeRegistry = new ThemeRegistry();
-        var windowRegistry = new WindowRegistry();
-
-        BuiltInMarkupActionRegistrar.Register(actionRegistry);
-        BuiltInControlRegistrar.Register(controlRegistry);
-
-        _services.Register<IWindowHost>(_windowHost);
-        _services.Register<IMarkupActionRegistry>(actionRegistry);
-        _services.Register<IUiCommandRegistry>(commandRegistry);
-        _services.Register<IUiStateStore>(stateStore);
-        _services.Register<IControlRegistry>(controlRegistry);
-        _services.Register<IThemeRegistry>(themeRegistry);
-        _services.Register<IWindowRegistry>(windowRegistry);
-
-        // Startup
-        _services.RegisterFactory<StartupManager>(Lifetime.Singleton, c => new StartupManager(c));
-
-        // Shutdown
-        _services.RegisterFactory<ShutdownManager>(Lifetime.Singleton, c => new ShutdownManager(c));
-        _services.Register(_pluginManager);
-        _services.Register<IShutdownAware>(_pluginManager);
-
-        // Logging sinks
-        _services.RegisterFactory<ILogSink>(Lifetime.Singleton,
-            c => new AsyncLogSink(new DebugSink()));
-
-        _services.RegisterFactory<ILogSink>(Lifetime.Singleton,
-            c => new AsyncLogSink(
-                new DailyRollingFileSink(
-                    5 * 1024 * 1024,
-                    5,
-                    () => Paths.GetDailyLogFile()
-                )
-            )
-        );
-
-        // LoggerFactory
-        _services.RegisterFactory<ILoggerFactory>(Lifetime.Singleton, c => new LoggerFactory(c));
-
-        // System logger
-        _services.RegisterFactory<ILoggingService>(Lifetime.Singleton,
-            c => c.Get<ILoggerFactory>().CreateLogger("System"));
-
-        // TrayIcon services
-        _services.Register(new TrayIcon());
-        _services.Register<ITrayService, TrayIconService>(Lifetime.Singleton);
-
+        RuntimeServiceConfiguration.RegisterDefaults(_services, _windowHost, _pluginManager, _uiComposition, _loggingComposition, _shellComposition);
         _configureAppServices?.Invoke(_services);
-    }
-
-    private void InitializePlugins() {
-        _pluginManager.InitializeAll();
-    }
-
-    private void InitializeUI() {
-        _window = (Window)_services.Create(_windowType!);
-
-        _windowHost.Closed += async e => {
-            await ShutdownAsync();
-        };
     }
 }

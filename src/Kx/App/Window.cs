@@ -1,18 +1,17 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Core.Configuration;
+using Kx.Core.Event;
 using Kx.Sdk.Events;
 using Kx.Sdk.Logging;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
-using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.UI.Themes;
 using Kx.Sdk.UI.VisualTree;
 using Kx.Sdk.WindowHost;
-using Kx.Core.Configuration;
-using Kx.Core.Event;
 using Kx.UI.Markup;
 using Kx.UI.Platform;
 using Kx.UI.Rendering;
@@ -27,6 +26,7 @@ public abstract class Window : IDisposable {
     protected WindowInteraction? _interaction;
     protected ITrayService? _tray;
     protected ILoggingService? _logger;
+    protected bool HasConfiguredControls { get; private set; }
     protected bool HasConfiguredContentControls { get; private set; }
 
     private readonly IMarkupActionRegistry? _actionRegistry;
@@ -125,12 +125,14 @@ public abstract class Window : IDisposable {
             return;
 
         ClearConfiguredControls();
+        HasConfiguredControls = false;
         HasConfiguredContentControls = false;
 
         foreach (var config in WindowDefinitionMerger.MergeControls(_resolvedWindowConfig.Controls, _resolvedTheme)) {
             var control = ControlFactory.Create(_controlRegistry, _actionRegistry, _ctx, config);
             _ctx.UIElementManager.Add(control);
             _configuredControls.Add(control);
+            HasConfiguredControls = true;
 
             if (control.Layer == VisualLayer.Content)
                 HasConfiguredContentControls = true;
@@ -161,6 +163,7 @@ public abstract class Window : IDisposable {
 
         _resolvedWindowConfig = config;
         _resolvedTheme = ResolveWindowTheme(config);
+        HasConfiguredControls = false;
         HasConfiguredContentControls = false;
 
         var frameConfig = WindowDefinitionMerger.MergeFrame(config.Frame, _resolvedTheme);

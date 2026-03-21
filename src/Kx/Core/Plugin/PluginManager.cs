@@ -1,18 +1,24 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Diagnostics;
-
 using Kx.Sdk.DI;
 using Kx.Sdk.Lifecycle;
 using Kx.Sdk.Logging;
-using Kx.Sdk.Plugin;
 
 namespace Kx.Core.Plugin;
 
-public sealed class PluginManager(IDependencyContainer services) : IShutdownAware {
+public sealed class PluginManager : IShutdownAware {
+    private readonly IDependencyContainer _services;
+    private readonly PluginRuntimePolicy _policy;
     private bool _servicesConfigured;
     private bool _initialized;
+
+    public PluginManager(IDependencyContainer services, PluginRuntimePolicy? policy = null) {
+        ArgumentNullException.ThrowIfNull(services);
+
+        _services = services;
+        _policy = policy ?? new PluginRuntimeComposition().Policy;
+    }
 
     /// <summary>
     /// Loads plugins and lets them register services before the dependency container is built.
@@ -22,21 +28,7 @@ public sealed class PluginManager(IDependencyContainer services) : IShutdownAwar
             return;
 
         _servicesConfigured = true;
-
-        var plugins = PluginLoader.LoadAll<IPlugin>();
-        foreach (var plugin in plugins) {
-            if (plugin is not IServicePlugin servicePlugin)
-                continue;
-
-            try {
-                Debug.WriteLine($"[PluginManager] Configuring services for plugin: {plugin.Name}");
-                servicePlugin.ConfigureServices(services);
-            }
-            catch (Exception ex) {
-                Debug.WriteLine($"[PluginManager] Service registration failed for plugin '{plugin.Name}': {ex}");
-                PluginRegistry.Unload(plugin);
-            }
-        }
+        _policy.ConfigureServices(_services);
     }
 
     /// <summary>
@@ -49,35 +41,16 @@ public sealed class PluginManager(IDependencyContainer services) : IShutdownAwar
         ConfigureServices();
         _initialized = true;
 
-        var log = services.Get<ILoggingService>();
-
-        foreach (var plugin in PluginRegistry.GetLoadOrder()) {
-            try {
-                log.Info($"Loading plugin: {plugin.Name}");
-                plugin.Initialize(new PluginContext(services, plugin.Name));
-            }
-            catch (Exception ex) {
-                log.Error($"Plugin initialization failed: {plugin.Name}", ex);
-                PluginRegistry.Unload(plugin);
-            }
-        }
+        var log = _services.Get<ILoggingService>();
+        _policy.InitializePlugins(_services, log);
     }
 
     /// <summary>
     /// Unloads all plugins in reverse dependency order during shutdown.
     /// </summary>
     public ValueTask ShutdownAsync() {
-        var log = services.Get<ILoggingService>();
-
-        foreach (var plugin in PluginRegistry.GetUnloadOrder()) {
-            try {
-                log.Info($"Unloading plugin: {plugin.Name}");
-                PluginRegistry.Unload(plugin);
-            }
-            catch (Exception ex) {
-                log.Error($"Plugin unload failed: {plugin.Name}", ex);
-            }
-        }
+        var log = _services.Get<ILoggingService>();
+        _policy.ShutdownPlugins(log);
 
         return ValueTask.CompletedTask;
     }

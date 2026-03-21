@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.App;
 using Kx.Sdk.Logging;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
@@ -9,13 +10,11 @@ using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.UI.Themes;
 using Kx.Sdk.WindowHost;
-using Kx.App;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
 
 namespace Kx.Update.App;
-
 
 public sealed class MainWindow : Window {
     public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
@@ -25,7 +24,7 @@ public sealed class MainWindow : Window {
     protected override void OnInitialize() {
         base.OnInitialize();
 
-        if (HasConfiguredContentControls)
+        if (HasConfiguredControls)
             return;
 
         BuildUI();
@@ -70,7 +69,6 @@ public sealed class MainWindow : Window {
         btn_exit.Click += () => {
             _logger?.Info($"{btn_exit.Id} Clicked!");
         };
-
 
         grid.AddChild(btn_exit);
         _ctx.UIElementManager.Add(grid);
