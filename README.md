@@ -1,78 +1,78 @@
-[![.NET Desktop CI](https://github.com/0MrDarn0/KUpdater/actions/workflows/dotnet.yml/badge.svg)](https://github.com/0MrDarn0/KUpdater/actions/workflows/dotnet.yml)
-<img width="1105" height="641" alt="kUpdater_screenshot" src="https://github.com/user-attachments/assets/7cc468dc-0173-4b6d-b9fe-c75a45f047f8" />
+# Kx
 
-# 📦 KUpdater – Universal Game Launcher & Updater
-KUpdater is a modern, fully customizable launcher and updater originally built for KalOnline, but now adaptable to any game.
+`Kx` is a .NET 10 desktop UI/runtime framework with a plugin-driven window system, YAML-based markup, custom rendering, and a sample updater application built on top of it.
 
-## ✨ Features
+The repository now contains three main areas:
+- reusable framework and runtime infrastructure in `src`
+- tests in `tests`
+- runnable reference material in `examples`
 
-### 🖌 Custom Rendering
-Entirely custom‑drawn interface (no default WinForms look)
-Fully configurable background images, layout offsets
-Support for transparent windows and anti‑aliasing for smooth visuals
+## Repository overview
 
-### 🖱 UI System
-IControl interface for building custom controls
-Includes Button, Label, ProgressBar and TextBox as reference implementations
-Hover and click effects with theme‑dependent graphics
+### Framework and app projects
+- `src/Kx` - framework runtime, window system, rendering, configuration loading, plugin infrastructure
+- `src/Kx.Sdk` - contracts for plugins, UI, logging, DI, window hosting, and markup
+- `src/Kx.Update.App` - concrete updater application built on the framework
+- `src/Kx.Update.Builder` - update package builder tool
+- `tests/Kx.Tests` - framework and runtime tests
 
-### ⚙ Lua Integration
-Create UI elements such as labels, buttons and textboxs directly from Lua
-Enables dynamic, script‑driven customization
+### Examples
+- `examples/Kx.Plugin.Example` - reference plugin that registers controls, actions, commands, themes, and window definitions
+- `examples/Kx.Example.App` - minimal sample host application that demonstrates the framework together with the example plugin
 
+## Current architecture direction
 
-### 🔧 Tech Stack
-C# / .NET for core logic and UI rendering
-Lua for scripting and theme control
-SkiaSharp for advanced graphics
+The codebase is being split more clearly into:
+- framework-generic infrastructure in `Kx`
+- app-specific behavior in `Kx.Update.App`
+- plugin extension points through `Kx.Sdk`
+- learning and reference material under `examples`
 
+The runtime bootstrap is now composed explicitly through dedicated composition objects:
+- `PluginRuntimeComposition`
+- `RuntimeUiComposition`
+- `RuntimeLoggingComposition`
+- `RuntimeShellComposition`
 
+This keeps `RuntimeServiceConfiguration` focused on registering already composed services instead of constructing them inline.
 
-## 🛠️ UpdateCreator Tool
+## Documentation
 
-The **UpdateCreator Tool** (`UpdateBuilder.exe`) prepares update packages for distribution.
+- `docs/architecture.md` - project boundaries, runtime startup flow, and composition model
+- `docs/plugins.md` - plugin model, registries, markup assets, and example plugin walkthrough
+- `docs/windows-and-markup.md` - window lifecycle, YAML/registry lookup, control layers, and fallback UI behavior
 
-1. Place all new or modified files into the `Update/` folder.  
-2. Run `UpdateBuilder.exe`.  
-3. Enter the **PackageUrl** (must be a valid `http` or `https` URL).  
-4. The tool generates the following files inside `Upload/`:  
-   - `update.zip` → compressed archive of all update files  
-   - `update.json` → metadata file containing version, URL, and SHA256 hashes  
-   - `version.txt` → current version string (default: `1.0.0`)  
-5. Upload these files to your server.  
+## Quick start
 
+### Run the concrete updater app
+Open the solution in Visual Studio 2026 or build from the repository root and run `src/Kx.Update.App`.
 
-### ⚙️ Updater Configuration
-The Updater reads its configuration from a Lua file located in the same folder as KUpdater.exe:
+### Run the sample app
+Build and run `examples/Kx.Example.App`. It is intended as the smallest reference host for the framework and the example plugin.
 
-Path: kUpdater/Lua/base.lua
-```
-Base = {
-    Url = "http://darn.bplaced.net/KUpdater/", -- must match PackageUrl
-    Language = "en", -- supported: "en", "de", ...
-}
-```
+### Main entry points
+- updater app startup: `src/Kx.Update.App/Program.cs`
+- sample app startup: `examples/Kx.Example.App/Program.cs`
+- runtime bootstrap: `src/Kx/App/Runtime.cs`
+- base window behavior: `src/Kx/App/Window.cs`
+- example plugin: `examples/Kx.Plugin.Example/Example.cs`
 
-### Important
-**The Url in base.lua must match the PackageUrl you entered in the UpdateCreator Tool.**
-This ensures the Updater knows where to check for update.json and download update.zip.
+## Configuration boundaries
 
+Framework-generic configuration loading stays in `Kx.Core.Configuration`.
 
-#### 🚀 Typical Workflow:
-1. Build update package with UpdateCreator Tool.
-2. Upload update.zip, update.json, and version.txt to your server.
-3. Configure the Updater (base.lua) with the same Url.
-4. Run KUpdater → it checks update.json, verifies hashes, and applies updates.
+Application-specific configuration belongs in the app project. For example:
+- updater app config types now live in `Kx.Update.App.Configuration`
+- framework-only runtime config such as UI language lives in `Kx.App`
 
+## Goals of the framework
 
+- plugin-driven UI extension
+- YAML-defined windows and themes
+- custom-rendered desktop UI
+- explicit runtime composition
+- separation between reusable framework code and app-specific code
 
-## 📜 License
-**This project is licensed under the [GNU General Public License v3.0](./LICENSE.txt).
-Copyright (c) 2025 Christian Schnuck**
+## License
 
-### That means:
-**✅ You are free to use this software for any purpose.
-✅ You are free to study, modify, and improve the code.
-✅ You are free to share the software and your modifications with others.
-🔄 If you distribute modified versions, you must also share the source code under the same license.
-🙌 Attribution is required — please keep the original copyright notices and clearly mark your changes.**
+This project is licensed under the GPL-3.0. See `LICENSE.txt`.
