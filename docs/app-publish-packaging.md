@@ -16,7 +16,7 @@ The app is published as:
 
 Typical result:
 
-- `Kx.Update.App.exe`
+- `KxUpdater.exe`
 - `Assets/Configs/...`
 - `Assets/Languages/...`
 - `Assets/Plugins/...`
@@ -40,7 +40,7 @@ not:
 
 ## Publish profile
 
-`Kx.Update.App` now includes this publish profile:
+`KxUpdater` now includes this publish profile:
 
 - `Properties/PublishProfiles/SingleFileWithAssets.pubxml`
 
@@ -93,13 +93,13 @@ The plugin keeps these external files:
 
 From the solution root:
 
-`dotnet publish Kx.Update.App/Kx.Update.App.csproj /p:PublishProfile=SingleFileWithAssets`
+`dotnet publish apps/KxUpdater/KxUpdater.csproj /p:PublishProfile=SingleFileWithAssets`
 
 ## Expected result
 
 The publish folder should mainly contain:
 
-- `Kx.Update.App.exe`
+- `KxUpdater.exe`
 - `Assets/...`
 
 The exact plugin folder still contains plugin runtime files because plugin loading is file-based by design.

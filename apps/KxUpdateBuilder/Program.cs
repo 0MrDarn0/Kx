@@ -6,9 +6,9 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using Kx.Sdk.Updater;
 
+namespace KxUpdateBuilder;
 
-
-class UpdateBuilder {
+internal static class Program {
     static void Main(string[] args) {
         string updateFolder = Path.Combine(Directory.GetCurrentDirectory(), "Update");
         string uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "Upload");

@@ -2,3 +2,5 @@ updater:
   url: http://darn.bplaced.net/update/
 ui:
   language: en
+window:
+  icon: Icons:app.ico

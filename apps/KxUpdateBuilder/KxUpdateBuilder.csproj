@@ -8,6 +8,6 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\Kx.Sdk\Kx.Sdk.csproj" />
+	  <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
 	</ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-using Kx.Update.App.Configuration;
+using KxUpdater.Configuration;
 
 namespace Kx.Tests;
 

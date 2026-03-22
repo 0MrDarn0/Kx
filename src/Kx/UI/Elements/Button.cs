@@ -82,10 +82,7 @@ public class Button : UIElement {
     }
 
     public override void Arrange(Rectangle finalRect, float dpi) {
-        finalRect = finalRect.ApplyMargin(Margin, dpi);
-
-        LayoutRect = finalRect;
-        _bounds.Value = finalRect;
+        base.Arrange(finalRect, dpi);
     }
 
     // UIElement verlangt protected abstract OnDraw(SKCanvas)

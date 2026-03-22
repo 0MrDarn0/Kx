@@ -1,19 +1,16 @@
 frame:
-  style: Default
-  topLeft: "Frames:KalOnline:top_left.png"
-  topCenter: "Frames:KalOnline:top_center.png"
-  topRight: "Frames:KalOnline:top_right.png"
-
-  rightCenter: "Frames:KalOnline:right_center.png"
-  bottomRight: "Frames:KalOnline:bottom_right.png"
-  bottomCenter: "Frames:KalOnline:bottom_center.png"
-  bottomLeft: "Frames:KalOnline:bottom_left.png"
-  leftCenter: "Frames:KalOnline:left_center.png"
-
-  fillBitmap: "Frames:KalOnline:fill_bitmap.bmp"
+  style: Image
+  topLeft: "Themes:KalOnline:Frame:top_left.png"
+  topCenter: "Themes:KalOnline:Frame:top_center.png"
+  topRight: "Themes:KalOnline:Frame:top_right.png"
+  rightCenter: "Themes:KalOnline:Frame:right_center.png"
+  bottomRight: "Themes:KalOnline:Frame:bottom_right.png"
+  bottomCenter: "Themes:KalOnline:Frame:bottom_center.png"
+  bottomLeft: "Themes:KalOnline:Frame:bottom_left.png"
+  leftCenter: "Themes:KalOnline:Frame:left_center.png"
+  fillBitmap: "Themes:KalOnline:Frame:fill_bitmap.bmp"
   fillColor: "#282828"
   useFillColor: false
-
   topWidthOffset: 7
   bottomWidthOffset: 15
   leftHeightOffset: 5
@@ -21,7 +18,6 @@ frame:
   fillPosOffset: 5
   fillWidthOffset: 12
   fillHeightOffset: 9
-
   default:
     title: "KUpdater"
     backgroundColor: "#1E1F22"
@@ -39,7 +35,6 @@ frame:
     contentPadding: 10
     closeButtonSize: 24
     closeButtonMargin: 6
-
 controls:
   - type: Label
     id: title
@@ -55,15 +50,14 @@ controls:
       y: 0
       width: 200
       height: 40
-
   - type: Button
     id: btn_exit
     text: ""
     color: "#FFA500"
     layer: Frame
-    normalImage: "Buttons:KalOnline:btn_exit.normal.png"
-    hoverImage: "Buttons:KalOnline:btn_exit.hover.png"
-    pressedImage: "Buttons:KalOnline:btn_exit.pressed.png"
+    normalImage: "Themes:KalOnline:Buttons:btn_exit_normal.png"
+    hoverImage: "Themes:KalOnline:Buttons:btn_exit_hover.png"
+    pressedImage: "Themes:KalOnline:Buttons:btn_exit_click.png"
     onClick: closeWindow
     bounds:
       x: -34

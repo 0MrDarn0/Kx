@@ -3,7 +3,7 @@
 
 using Kx.App;
 
-namespace Kx.Update.App {
+namespace KxUpdater {
     internal static class Program {
         [STAThread]
         static void Main() {

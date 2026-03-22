@@ -7,8 +7,10 @@ The repository contains both a framework and concrete consumers of that framewor
 ### Projects
 - `src/Kx` - framework implementation
 - `src/Kx.Sdk` - framework contracts and extension points
-- `src/Kx.Update.App` - concrete updater application built on the framework
-- `src/Kx.Update.Builder` - update package builder
+- `apps/KxUpdater` - concrete updater application built on the framework
+- `apps/KxUpdateBuilder` - update package builder
+- `apps/KxUpdater/Plugins/KxUpdater.Plugin.KalOnline` - app-specific updater plugin scaffold
+- `plugins` - reusable plugins shared across multiple apps
 - `examples/Kx.Plugin.Example` - reference plugin
 - `examples/Kx.Example.App` - reference host application
 - `tests/Kx.Tests` - tests for runtime and framework behavior
@@ -38,7 +40,7 @@ Examples:
 - generic YAML configuration loading
 - generic asset path and resource loading infrastructure
 
-### `Kx.Update.App`
+### `KxUpdater`
 Contains concrete application behavior for the updater host.
 
 Examples:
@@ -46,6 +48,12 @@ Examples:
 - updater-owned asset files under `Assets`
 - the concrete updater main window
 - application startup entry point
+
+### `plugins`
+Contains reusable plugins that are intentionally not tied to a single application.
+
+### `apps/<App>/Plugins`
+Contains plugins that belong to one concrete application and should evolve beside that app.
 
 ### `examples`
 Contains learning and reference material.
@@ -144,8 +152,10 @@ Concrete asset files and concrete app config DTOs belong to the owning app proje
 
 Current examples:
 - `Kx.Core.Configuration.ConfigLoader` is generic infrastructure
-- updater-specific `AppConfig` lives in `Kx.Update.App.Configuration`
-- updater app asset files now live in `src/Kx.Update.App/Assets`
+- updater-specific `AppConfig` lives in `KxUpdater.Configuration`
+- updater app asset files now live in `apps/KxUpdater/Assets`
+- updater-specific plugins can live under `apps/KxUpdater/Plugins`
+- reusable plugins can live under `plugins`
 - sample app asset files now live in `examples/Kx.Example.App/Assets`
 - `Kx` no longer ships updater-specific `app.yaml`, `frame.yaml`, or language YAML files
 
@@ -155,6 +165,7 @@ The recent extraction work aims to make the code easier to understand and evolve
 
 Benefits:
 - clearer framework versus app boundaries
+- easier separation between reusable and app-specific plugins
 - easier testing of runtime subsystems
 - smaller responsibilities per class
 - easier onboarding for plugin authors and contributors

@@ -14,7 +14,7 @@ using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
 
-namespace Kx.Update.App;
+namespace KxUpdater;
 
 public sealed class MainWindow : Window {
     public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
@@ -40,18 +40,18 @@ public sealed class MainWindow : Window {
         grid.Rows.Add(new RowDefinition { Height = GridLength.Pixel(50) });
         grid.Rows.Add(new RowDefinition { Height = GridLength.Star(1) });
 
-        var header = new UI.Elements.Label(_ctx, id: "header", text: "HEADER", size: 10) {
+        var header = new Kx.UI.Elements.Label(_ctx, id: "header", text: "HEADER", size: 10) {
             GridRow = 0,
             GridColumn = 0,
             GridColumnSpan = 2
         };
 
-        var sidebar = new UI.Elements.Label(_ctx, id: "sidebar", text: "SIDEBAR", size: 10) {
+        var sidebar = new Kx.UI.Elements.Label(_ctx, id: "sidebar", text: "SIDEBAR", size: 10) {
             GridRow = 1,
             GridColumn = 0
         };
 
-        var content = new UI.Elements.Label(_ctx, id: "content", text: "CONTENT", size: 10) {
+        var content = new Kx.UI.Elements.Label(_ctx, id: "content", text: "CONTENT", size: 10) {
             GridRow = 1,
             GridColumn = 1
         };
@@ -60,7 +60,7 @@ public sealed class MainWindow : Window {
         grid.AddChild(sidebar);
         grid.AddChild(content);
 
-        var btn_exit = new UI.Elements.Button(_ctx, id: "btn_exit", text: "X") {
+        var btn_exit = new Kx.UI.Elements.Button(_ctx, id: "btn_exit", text: "X") {
             GridRow = 1,
             GridColumn = 1,
             Padding = new Thickness(100),

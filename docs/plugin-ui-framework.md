@@ -405,7 +405,7 @@ The example now demonstrates both custom and built-in actions, a custom command 
 
 ## Automatic plugin deployment during build
 
-`Kx.Update.App.csproj` currently copies the example plugin automatically into the app output folder after build.
+`examples/Kx.Example.App/Kx.Example.App.csproj` currently copies the example plugin automatically into the app output folder after build.
 
 That ensures these files are placed into:
 
@@ -459,3 +459,4 @@ The most important architectural point is:
 - contracts live in `Kx.Sdk`
 - runtime implementation lives in `Kx`
 - plugins can increasingly work against `Kx.Sdk` only
+

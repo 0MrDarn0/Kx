@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
     <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
-    <ProjectReference Include="..\..\src\Kx.Update.App\Kx.Update.App.csproj" />
+    <ProjectReference Include="..\..\apps\KxUpdater\KxUpdater.csproj" />
+    <ProjectReference Include="..\..\apps\KxUpdater\Plugins\KxUpdater.Plugin.KalOnline\KxUpdater.Plugin.KalOnline.csproj" />
   </ItemGroup>
 </Project>

@@ -41,9 +41,9 @@ This means a window definition can contain both built-in controls and plugin-pro
 Buttons can now declare explicit state images in markup instead of using the old ambiguous `skinKey` concept.
 
 Examples:
-- `normalImage: "Buttons:KalOnline:btn_exit.normal.png"`
-- `hoverImage: "Buttons:KalOnline:btn_exit.hover.png"`
-- `pressedImage: "Buttons:KalOnline:btn_exit.pressed.png"`
+- `normalImage: "Themes:KalOnline:Buttons:btn_exit.normal.png"`
+- `hoverImage: "Themes:KalOnline:Buttons:btn_exit.hover.png"`
+- `pressedImage: "Themes:KalOnline:Buttons:btn_exit.pressed.png"`
 
 ## Window icons
 
@@ -62,10 +62,14 @@ Resource ids now resolve directly under the app `Assets` root.
 
 Examples:
 - `Icons:app.ico` -> `Assets/Icons/app.ico`
-- `Frames:KalOnline:top_left.png` -> `Assets/Frames/KalOnline/top_left.png`
-- `Skins:KalOnline:Buttons` -> `Assets/Skins/KalOnline/Buttons`
+- `Themes:KalOnline:Frame:top_left.png` -> `Assets/Themes/KalOnline/Frame/top_left.png`
+- `Themes:KalOnline:Buttons:btn_exit.normal.png` -> `Assets/Themes/KalOnline/Buttons/btn_exit.normal.png`
 
-This keeps ids category-first and removes the old extra `Assets/Resources/...` nesting layer.
+This keeps app-global assets simple while grouping theme-owned visuals under `Assets/Themes/...` without reintroducing the old extra `Assets/Resources/...` nesting layer.
+
+Current concrete layouts:
+- updater app: `Assets/Icons/app.ico` plus `Assets/Themes/KalOnline/Frame/...` and `Assets/Themes/KalOnline/Buttons/...`
+- example app: `Assets/Icons/app.ico`
 
 ## Control layers
 
@@ -128,6 +132,7 @@ Concrete apps and examples own the actual files under their local `Assets` folde
 - `Assets/Languages/lang_en.yaml`
 - `Assets/Languages/lang_de.yaml`
 - `Assets/Icons/app.ico`
+- `Assets/Themes/<ThemeName>/...`
 - app-specific images and other resource files
 
 ## Markup-driven interaction

@@ -1,0 +1,96 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
+    <ProjectReference Include="Plugins\KxUpdater.Plugin.KalOnline\KxUpdater.Plugin.KalOnline.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Plugins\**" />
+    <EmbeddedResource Remove="Plugins\**" />
+    <None Remove="Plugins\**" />
+    <Content Remove="Plugins\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <Target Name="CopyKalOnlinePluginToBuildOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <KalOnlinePluginProjectDir>$(MSBuildProjectDirectory)\Plugins\KxUpdater.Plugin.KalOnline\</KalOnlinePluginProjectDir>
+      <KalOnlinePluginOutputDir>$(KalOnlinePluginProjectDir)bin\$(Configuration)\$(TargetFramework)\</KalOnlinePluginOutputDir>
+      <KalOnlinePluginTargetDir>$(TargetDir)Assets\Plugins\KxUpdater.Plugin.KalOnline\</KalOnlinePluginTargetDir>
+      <KalOnlinePluginMarkupTargetDir>$(KalOnlinePluginTargetDir)Markup\</KalOnlinePluginMarkupTargetDir>
+      <KalOnlinePluginAssetTargetDir>$(TargetDir)Assets\</KalOnlinePluginAssetTargetDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(KalOnlinePluginTargetDir);$(KalOnlinePluginMarkupTargetDir);$(KalOnlinePluginAssetTargetDir)" />
+
+    <ItemGroup>
+      <KalOnlinePluginFiles Include="$(KalOnlinePluginOutputDir)KxUpdater.Plugin.KalOnline.dll" />
+      <KalOnlinePluginFiles Include="$(KalOnlinePluginOutputDir)KxUpdater.Plugin.KalOnline.pdb" Condition="Exists('$(KalOnlinePluginOutputDir)KxUpdater.Plugin.KalOnline.pdb')" />
+      <KalOnlinePluginFiles Include="$(KalOnlinePluginOutputDir)Plugin.yaml" />
+      <KalOnlinePluginMarkupFiles Include="$(KalOnlinePluginOutputDir)Markup\**\*.yaml" />
+      <KalOnlinePluginAssetFiles Include="$(KalOnlinePluginOutputDir)Assets\**\*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(KalOnlinePluginFiles)"
+          DestinationFiles="@(KalOnlinePluginFiles->'$(KalOnlinePluginTargetDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(KalOnlinePluginMarkupFiles)"
+          DestinationFiles="@(KalOnlinePluginMarkupFiles->'$(KalOnlinePluginMarkupTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(KalOnlinePluginAssetFiles)"
+          DestinationFiles="@(KalOnlinePluginAssetFiles->'$(KalOnlinePluginAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyKalOnlinePluginToPublishOutput" AfterTargets="Publish">
+    <PropertyGroup>
+      <KalOnlinePluginProjectDir>$(MSBuildProjectDirectory)\Plugins\KxUpdater.Plugin.KalOnline\</KalOnlinePluginProjectDir>
+      <KalOnlinePluginOutputDir>$(KalOnlinePluginProjectDir)bin\$(Configuration)\$(TargetFramework)\</KalOnlinePluginOutputDir>
+      <KalOnlinePluginTargetDir>$(PublishDir)Assets\Plugins\KxUpdater.Plugin.KalOnline\</KalOnlinePluginTargetDir>
+      <KalOnlinePluginMarkupTargetDir>$(KalOnlinePluginTargetDir)Markup\</KalOnlinePluginMarkupTargetDir>
+      <KalOnlinePluginAssetTargetDir>$(PublishDir)Assets\</KalOnlinePluginAssetTargetDir>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(KalOnlinePluginTargetDir);$(KalOnlinePluginMarkupTargetDir);$(KalOnlinePluginAssetTargetDir)" />
+
+    <ItemGroup>
+      <KalOnlinePluginPublishFiles Include="$(KalOnlinePluginOutputDir)*.*"
+                                   Exclude="$(KalOnlinePluginOutputDir)Markup\**\*;$(KalOnlinePluginOutputDir)Assets\**\*;$(KalOnlinePluginOutputDir)*.pdb" />
+      <KalOnlinePluginPublishMarkupFiles Include="$(KalOnlinePluginOutputDir)Markup\**\*.yaml" />
+      <KalOnlinePluginPublishAssetFiles Include="$(KalOnlinePluginOutputDir)Assets\**\*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(KalOnlinePluginPublishFiles)"
+          DestinationFolder="$(KalOnlinePluginTargetDir)"
+          SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(KalOnlinePluginPublishMarkupFiles)"
+          DestinationFiles="@(KalOnlinePluginPublishMarkupFiles->'$(KalOnlinePluginMarkupTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(KalOnlinePluginPublishAssetFiles)"
+          DestinationFiles="@(KalOnlinePluginPublishAssetFiles->'$(KalOnlinePluginAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

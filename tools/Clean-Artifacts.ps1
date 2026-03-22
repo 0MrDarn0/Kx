@@ -18,6 +18,7 @@ function Resolve-RepositoryRoot {
             $hasGit = Test-Path -LiteralPath (Join-Path $current '.git')
             $hasRepoFolders =
                 (Test-Path -LiteralPath (Join-Path $current 'src')) -or
+                (Test-Path -LiteralPath (Join-Path $current 'apps')) -or
                 (Test-Path -LiteralPath (Join-Path $current 'tests')) -or
                 (Test-Path -LiteralPath (Join-Path $current 'examples'))
 

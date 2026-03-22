@@ -51,6 +51,17 @@ public sealed class ButtonStateImageTests {
         Assert.Equal(SKColors.Blue, bitmap.GetPixel(20, 20));
     }
 
+    [Fact]
+    public void WhenButtonUsesFixedBoundsThenArrangeKeepsConfiguredSize() {
+        using var button = new Kx.UI.Elements.Button(new TestVisualContext(), "button", string.Empty) {
+            FixedBounds = new Rectangle(-34, 16, 17, 17)
+        };
+
+        button.Arrange(new Rectangle(0, 0, 400, 300), 1f);
+
+        Assert.Equal(new Rectangle(349, 16, 17, 17), button.Bounds);
+    }
+
     private static Kx.UI.Elements.Button CreateButton() {
         var button = new Kx.UI.Elements.Button(new TestVisualContext(), "button", string.Empty);
         button.Arrange(new Rectangle(0, 0, 40, 40), 1f);
