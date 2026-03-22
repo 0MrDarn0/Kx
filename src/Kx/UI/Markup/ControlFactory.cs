@@ -9,6 +9,7 @@ using Kx.Sdk.UI.Layout;
 using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.UI.VisualTree;
+using Kx.App;
 using Kx.UI.State;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
@@ -27,12 +28,12 @@ public static class ControlFactory {
         if (!registry.TryCreate(context, config, out var control) || control is null)
             throw new InvalidOperationException($"No control factory has been registered for type '{config.Type}'.");
 
-        ApplyCommonProperties(actionRegistry, control, config);
+        ApplyCommonProperties(actionRegistry, context, control, config);
         ApplyContainerProperties(registry, actionRegistry, context, control, config);
         return control;
     }
 
-    private static void ApplyCommonProperties(IMarkupActionRegistry actionRegistry, UIElement control, ControlConfig config) {
+    private static void ApplyCommonProperties(IMarkupActionRegistry actionRegistry, IVisualContext visualContext, UIElement control, ControlConfig config) {
         if (config.Margin is not null)
             control.Margin = ToThickness(config.Margin);
 
@@ -68,7 +69,7 @@ public static class ControlFactory {
                 break;
 
             case Kx.UI.Elements.Button button:
-                ApplyButtonProperties(actionRegistry, button, config);
+                ApplyButtonProperties(actionRegistry, visualContext, button, config);
                 break;
 
             case StackPanel stackPanel:
@@ -129,16 +130,30 @@ public static class ControlFactory {
         label.Font.Value = new SKFont(typeface, config.Font.Size);
     }
 
-    private static void ApplyButtonProperties(IMarkupActionRegistry actionRegistry, Kx.UI.Elements.Button button, ControlConfig config) {
+    private static void ApplyButtonProperties(IMarkupActionRegistry actionRegistry, IVisualContext context, Kx.UI.Elements.Button button, ControlConfig config) {
         if (config.Text is not null)
             button.Text = config.Text;
 
         if (config.Font is not null)
             button.FontSize = config.Font.Size;
 
+        button.SetStateImages(
+            ResolveButtonImage(context, config.NormalImage),
+            ResolveButtonImage(context, config.HoverImage),
+            ResolveButtonImage(context, config.PressedImage));
+
         if (TryParseAction(config.OnClick, out var actionName, out var argument)) {
             button.Click += () => ExecuteAction(actionRegistry, button, actionName, argument);
         }
+    }
+
+    private static SKBitmap? ResolveButtonImage(IVisualContext context, string? resourceId) {
+        if (string.IsNullOrWhiteSpace(resourceId))
+            return null;
+
+        return context is WindowContext windowContext
+            ? windowContext.Resources.TryGetSkiaBitmap(resourceId)
+            : null;
     }
 
     private static void ApplyStackPanelProperties(StackPanel stackPanel, ControlConfig config) {

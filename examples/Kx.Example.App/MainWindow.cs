@@ -21,6 +21,8 @@ public sealed class MainWindow : Window {
         : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, themeRegistry, windowRegistry) {
     }
 
+    protected override string? WindowIconResource => "Icons:app.ico";
+
     protected override void OnInitialize() {
         base.OnInitialize();
 

@@ -27,6 +27,9 @@ public class Button : UIElement {
 
     private SKFont? _font;
     private float _scaledFontSize;
+    private SKBitmap? _normalImage;
+    private SKBitmap? _hoverImage;
+    private SKBitmap? _pressedImage;
 
     public Button(IVisualContext ctx, string id, string text) : base(ctx, id) {
         Text = text;
@@ -34,10 +37,25 @@ public class Button : UIElement {
         _font = new SKFont(SKTypeface.Default, _scaledFontSize);
     }
 
+    /// <summary>
+    /// Configures optional button state images for the normal, hover, and pressed visual states.
+    /// </summary>
+    public void SetStateImages(SKBitmap? normalImage, SKBitmap? hoverImage, SKBitmap? pressedImage) {
+        _normalImage?.Dispose();
+        _hoverImage?.Dispose();
+        _pressedImage?.Dispose();
+
+        _normalImage = normalImage;
+        _hoverImage = hoverImage;
+        _pressedImage = pressedImage;
+        Invalidate();
+    }
+
     // Visual exposes OnDpiChanged(float) as virtual — override to react to DPI changes
     public override void OnDpiChanged(float scale) {
         base.OnDpiChanged(scale);
         _scaledFontSize = FontSize * scale;
+        _font?.Dispose();
         _font = new SKFont(SKTypeface.Default, _scaledFontSize);
         _borderPaint.StrokeWidth = Math.Max(1f, scale);
         Invalidate();
@@ -45,6 +63,7 @@ public class Button : UIElement {
 
     public override void Measure(float dpi) {
         _scaledFontSize = FontSize * dpi;
+        _font?.Dispose();
         _font = new SKFont(SKTypeface.Default, _scaledFontSize);
 
         var text = Text ?? string.Empty;
@@ -74,25 +93,37 @@ public class Button : UIElement {
         if (!Visible)
             return;
 
-        if (!IsEnabled) {
-            _bgPaint.Color = new SKColor(240, 240, 240, 255);
-            _textPaint.Color = new SKColor(160, 160, 160, 255);
-        } else if (_isPressed) {
-            _bgPaint.Color = new SKColor(200, 200, 200, 255);
-            _textPaint.Color = new SKColor(0, 0, 0, 255);
-        } else if (_isHovered || IsFocused) {
-            _bgPaint.Color = new SKColor(220, 220, 220, 255);
-            _textPaint.Color = new SKColor(0, 0, 0, 255);
-        } else {
-            _bgPaint.Color = new SKColor(245, 245, 245, 255);
-            _textPaint.Color = new SKColor(0, 0, 0, 255);
-        }
-
         var r = LayoutRect;
-        var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);
 
-        canvas.DrawRect(skRect, _bgPaint);
-        canvas.DrawRect(skRect, _borderPaint);
+        var stateImage = _isPressed
+            ? _pressedImage ?? _hoverImage ?? _normalImage
+            : (_isHovered || IsFocused)
+                ? _hoverImage ?? _normalImage
+                : _normalImage;
+
+        if (stateImage is not null) {
+            canvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
+        }
+        else {
+            if (!IsEnabled) {
+                _bgPaint.Color = new SKColor(240, 240, 240, 255);
+                _textPaint.Color = new SKColor(160, 160, 160, 255);
+            } else if (_isPressed) {
+                _bgPaint.Color = new SKColor(200, 200, 200, 255);
+                _textPaint.Color = new SKColor(0, 0, 0, 255);
+            } else if (_isHovered || IsFocused) {
+                _bgPaint.Color = new SKColor(220, 220, 220, 255);
+                _textPaint.Color = new SKColor(0, 0, 0, 255);
+            } else {
+                _bgPaint.Color = new SKColor(245, 245, 245, 255);
+                _textPaint.Color = new SKColor(0, 0, 0, 255);
+            }
+
+            var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);
+
+            canvas.DrawRect(skRect, _bgPaint);
+            canvas.DrawRect(skRect, _borderPaint);
+        }
 
         var text = Text ?? string.Empty;
         _font ??= new SKFont(SKTypeface.Default, _scaledFontSize);
@@ -181,5 +212,16 @@ public class Button : UIElement {
         _isPressed = false;
         _isHovered = false;
         Invalidate();
+    }
+
+    protected override void Dispose(bool disposing) {
+        if (disposing) {
+            _normalImage?.Dispose();
+            _hoverImage?.Dispose();
+            _pressedImage?.Dispose();
+            _font?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }

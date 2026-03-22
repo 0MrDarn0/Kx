@@ -36,12 +36,14 @@ Examples:
 - plugin loading and plugin runtime policy
 - logging implementation
 - generic YAML configuration loading
+- generic asset path and resource loading infrastructure
 
 ### `Kx.Update.App`
 Contains concrete application behavior for the updater host.
 
 Examples:
 - updater-specific configuration types
+- updater-owned asset files under `Assets`
 - the concrete updater main window
 - application startup entry point
 
@@ -124,6 +126,7 @@ It is responsible for:
 - loading the window definition
 - loading the matching theme
 - building configured controls from YAML/registry data
+- resolving the window icon from code, markup, or runtime config
 - creating renderer and interaction infrastructure
 - dispatching window lifecycle events
 
@@ -133,16 +136,18 @@ It is responsible for:
 
 That distinction matters for fallback UI behavior.
 
-## Config boundaries
+## Config and asset boundaries
 
-Framework-generic config loading remains in `Kx.Core.Configuration`.
+Framework-generic loading infrastructure remains in `Kx`.
 
-Application-specific config DTOs should live in the concrete app project.
+Concrete asset files and concrete app config DTOs belong to the owning app project.
 
-Current example:
+Current examples:
 - `Kx.Core.Configuration.ConfigLoader` is generic infrastructure
 - updater-specific `AppConfig` lives in `Kx.Update.App.Configuration`
-- framework-only runtime config lives in `Kx.App`
+- updater app asset files now live in `src/Kx.Update.App/Assets`
+- sample app asset files now live in `examples/Kx.Example.App/Assets`
+- `Kx` no longer ships updater-specific `app.yaml`, `frame.yaml`, or language YAML files
 
 ## Why this structure exists
 

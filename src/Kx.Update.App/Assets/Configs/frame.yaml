@@ -1,16 +1,16 @@
 frame:
   style: Default
-  topLeft: "KalOnline:Frame:top_left.png"
-  topCenter: "KalOnline:Frame:top_center.png"
-  topRight: "KalOnline:Frame:top_right.png"
+  topLeft: "Frames:KalOnline:top_left.png"
+  topCenter: "Frames:KalOnline:top_center.png"
+  topRight: "Frames:KalOnline:top_right.png"
 
-  rightCenter: "KalOnline:Frame:right_center.png"
-  bottomRight: "KalOnline:Frame:bottom_right.png"
-  bottomCenter: "KalOnline:Frame:bottom_center.png"
-  bottomLeft: "KalOnline:Frame:bottom_left.png"
-  leftCenter: "KalOnline:Frame:left_center.png"
+  rightCenter: "Frames:KalOnline:right_center.png"
+  bottomRight: "Frames:KalOnline:bottom_right.png"
+  bottomCenter: "Frames:KalOnline:bottom_center.png"
+  bottomLeft: "Frames:KalOnline:bottom_left.png"
+  leftCenter: "Frames:KalOnline:left_center.png"
 
-  fillBitmap: "KalOnline:Frame:fill_bitmap.bmp"
+  fillBitmap: "Frames:KalOnline:fill_bitmap.bmp"
   fillColor: "#282828"
   useFillColor: false
 
@@ -61,11 +61,12 @@ controls:
     text: ""
     color: "#FFA500"
     layer: Frame
-    skinKey: "KalOnline:Buttons"
+    normalImage: "Buttons:KalOnline:btn_exit.normal.png"
+    hoverImage: "Buttons:KalOnline:btn_exit.hover.png"
+    pressedImage: "Buttons:KalOnline:btn_exit.pressed.png"
     onClick: closeWindow
     bounds:
       x: -34
       y: 16
       width: 17
       height: 17
-

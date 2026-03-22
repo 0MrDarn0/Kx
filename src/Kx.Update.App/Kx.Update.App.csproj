@@ -14,4 +14,10 @@
     <ProjectReference Include="..\Kx\Kx.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

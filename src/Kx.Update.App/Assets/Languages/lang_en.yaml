@@ -31,11 +31,3 @@ error:
   unauthorized: "You are not authorized to perform this action."
   hash_mismatch: "Hash mismatch for {0}"
 
-dialog:
-  confirm_exit:
-    title: "Exit Application"
-    message: "Are you sure you want to quit?"
-  app_icon_missing:
-    title: "Icon missing"
-    message: "The application icon file was not found\n{0}"
-

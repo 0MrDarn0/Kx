@@ -17,6 +17,12 @@
                       PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <Target Name="CopyPluginExampleToBuildOutput" AfterTargets="Build">
     <PropertyGroup>
       <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>

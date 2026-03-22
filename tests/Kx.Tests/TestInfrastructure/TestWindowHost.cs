@@ -29,6 +29,8 @@ internal sealed class TestWindowHost : IWindowHost {
     public object? Cursor { get; set; }
     public int ShowWindowCallCount { get; private set; }
     public int CloseWindowCallCount { get; private set; }
+    public int SetWindowIconCallCount { get; private set; }
+    public byte[]? LastWindowIconBytes { get; private set; }
 
     public void BeginInvoke(Delegate d) {
         ArgumentNullException.ThrowIfNull(d);
@@ -53,6 +55,19 @@ internal sealed class TestWindowHost : IWindowHost {
 
     public void CloseWindow() {
         CloseWindowCallCount++;
+    }
+
+    public void SetWindowIcon(Stream? iconStream) {
+        SetWindowIconCallCount++;
+
+        if (iconStream is null) {
+            LastWindowIconBytes = null;
+            return;
+        }
+
+        using var buffer = new MemoryStream();
+        iconStream.CopyTo(buffer);
+        LastWindowIconBytes = buffer.ToArray();
     }
 
     public void RaiseClosed(bool userInitiated = true) {

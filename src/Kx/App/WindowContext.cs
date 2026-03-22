@@ -49,7 +49,7 @@ public sealed class WindowContext : IVisualContext, IDisposable {
         WindowHost = windowHost;
         DpiScale = Math.Max(1f, Target.DeviceDpi / 96f);
         Config = ConfigLoader.Load<RuntimeConfig>(Paths.GetConfig("app.yaml"));
-        Resources = new FileResourceProvider(Paths.ResFolder);
+        Resources = new FileResourceProvider(Paths.ResourceFolder);
         UIElementManager = new UIElementManager();
         Events = eventManager ?? new EventManager();
         LanguageLoader.Load(Config.Ui.Language);
@@ -66,6 +66,16 @@ public sealed class WindowContext : IVisualContext, IDisposable {
 
     public void SetRenderer(IWindowRenderer renderer) {
         Renderer = renderer;
+    }
+
+    internal void SetWindowIcon(string? iconResource) {
+        if (string.IsNullOrWhiteSpace(iconResource)) {
+            WindowHost.SetWindowIcon(null);
+            return;
+        }
+
+        using var iconStream = Resources.OpenStream(iconResource);
+        WindowHost.SetWindowIcon(iconStream);
     }
 
     /// <summary>

@@ -12,13 +12,13 @@ The repository now contains three main areas:
 ### Framework and app projects
 - `src/Kx` - framework runtime, window system, rendering, configuration loading, plugin infrastructure
 - `src/Kx.Sdk` - contracts for plugins, UI, logging, DI, window hosting, and markup
-- `src/Kx.Update.App` - concrete updater application built on the framework
+- `src/Kx.Update.App` - concrete updater application built on the framework, including its own `Assets` content
 - `src/Kx.Update.Builder` - update package builder tool
 - `tests/Kx.Tests` - framework and runtime tests
 
 ### Examples
 - `examples/Kx.Plugin.Example` - reference plugin that registers controls, actions, commands, themes, and window definitions
-- `examples/Kx.Example.App` - minimal sample host application that demonstrates the framework together with the example plugin
+- `examples/Kx.Example.App` - minimal sample host application that demonstrates the framework together with the example plugin and its own local `Assets` content
 
 ## Current architecture direction
 
@@ -40,7 +40,7 @@ This keeps `RuntimeServiceConfiguration` focused on registering already composed
 
 - `docs/architecture.md` - project boundaries, runtime startup flow, and composition model
 - `docs/plugins.md` - plugin model, registries, markup assets, and example plugin walkthrough
-- `docs/windows-and-markup.md` - window lifecycle, YAML/registry lookup, control layers, and fallback UI behavior
+- `docs/windows-and-markup.md` - window lifecycle, YAML/registry lookup, control layers, icon precedence, and fallback UI behavior
 
 ## Quick start
 
@@ -57,13 +57,25 @@ Build and run `examples/Kx.Example.App`. It is intended as the smallest referenc
 - base window behavior: `src/Kx/App/Window.cs`
 - example plugin: `examples/Kx.Plugin.Example/Example.cs`
 
-## Configuration boundaries
+## Asset and configuration boundaries
 
-Framework-generic configuration loading stays in `Kx.Core.Configuration`.
+Framework-generic path and loading infrastructure stays in `Kx`.
 
-Application-specific configuration belongs in the app project. For example:
-- updater app config types now live in `Kx.Update.App.Configuration`
-- framework-only runtime config such as UI language lives in `Kx.App`
+Concrete asset files belong to the owning app or example project. That includes:
+- `Assets/Configs/app.yaml`
+- `Assets/Configs/frame.yaml`
+- `Assets/Languages/*.yaml`
+- app-owned icons and other UI resources directly under `Assets`
+
+Resource ids map directly under the app `Assets` root. For example:
+- `Icons:app.ico` -> `Assets/Icons/app.ico`
+- `Frames:KalOnline:top_left.png` -> `Assets/Frames/KalOnline/top_left.png`
+- `Skins:KalOnline:Buttons` -> `Assets/Skins/KalOnline/Buttons`
+
+Current examples:
+- updater app assets now live under `src/Kx.Update.App/Assets`
+- sample app assets now live under `examples/Kx.Example.App/Assets`
+- `Kx` keeps generic asset resolution infrastructure, not updater-specific content files
 
 ## Goals of the framework
 

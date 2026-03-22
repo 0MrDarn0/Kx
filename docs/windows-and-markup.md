@@ -21,6 +21,8 @@ A window resolves its configuration in this order:
 
 The default window definition name is the CLR type name.
 
+The default path still resolves inside the runtime output `Assets/Configs` layout, but the owning app is now responsible for shipping the actual `frame.yaml` file.
+
 ## Themes
 
 A window can reference a theme by name.
@@ -35,6 +37,35 @@ Configured controls are created through:
 - `IControlRegistry`
 
 This means a window definition can contain both built-in controls and plugin-provided controls.
+
+Buttons can now declare explicit state images in markup instead of using the old ambiguous `skinKey` concept.
+
+Examples:
+- `normalImage: "Buttons:KalOnline:btn_exit.normal.png"`
+- `hoverImage: "Buttons:KalOnline:btn_exit.hover.png"`
+- `pressedImage: "Buttons:KalOnline:btn_exit.pressed.png"`
+
+## Window icons
+
+Window icons can now be supplied from three places.
+
+Precedence:
+1. code override via `WindowIconResource`
+2. merged frame markup via `frame.default.icon`
+3. app-level default via `Assets/Configs/app.yaml` -> `window.icon`
+
+The WinForms host no longer knows a hardcoded icon path. It only applies the icon stream passed down by the runtime.
+
+## Asset id to file path mapping
+
+Resource ids now resolve directly under the app `Assets` root.
+
+Examples:
+- `Icons:app.ico` -> `Assets/Icons/app.ico`
+- `Frames:KalOnline:top_left.png` -> `Assets/Frames/KalOnline/top_left.png`
+- `Skins:KalOnline:Buttons` -> `Assets/Skins/KalOnline/Buttons`
+
+This keeps ids category-first and removes the old extra `Assets/Resources/...` nesting layer.
 
 ## Control layers
 
@@ -86,6 +117,18 @@ It builds:
 It also registers built-in:
 - markup actions
 - control factories
+
+## App-owned assets
+
+`Kx` now keeps only the generic path and resource-loading infrastructure.
+
+Concrete apps and examples own the actual files under their local `Assets` folder, for example:
+- `Assets/Configs/app.yaml`
+- `Assets/Configs/frame.yaml`
+- `Assets/Languages/lang_en.yaml`
+- `Assets/Languages/lang_de.yaml`
+- `Assets/Icons/app.ico`
+- app-specific images and other resource files
 
 ## Markup-driven interaction
 

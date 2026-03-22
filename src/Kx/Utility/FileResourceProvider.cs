@@ -17,19 +17,16 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
     private readonly int _strongCacheCapacity = Math.Max(0, strongCacheCapacity);
 
     private string ResolvePath(string id) {
-        // Ids können absolut, relativ oder namespaced sein.
         if (Path.IsPathRooted(id))
             return id;
 
-        // einfache namespace-konvention: "theme:foo.png" oder "theme:sub:foo.png"
         if (id.Contains(':')) {
             var parts = id.Split([':'], 2);
             var ns = parts[0];
-            // Ersetze zusätzlich ':' im Tail durch DirectorySeparatorChar, plus normale Slashes
             var tail = parts[1]
-            .Replace(':', Path.DirectorySeparatorChar)
-            .Replace('/', Path.DirectorySeparatorChar)
-            .Replace('\\', Path.DirectorySeparatorChar);
+                .Replace(':', Path.DirectorySeparatorChar)
+                .Replace('/', Path.DirectorySeparatorChar)
+                .Replace('\\', Path.DirectorySeparatorChar);
             return Path.Combine(_baseDirectory, ns, tail);
         }
 
@@ -53,7 +50,6 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
         if (!File.Exists(path))
             return null;
         try {
-            // FileStream supports async reads; return stream directly
             var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 81920, useAsync: true);
             return await Task.FromResult(fs);
         }
@@ -63,11 +59,9 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
     }
 
     public bool TryGetBitmap(string id, out Bitmap? bitmap) {
-        // 1) strong LRU cache
         if (_strongCacheCapacity > 0) {
             lock (_strongCacheLock) {
                 if (_strongCache.TryGetValue(id, out var bstrong)) {
-                    // move to front
                     _strongLru.Remove(id);
                     _strongLru.AddFirst(id);
                     bitmap = (Bitmap)bstrong.Clone();
@@ -76,17 +70,16 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
             }
         }
 
-        // 2) weak cache
         if (_bitmapCache.TryGetValue(id, out var weak)) {
             if (weak.TryGetTarget(out var cachedBmp)) {
                 bitmap = (Bitmap)cachedBmp.Clone();
                 return true;
-            } else {
+            }
+            else {
                 _bitmapCache.TryRemove(id, out _);
             }
         }
 
-        // 3) Load from file synchronously
         var path = ResolvePath(id);
         if (!File.Exists(path)) {
             bitmap = null;
@@ -96,7 +89,6 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
         try {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
             var bmp = new Bitmap(fs);
-            // ensure 32bpp PArgb for consistent interop
             if (bmp.PixelFormat != PixelFormat.Format32bppPArgb) {
                 var conv = new Bitmap(bmp.Width, bmp.Height, PixelFormat.Format32bppPArgb);
                 using (var g = Graphics.FromImage(conv)) {
@@ -106,7 +98,6 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
                 bmp = conv;
             }
 
-            // add to caches
             _bitmapCache[id] = new WeakReference<Bitmap>(bmp);
             if (_strongCacheCapacity > 0) {
                 lock (_strongCacheLock) {
@@ -155,7 +146,6 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
     }
 
     public void Dispose() {
-        // clear caches and dispose bitmaps
         foreach (var kv in _bitmapCache.ToArray()) {
             if (kv.Value.TryGetTarget(out var bmp)) {
                 try { bmp.Dispose(); }

@@ -6,8 +6,6 @@ using System.Diagnostics;
 using Kx.Sdk.Events;
 using Kx.Sdk.WindowHost;
 using Kx.Core.Interop;
-using Kx.Core.Localization;
-using Kx.Utility;
 
 namespace Kx.WindowHost.WinForms;
 
@@ -25,7 +23,6 @@ public class WinFormsWindowHost : Form, IWindowHost {
     void IUiDispatcher.Invoke(Action action) => base.Invoke(action);
 
     private Icon? _appIcon;
-    private bool _iconMissingNotified;
 
     private Keys _lastKeyDown = Keys.None;
     private DateTime _lastKeyDownTime = DateTime.MinValue;
@@ -63,6 +60,27 @@ public class WinFormsWindowHost : Form, IWindowHost {
     public void ShowWindow() => Show();
     public void CloseWindow() => Close();
 
+    public void SetWindowIcon(Stream? iconStream) {
+        ClearWindowIcon();
+
+        if (iconStream is null)
+            return;
+
+        try {
+            using var buffer = new MemoryStream();
+            iconStream.CopyTo(buffer);
+            buffer.Position = 0;
+
+            using var rawIcon = new Icon(buffer);
+            _appIcon = (Icon)rawIcon.Clone();
+            ApplyWindowIcon();
+        }
+        catch (Exception ex) {
+            Debug.WriteLine($"Fehler beim Laden des Fenster-Icons: {ex}");
+            ClearWindowIcon();
+        }
+    }
+
     object? IWindowHost.Cursor {
         get => base.Cursor;
         set => base.Cursor = value as Cursor;
@@ -87,31 +105,8 @@ public class WinFormsWindowHost : Form, IWindowHost {
     protected override void OnHandleCreated(EventArgs e) {
         base.OnHandleCreated(e);
 
-        try {
-            var path = Paths.GetResource("Default\\app.ico");
-            if (File.Exists(path)) {
-                _appIcon = new Icon(path);
-                Icon = _appIcon;
-
-                NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_BIG), _appIcon.Handle);
-                NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_SMALL), _appIcon.Handle);
-                NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICON, _appIcon.Handle);
-                NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICONSM, _appIcon.Handle);
-            }
-            else if (!_iconMissingNotified) {
-                _iconMissingNotified = true;
-                MessageBox.Show(
-                    this,
-                    LanguageService.Translate("dialog.app_icon_missing.message", path),
-                    LanguageService.Translate("dialog.app_icon_missing.title"),
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
-            }
-        }
-        catch (Exception ex) {
-            Debug.WriteLine($"Fehler beim Laden des App-Icons: {ex}");
-        }
+        if (_appIcon is not null)
+            ApplyWindowIcon();
     }
 
     protected override void OnResize(EventArgs e) {
@@ -202,6 +197,31 @@ public class WinFormsWindowHost : Form, IWindowHost {
         _textInput?.Invoke(new TextInputEvent(e.KeyChar));
     }
 
+    private void ApplyWindowIcon() {
+        if (_appIcon is null || !IsHandleCreated)
+            return;
+
+        Icon = _appIcon;
+        NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_BIG), _appIcon.Handle);
+        NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_SMALL), _appIcon.Handle);
+        NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICON, _appIcon.Handle);
+        NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICONSM, _appIcon.Handle);
+    }
+
+    private void ClearWindowIcon() {
+        Icon = null;
+        _appIcon?.Dispose();
+        _appIcon = null;
+
+        if (!IsHandleCreated)
+            return;
+
+        NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_BIG), IntPtr.Zero);
+        NativeMethods.SendMessage(Handle, NativeMethods.WM_SETICON, new IntPtr(NativeMethods.ICON_SMALL), IntPtr.Zero);
+        NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICON, IntPtr.Zero);
+        NativeMethods.SetClassLongPtr(Handle, NativeMethods.GCL_HICONSM, IntPtr.Zero);
+    }
+
     private static MouseEvent MapMouse(MouseEventArgs e) {
         var btn = e.Button switch {
             MouseButtons.Left => MouseButton.Left,
@@ -258,14 +278,13 @@ public class WinFormsWindowHost : Form, IWindowHost {
             Keys.Space => KeyCode.Space,
             Keys.Back => KeyCode.Backspace,
             Keys.Tab => KeyCode.Tab,
-            Keys.ShiftKey => KeyCode.Shift,
-            Keys.ControlKey => KeyCode.Control,
-            Keys.Menu => KeyCode.Alt,
             Keys.Left => KeyCode.Left,
             Keys.Right => KeyCode.Right,
             Keys.Up => KeyCode.Up,
             Keys.Down => KeyCode.Down,
-
+            Keys.ShiftKey => KeyCode.Shift,
+            Keys.ControlKey => KeyCode.Control,
+            Keys.Menu => KeyCode.Alt,
             _ => KeyCode.None
         };
     }
@@ -283,6 +302,8 @@ public class WinFormsWindowHost : Form, IWindowHost {
                 _keyDown = null;
                 _keyUp = null;
                 _textInput = null;
+                _stateChanged = null;
+                _focusChanged = null;
 
                 _appIcon?.Dispose();
                 _appIcon = null;

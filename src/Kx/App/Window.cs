@@ -71,14 +71,13 @@ public abstract class Window : IDisposable {
 
     protected virtual string WindowDefinitionName => GetType().Name;
     protected virtual string WindowConfigPath => Paths.GetConfig("frame.yaml");
+    protected virtual string? WindowIconResource => null;
 
     protected virtual void InitializeFrame() {
         _resolvedWindowConfig = ResolveWindowConfig();
         _resolvedTheme = ResolveWindowTheme(_resolvedWindowConfig);
 
-        var frameConfig = WindowDefinitionMerger.MergeFrame(_resolvedWindowConfig.Frame, _resolvedTheme);
-        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, _ctx.DpiScale);
-        _ctx.SetFrame(frame);
+        ApplyFrame(WindowDefinitionMerger.MergeFrame(_resolvedWindowConfig.Frame, _resolvedTheme));
     }
 
     protected virtual void InitializeRenderer() {
@@ -141,6 +140,22 @@ public abstract class Window : IDisposable {
         _ctx.RequestRender();
     }
 
+    private void ApplyFrame(FrameConfig frameConfig) {
+        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, _ctx.DpiScale);
+        _ctx.SetFrame(frame);
+        _ctx.SetWindowIcon(ResolveWindowIconResource(frameConfig));
+    }
+
+    private string? ResolveWindowIconResource(FrameConfig frameConfig) {
+        if (!string.IsNullOrWhiteSpace(WindowIconResource))
+            return WindowIconResource;
+
+        if (!string.IsNullOrWhiteSpace(frameConfig.Default.Icon))
+            return frameConfig.Default.Icon;
+
+        return _ctx.Config.Window.Icon;
+    }
+
     private WindowConfig ResolveWindowConfig() {
         if (_windowRegistry?.TryGet(WindowDefinitionName, out var config) == true && config is not null)
             return config;
@@ -166,9 +181,7 @@ public abstract class Window : IDisposable {
         HasConfiguredControls = false;
         HasConfiguredContentControls = false;
 
-        var frameConfig = WindowDefinitionMerger.MergeFrame(config.Frame, _resolvedTheme);
-        var frame = FrameResource.FromConfig(frameConfig, _ctx.Resources, _ctx.DpiScale);
-        _ctx.SetFrame(frame);
+        ApplyFrame(WindowDefinitionMerger.MergeFrame(config.Frame, _resolvedTheme));
         InitializeConfiguredControls();
     }
 

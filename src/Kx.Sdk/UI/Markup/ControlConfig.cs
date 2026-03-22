@@ -42,12 +42,30 @@ public class ControlConfig {
         }
     }
 
-    private string? _skinKey;
-    public string? SkinKey {
-        get => _skinKey;
+    private string? _normalImage;
+    public string? NormalImage {
+        get => _normalImage;
         set {
-            _skinKey = value;
-            MarkExplicit(nameof(SkinKey));
+            _normalImage = value;
+            MarkExplicit(nameof(NormalImage));
+        }
+    }
+
+    private string? _hoverImage;
+    public string? HoverImage {
+        get => _hoverImage;
+        set {
+            _hoverImage = value;
+            MarkExplicit(nameof(HoverImage));
+        }
+    }
+
+    private string? _pressedImage;
+    public string? PressedImage {
+        get => _pressedImage;
+        set {
+            _pressedImage = value;
+            MarkExplicit(nameof(PressedImage));
         }
     }
 

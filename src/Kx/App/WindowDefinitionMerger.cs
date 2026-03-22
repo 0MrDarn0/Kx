@@ -75,6 +75,8 @@ internal static class WindowDefinitionMerger {
 
         if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.Title)))
             merged.Title = windowDefaults.Title;
+        if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.Icon)))
+            merged.Icon = windowDefaults.Icon;
         if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.BackgroundColor)))
             merged.BackgroundColor = windowDefaults.BackgroundColor;
         if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.TitleBarColor)))
@@ -141,8 +143,12 @@ internal static class WindowDefinitionMerger {
             merged.Text = windowControl.Text;
         if (windowControl.IsPropertySet(nameof(ControlConfig.TextBinding)))
             merged.TextBinding = windowControl.TextBinding;
-        if (windowControl.IsPropertySet(nameof(ControlConfig.SkinKey)))
-            merged.SkinKey = windowControl.SkinKey;
+        if (windowControl.IsPropertySet(nameof(ControlConfig.NormalImage)))
+            merged.NormalImage = windowControl.NormalImage;
+        if (windowControl.IsPropertySet(nameof(ControlConfig.HoverImage)))
+            merged.HoverImage = windowControl.HoverImage;
+        if (windowControl.IsPropertySet(nameof(ControlConfig.PressedImage)))
+            merged.PressedImage = windowControl.PressedImage;
         if (windowControl.IsPropertySet(nameof(ControlConfig.Color)))
             merged.Color = windowControl.Color;
         if (windowControl.IsPropertySet(nameof(ControlConfig.ColorBinding)))
@@ -222,6 +228,7 @@ internal static class WindowDefinitionMerger {
     private static DefaultFrameConfig CloneDefaultFrame(DefaultFrameConfig source) {
         return new DefaultFrameConfig {
             Title = source.Title,
+            Icon = source.Icon,
             BackgroundColor = source.BackgroundColor,
             TitleBarColor = source.TitleBarColor,
             BorderColor = source.BorderColor,
@@ -246,7 +253,9 @@ internal static class WindowDefinitionMerger {
             Id = source.Id,
             Text = source.Text,
             TextBinding = source.TextBinding,
-            SkinKey = source.SkinKey,
+            NormalImage = source.NormalImage,
+            HoverImage = source.HoverImage,
+            PressedImage = source.PressedImage,
             Color = source.Color,
             ColorBinding = source.ColorBinding,
             FontSizeBinding = source.FontSizeBinding,
@@ -267,9 +276,11 @@ internal static class WindowDefinitionMerger {
             GridColumnSpan = source.GridColumnSpan,
             Rows = source.Rows.Select(CloneGridRow).ToList(),
             Columns = source.Columns.Select(CloneGridColumn).ToList(),
-            Children = source.Children.Select(CloneControl).ToList(),
-            Properties = new Dictionary<string, string>(source.Properties, StringComparer.OrdinalIgnoreCase)
+            Children = source.Children.Select(CloneControl).ToList()
         };
+
+        foreach (var property in source.Properties)
+            clone.Properties[property.Key] = property.Value;
 
         return clone;
     }
@@ -314,8 +325,8 @@ internal static class WindowDefinitionMerger {
 
     private static GridLengthConfig CloneGridLength(GridLengthConfig source) {
         return new GridLengthConfig {
-            Value = source.Value,
-            Unit = source.Unit
+            Unit = source.Unit,
+            Value = source.Value
         };
     }
 }

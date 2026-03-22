@@ -15,6 +15,15 @@ public class DefaultFrameConfig {
         }
     }
 
+    private string? _icon;
+    public string? Icon {
+        get => _icon;
+        set {
+            _icon = value;
+            MarkExplicit(nameof(Icon));
+        }
+    }
+
     private string _backgroundColor = "#1E1F22";
     public string BackgroundColor {
         get => _backgroundColor;

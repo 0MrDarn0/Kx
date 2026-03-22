@@ -27,5 +27,11 @@ public interface IWindowHost : IWindowSurface, IUiDispatcher {
     void ShowWindow();
     void CloseWindow();
 
+    /// <summary>
+    /// Applies an optional icon to the native host window.
+    /// </summary>
+    /// <param name="iconStream">A readable stream containing icon data, or <see langword="null"/> to clear the custom icon.</param>
+    void SetWindowIcon(Stream? iconStream);
+
     object? Cursor { get; set; }
 }
