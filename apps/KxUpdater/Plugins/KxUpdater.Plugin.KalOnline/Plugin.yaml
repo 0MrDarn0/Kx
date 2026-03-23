@@ -1,7 +1,0 @@
-name: KalOnline
-version: 1.0.0
-apiVersion: 1.0.0
-entryType: KxUpdater.Plugin.KalOnline.KalOnlinePlugin
-description: "KalOnline updater plugin"
-author: "Christian Schnuck"
-dependencies: []

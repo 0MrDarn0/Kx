@@ -1,5 +1,20 @@
 updater:
-  url: http://darn.bplaced.net/update/
+  url: https://update.idb-lab.de/
+launcher:
+  start:
+    fileName: "engine.exe"
+    arguments: "/load /config debug"
+    workingDirectory: ""
+    resolveFromAppDirectory: true
+    closeUpdaterOnSuccess: true
+  settings:
+    fileName: "engine.exe"
+    arguments: "/setup"
+    workingDirectory: ""
+    resolveFromAppDirectory: true
+    closeUpdaterOnSuccess: false
+  website:
+    url: http://www.idb-lab.de/
 ui:
   language: en
 window:

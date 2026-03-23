@@ -6,39 +6,39 @@ using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.Themes;
 using Kx.UI.Markup;
 using Kx.UI.Themes;
-using KxUpdater.Plugin.KalOnline;
+using KxUpdater.Plugin;
 
 namespace Kx.Tests;
 
-public sealed class KalOnlinePluginTests {
+public sealed class KalThemeTests {
     [Fact]
-    public void WhenKalOnlinePluginInitializesThenItRegistersKalOnlineTheme() {
+    public void WhenKalThemeInitializesThenItRegistersUpdaterFrameTheme() {
         using var testContext = new TestPluginContext();
-        var plugin = new KalOnlinePlugin();
+        var plugin = new KalTheme();
 
         plugin.Initialize(testContext);
 
-        Assert.True(testContext.ThemeRegistry.TryGet("KalOnline", out var theme));
+        Assert.True(testContext.ThemeRegistry.TryGet("UpdaterFrame", out var theme));
         Assert.NotNull(theme);
         Assert.Equal("Themes:KalOnline:Frame:top_left.png", theme!.Frame.TopLeft);
     }
 
     [Fact]
-    public void WhenKalOnlinePluginInitializesThenItRegistersMainWindowDefinition() {
+    public void WhenKalThemeInitializesThenItRegistersMainWindowDefinition() {
         using var testContext = new TestPluginContext();
-        var plugin = new KalOnlinePlugin();
+        var plugin = new KalTheme();
 
         plugin.Initialize(testContext);
 
         Assert.True(testContext.WindowRegistry.TryGet("MainWindow", out var window));
         Assert.NotNull(window);
-        Assert.Equal("KalOnline", window!.Theme);
+        Assert.Equal("UpdaterFrame", window!.Theme);
     }
 
     [Fact]
-    public void WhenKalOnlinePluginInitializesThenMainWindowContainsContentControls() {
+    public void WhenKalThemeInitializesThenMainWindowContainsContentControls() {
         using var testContext = new TestPluginContext();
-        var plugin = new KalOnlinePlugin();
+        var plugin = new KalTheme();
 
         plugin.Initialize(testContext);
 

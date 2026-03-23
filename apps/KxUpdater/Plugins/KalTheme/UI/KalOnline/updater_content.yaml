@@ -1,0 +1,137 @@
+controls:
+  - type: Grid
+    id: updater_layout
+    layer: Content
+    padding:
+      left: 24
+      top: 14
+      right: 24
+      bottom: 18
+    rows:
+      - height:
+          value: 28
+          unit: Pixel
+      - height:
+          value: 1
+          unit: Star
+      - height:
+          value: 20
+          unit: Pixel
+      - height:
+          value: 8
+          unit: Pixel
+      - height:
+          value: 28
+          unit: Pixel
+    columns:
+      - width:
+          value: 1
+          unit: Star
+      - width:
+          value: 97
+          unit: Pixel
+      - width:
+          value: 8
+          unit: Pixel
+      - width:
+          value: 97
+          unit: Pixel
+      - width:
+          value: 8
+          unit: Pixel
+      - width:
+          value: 97
+          unit: Pixel
+    children:
+      - type: Label
+        id: updater_subtitle
+        textBinding: updater.subtitle
+        color: "#F5F5F5"
+        font:
+          name: "Malgun Gothic"
+          size: 13
+          style: "Bold"
+        gridRow: 0
+        gridColumn: 0
+        gridColumnSpan: 6
+      - type: TextBox
+        id: updater_changelog
+        textBinding: updater.changelog
+        color: "#F5F5F5"
+        font:
+          name: "Segoe UI"
+          size: 10
+          style: "Regular"
+        gridRow: 1
+        gridColumn: 0
+        gridColumnSpan: 6
+        properties:
+          backgroundColor: "#101010"
+          borderColor: "#7C6E4B"
+          borderThickness: "3"
+          glowEnabled: "true"
+          glowColor: "#FFFFFF"
+          glowRadius: "6"
+          multiline: "true"
+          readOnly: "true"
+          scrollBarColor: "#7C6E4B"
+      - type: Label
+        id: updater_status
+        textBinding: updater.status
+        color: "#F5F5F5"
+        font:
+          name: "Segoe UI"
+          size: 8
+          style: "Italic"
+        gridRow: 2
+        gridColumn: 0
+        gridColumnSpan: 6
+      - type: ProgressBar
+        id: updater_progress
+        gridRow: 3
+        gridColumn: 0
+        gridColumnSpan: 6
+        properties:
+          progressBinding: updater.progress
+          fillColor: "#DAA520"
+          borderColor: "#7C6E4B"
+          backgroundColor: "#101010"
+          borderThickness: "1"
+      - type: Button
+        id: updater_website_button
+        textBinding: updater.buttons.website
+        onClick: runCommand:kxUpdater.openWebsite
+        gridRow: 4
+        gridColumn: 1
+        normalImage: "Themes:KalOnline:Buttons:btn_default_normal.png"
+        hoverImage: "Themes:KalOnline:Buttons:btn_default_hover.png"
+        pressedImage: "Themes:KalOnline:Buttons:btn_default_click.png"
+        font:
+          name: "Segoe UI"
+          size: 11
+          style: "Regular"
+      - type: Button
+        id: updater_settings_button
+        textBinding: updater.buttons.settings
+        onClick: runCommand:kxUpdater.openSettings
+        gridRow: 4
+        gridColumn: 3
+        normalImage: "Themes:KalOnline:Buttons:btn_default_normal.png"
+        hoverImage: "Themes:KalOnline:Buttons:btn_default_hover.png"
+        pressedImage: "Themes:KalOnline:Buttons:btn_default_click.png"
+        font:
+          name: "Segoe UI"
+          size: 11
+          style: "Regular"
+      - type: Button
+        id: updater_start_button
+        textBinding: updater.buttons.start
+        gridRow: 4
+        gridColumn: 5
+        normalImage: "Themes:KalOnline:Buttons:btn_default_normal.png"
+        hoverImage: "Themes:KalOnline:Buttons:btn_default_hover.png"
+        pressedImage: "Themes:KalOnline:Buttons:btn_default_click.png"
+        font:
+          name: "Segoe UI"
+          size: 11
+          style: "Regular"

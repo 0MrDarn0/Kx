@@ -72,6 +72,14 @@ public static class ControlFactory {
                 ApplyButtonProperties(actionRegistry, visualContext, button, config);
                 break;
 
+            case Kx.UI.Elements.TextBox textBox:
+                ApplyTextBoxProperties(textBox, config);
+                break;
+
+            case Kx.UI.Elements.ProgressBar progressBar:
+                ApplyProgressBarProperties(progressBar, config);
+                break;
+
             case StackPanel stackPanel:
                 ApplyStackPanelProperties(stackPanel, config);
                 break;
@@ -107,6 +115,14 @@ public static class ControlFactory {
                 BindText(button, config.TextBinding);
                 BindEnabled(button, config.EnabledBinding);
                 BindFontSize(button, config.FontSizeBinding);
+                break;
+
+            case Kx.UI.Elements.TextBox textBox:
+                BindText(textBox, config.TextBinding);
+                break;
+
+            case Kx.UI.Elements.ProgressBar progressBar:
+                BindProgress(progressBar, GetProperty(config, "progressBinding"));
                 break;
 
             case StackPanel stackPanel:
@@ -145,6 +161,62 @@ public static class ControlFactory {
         if (TryParseAction(config.OnClick, out var actionName, out var argument)) {
             button.Click += () => ExecuteAction(actionRegistry, button, actionName, argument);
         }
+    }
+
+    private static void ApplyTextBoxProperties(Kx.UI.Elements.TextBox textBox, ControlConfig config) {
+        if (config.Text is not null)
+            textBox.Text = config.Text;
+
+        if (!string.IsNullOrWhiteSpace(config.Color))
+            textBox.ForegroundColor = SKColor.Parse(config.Color);
+
+        if (config.Font is not null) {
+            textBox.FontFamily = config.Font.Name;
+            textBox.FontSize = config.Font.Size;
+            textBox.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
+            textBox.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
+            textBox.BackgroundColor = backgroundColor;
+
+        if (TryGetColorProperty(config, "borderColor", out var borderColor))
+            textBox.BorderColor = borderColor;
+
+        if (TryGetColorProperty(config, "scrollBarColor", out var scrollBarColor))
+            textBox.ScrollBarColor = scrollBarColor;
+
+        if (TryGetFloatProperty(config, "borderThickness", out var borderThickness))
+            textBox.BorderThickness = borderThickness;
+
+        if (TryGetBoolProperty(config, "multiline", out var multiline))
+            textBox.Multiline = multiline;
+
+        if (TryGetBoolProperty(config, "readOnly", out var readOnly))
+            textBox.ReadOnly = readOnly;
+
+        if (TryGetBoolProperty(config, "glowEnabled", out var glowEnabled))
+            textBox.GlowEnabled = glowEnabled;
+
+        if (TryGetColorProperty(config, "glowColor", out var glowColor))
+            textBox.GlowColor = glowColor;
+
+        if (TryGetFloatProperty(config, "glowRadius", out var glowRadius))
+            textBox.GlowRadius = glowRadius;
+    }
+
+    private static void ApplyProgressBarProperties(Kx.UI.Elements.ProgressBar progressBar, ControlConfig config) {
+        if (TryGetColorProperty(config, "fillColor", out var fillColor))
+            progressBar.FillColor = fillColor;
+
+        if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
+            progressBar.BackgroundColor = backgroundColor;
+
+        if (TryGetColorProperty(config, "borderColor", out var borderColor))
+            progressBar.BorderColor = borderColor;
+
+        if (TryGetFloatProperty(config, "borderThickness", out var borderThickness))
+            progressBar.BorderThickness = borderThickness;
     }
 
     private static SKBitmap? ResolveButtonImage(IVisualContext context, string? resourceId) {
@@ -210,6 +282,28 @@ public static class ControlFactory {
         BindState(label, path, value => {
             if (UiStateValueConverter.TryGetText(value, out var text))
                 label.Text.Value = text;
+        });
+    }
+
+    private static void BindText(Kx.UI.Elements.TextBox textBox, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(textBox, path, value => {
+            if (UiStateValueConverter.TryGetText(value, out var text))
+                textBox.Text = text;
+        });
+    }
+
+    private static void BindProgress(Kx.UI.Elements.ProgressBar progressBar, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(progressBar, path, value => {
+            if (!UiStateValueConverter.TryGetFloat(value, out var progress))
+                return;
+
+            progressBar.Progress = progress > 1f ? progress / 100f : progress;
         });
     }
 
@@ -347,6 +441,31 @@ public static class ControlFactory {
         actionName = actionExpression[..separatorIndex].Trim();
         argument = actionExpression[(separatorIndex + 1)..].Trim();
         return !string.IsNullOrWhiteSpace(actionName);
+    }
+
+    private static string? GetProperty(ControlConfig config, string key) {
+        return config.Properties.TryGetValue(key, out var value)
+            ? value
+            : null;
+    }
+
+    private static bool TryGetBoolProperty(ControlConfig config, string key, out bool value) {
+        return bool.TryParse(GetProperty(config, key), out value);
+    }
+
+    private static bool TryGetFloatProperty(ControlConfig config, string key, out float value) {
+        return float.TryParse(GetProperty(config, key), out value);
+    }
+
+    private static bool TryGetColorProperty(ControlConfig config, string key, out SKColor color) {
+        var value = GetProperty(config, key);
+        if (string.IsNullOrWhiteSpace(value)) {
+            color = default;
+            return false;
+        }
+
+        color = SKColor.Parse(value);
+        return true;
     }
 
     private static Thickness ToThickness(ThicknessConfig config) {

@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KxUpdater", "apps\KxUpdater
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KxUpdateBuilder", "apps\KxUpdateBuilder\KxUpdateBuilder.csproj", "{B9F43393-B110-81C3-CEE3-EA79D6C16E37}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KxUpdater.Plugin.KalOnline", "apps\KxUpdater\Plugins\KxUpdater.Plugin.KalOnline\KxUpdater.Plugin.KalOnline.csproj", "{96F60E56-724C-4BA9-B4D8-91C9AC14458F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KalTheme", "apps\KxUpdater\Plugins\KalTheme\KalTheme.csproj", "{96F60E56-724C-4BA9-B4D8-91C9AC14458F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Tests", "tests\Kx.Tests\Kx.Tests.csproj", "{92CD3A80-52BF-4836-E815-E47B43D2044F}"
 EndProject

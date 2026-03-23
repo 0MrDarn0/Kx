@@ -9,7 +9,7 @@ The repository contains both a framework and concrete consumers of that framewor
 - `src/Kx.Sdk` - framework contracts and extension points
 - `apps/KxUpdater` - concrete updater application built on the framework
 - `apps/KxUpdateBuilder` - update package builder
-- `apps/KxUpdater/Plugins/KxUpdater.Plugin.KalOnline` - app-specific updater plugin scaffold
+- `apps/KxUpdater/Plugins/KalTheme` - app-specific updater plugin scaffold
 - `plugins` - reusable plugins shared across multiple apps
 - `examples/Kx.Plugin.Example` - reference plugin
 - `examples/Kx.Example.App` - reference host application

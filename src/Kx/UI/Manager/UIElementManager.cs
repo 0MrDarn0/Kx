@@ -14,6 +14,8 @@ public class UIElementManager : IUIElementManager {
 
     private readonly List<IVisual> _elements = [];
     private readonly List<IVisual> _roots = [];
+    private IVisual? _hoveredElement;
+    private IVisual? _capturedElement;
 
     public IEnumerable<IVisual> Elements => _elements;
     public IEnumerable<IVisual> Roots => _roots;
@@ -69,6 +71,9 @@ public class UIElementManager : IUIElementManager {
     public void Remove(IVisual el) {
         if (el == null)
             return;
+
+        ClearTrackedElement(ref _hoveredElement, el);
+        ClearTrackedElement(ref _capturedElement, el);
 
         _elements.Remove(el);
         _roots.Remove(el);
@@ -183,13 +188,14 @@ public class UIElementManager : IUIElementManager {
                 el.Draw(canvas);
     }
 
-    private bool HitTest(Point p, Func<IVisual, bool> action) {
-        // Iterate roots from topmost to bottommost
-        foreach (var root in _roots.OrderByDescending(x => x.Layer).ThenByDescending(x => x.ZIndex)) {
-            if (HitTestRecursive(root, p, action))
-                return true;
+    private IVisual? HitTest(Point p) {
+        foreach (var root in EnumerateHitTestRoots()) {
+            var hit = HitTestRecursive(root, p);
+            if (hit is not null)
+                return hit;
         }
-        return false;
+
+        return null;
     }
 
     private static bool TryGetRecursive(IVisual visual, string id, out IVisual? match) {
@@ -209,35 +215,98 @@ public class UIElementManager : IUIElementManager {
         return false;
     }
 
-    private static bool HitTestRecursive(IVisual el, Point p, Func<IVisual, bool> action) {
+    private static IVisual? HitTestRecursive(IVisual el, Point p) {
         if (!el.Visible)
-            return false;
+            return null;
 
-        // Prüfe zuerst Kinder (oberstes Kind zuerst), falls das Element ein Panel/Container ist
         if (el is IVisualContainer container && container.Children.Count != 0) {
-            // sortiere Kinder nach Layer/ZIndex absteigend (oberstes zuerst)
             var children = container.Children
-            .OrderByDescending(c => c.Layer)
-            .ThenByDescending(c => c.ZIndex);
+                .OrderByDescending(c => c.Layer)
+                .ThenByDescending(c => c.ZIndex);
 
             foreach (var child in children) {
-                if (HitTestRecursive(child, p, action))
+                var hit = HitTestRecursive(child, p);
+                if (hit is not null)
+                    return hit;
+            }
+        }
+
+        return el.Bounds.Contains(p)
+            ? el
+            : null;
+    }
+
+    private bool TryDispatchHit(Point p, Func<IVisual, bool> action, out IVisual? handledElement) {
+        foreach (var root in EnumerateHitTestRoots()) {
+            if (TryDispatchHitRecursive(root, p, action, out handledElement))
+                return true;
+        }
+
+        handledElement = null;
+        return false;
+    }
+
+    private static bool TryDispatchHitRecursive(IVisual el, Point p, Func<IVisual, bool> action, out IVisual? handledElement) {
+        if (!el.Visible)
+        {
+            handledElement = null;
+            return false;
+        }
+
+        if (el is IVisualContainer container && container.Children.Count != 0) {
+            var children = container.Children
+                .OrderByDescending(c => c.Layer)
+                .ThenByDescending(c => c.ZIndex);
+
+            foreach (var child in children) {
+                if (TryDispatchHitRecursive(child, p, action, out handledElement))
                     return true;
             }
         }
 
-        // Wenn kein Kind das Event behandelt hat, prüfe das aktuelle Element selbst
-        if (el.Bounds.Contains(p)) {
-            try {
-                return action(el);
-            }
-            catch {
-                // defensive: Listener darf keine Exceptions durchreichen
-                return false;
-            }
+        if (!el.Bounds.Contains(p)) {
+            handledElement = null;
+            return false;
         }
 
-        return false;
+        try {
+            if (!action(el)) {
+                handledElement = null;
+                return false;
+            }
+
+            handledElement = el;
+            return true;
+        }
+        catch {
+            handledElement = null;
+            return false;
+        }
+
+    }
+
+    private IEnumerable<IVisual> EnumerateHitTestRoots() {
+        return _roots
+            .OrderByDescending(x => x.Layer)
+            .ThenByDescending(x => x.ZIndex);
+    }
+
+    private static void ClearTrackedElement(ref IVisual? trackedElement, IVisual element) {
+        if (ReferenceEquals(trackedElement, element))
+            trackedElement = null;
+    }
+
+    private bool UpdateHoveredElement(Point p, IVisual? hit) {
+        bool handled = false;
+
+        if (_hoveredElement is not null && !ReferenceEquals(_hoveredElement, hit))
+            handled = _hoveredElement.OnMouseMove(p);
+
+        if (hit is not null)
+            handled = hit.OnMouseMove(p) || handled;
+
+        _hoveredElement = hit;
+        return handled;
     }
 
 
@@ -245,28 +314,44 @@ public class UIElementManager : IUIElementManager {
         if (ModalElement != null)
             return ModalElement.OnMouseDown(p);
 
-        return HitTest(p, el => el.OnMouseDown(p));
+        var handled = TryDispatchHit(p, el => el.OnMouseDown(p), out var handledElement);
+        if (handled)
+            _capturedElement = handledElement;
+
+        return handled;
     }
 
     public bool MouseUp(Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseUp(p);
 
-        return HitTest(p, el => el.OnMouseUp(p));
+        if (_capturedElement is not null) {
+            var captured = _capturedElement;
+            _capturedElement = null;
+            return captured.OnMouseUp(p);
+        }
+
+        return TryDispatchHit(p, el => el.OnMouseUp(p), out _);
     }
 
     public bool MouseMove(Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseMove(p);
 
-        return HitTest(p, el => el.OnMouseMove(p));
+        if (_capturedElement is not null) {
+            bool capturedHandled = _capturedElement.OnMouseMove(p);
+            _hoveredElement = HitTest(p);
+            return capturedHandled;
+        }
+
+        return UpdateHoveredElement(p, HitTest(p));
     }
 
     public bool MouseWheel(int delta, Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseWheel(delta, p);
 
-        return HitTest(p, el => el.OnMouseWheel(delta, p));
+        return TryDispatchHit(p, el => el.OnMouseWheel(delta, p), out _);
     }
 
     public bool KeyDown(KeyCode key) {

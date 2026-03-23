@@ -28,6 +28,7 @@ public abstract class Window : IDisposable {
     protected ILoggingService? _logger;
     protected bool HasConfiguredControls { get; private set; }
     protected bool HasConfiguredContentControls { get; private set; }
+    protected IUiStateStore StateStore => ((Kx.Sdk.UI.IVisualContext)_ctx).State;
 
     private readonly IMarkupActionRegistry? _actionRegistry;
     private readonly IUiCommandRegistry? _commandRegistry;
@@ -55,6 +56,7 @@ public abstract class Window : IDisposable {
             uiThread: host,
             windowHost: host,
             new EventManager());
+
         if (_commandRegistry is not null)
             _ctx.SetCommandRegistry(_commandRegistry);
         if (_stateStore is not null)

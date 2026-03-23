@@ -5,4 +5,4 @@
 Use this area for plugins that can be shared across multiple `Kx`-based apps.
 
 App-specific plugins stay beside their owning app, for example:
-- `apps/KxUpdater/Plugins/KxUpdater.Plugin.KalOnline`
+- `apps/KxUpdater/Plugins/KalTheme`

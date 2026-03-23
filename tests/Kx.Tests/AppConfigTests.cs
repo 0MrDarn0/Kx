@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
 using KxUpdater.Configuration;
 
 namespace Kx.Tests;
@@ -7,7 +10,7 @@ public sealed class AppConfigTests {
     public void WhenAppConfigIsCreatedThenUpdaterDefaultsAreInitialized() {
         var config = new AppConfig();
 
-        Assert.Equal("http://webhost.com/KUpdater/", config.Updater.Url);
+        Assert.Equal("https://update.idb-lab.de/", config.Updater.Url);
     }
 
     [Fact]

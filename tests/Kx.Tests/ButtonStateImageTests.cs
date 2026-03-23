@@ -52,6 +52,40 @@ public sealed class ButtonStateImageTests {
     }
 
     [Fact]
+    public void WhenCursorLeavesButtonThenHoverImageIsCleared() {
+        var context = new TestVisualContext();
+        using var button = CreateButton(context);
+        button.SetStateImages(CreateSolidBitmap(SKColors.Red), CreateSolidBitmap(SKColors.Green), CreateSolidBitmap(SKColors.Blue));
+        context.UIElementManager.Add(button);
+
+        context.UIElementManager.MouseMove(new Point(20, 20));
+        context.UIElementManager.MouseMove(new Point(80, 80));
+
+        using var surface = CreateSurface(out var canvas, out var bitmap);
+        button.Draw(canvas);
+
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(20, 20));
+    }
+
+    [Fact]
+    public void WhenMouseIsReleasedOutsideButtonThenPressedImageIsCleared() {
+        var context = new TestVisualContext();
+        using var button = CreateButton(context);
+        button.SetStateImages(CreateSolidBitmap(SKColors.Red), CreateSolidBitmap(SKColors.Green), CreateSolidBitmap(SKColors.Blue));
+        context.UIElementManager.Add(button);
+
+        context.UIElementManager.MouseMove(new Point(20, 20));
+        context.UIElementManager.MouseDown(new Point(20, 20));
+        context.UIElementManager.MouseMove(new Point(80, 80));
+        context.UIElementManager.MouseUp(new Point(80, 80));
+
+        using var surface = CreateSurface(out var canvas, out var bitmap);
+        button.Draw(canvas);
+
+        Assert.Equal(SKColors.Red, bitmap.GetPixel(20, 20));
+    }
+
+    [Fact]
     public void WhenButtonUsesFixedBoundsThenArrangeKeepsConfiguredSize() {
         using var button = new Kx.UI.Elements.Button(new TestVisualContext(), "button", string.Empty) {
             FixedBounds = new Rectangle(-34, 16, 17, 17)
@@ -63,7 +97,11 @@ public sealed class ButtonStateImageTests {
     }
 
     private static Kx.UI.Elements.Button CreateButton() {
-        var button = new Kx.UI.Elements.Button(new TestVisualContext(), "button", string.Empty);
+        return CreateButton(new TestVisualContext());
+    }
+
+    private static Kx.UI.Elements.Button CreateButton(TestVisualContext context) {
+        var button = new Kx.UI.Elements.Button(context, "button", string.Empty);
         button.Arrange(new Rectangle(0, 0, 40, 40), 1f);
         return button;
     }

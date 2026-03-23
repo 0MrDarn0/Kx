@@ -16,7 +16,7 @@ The repository now contains five main areas:
 - `src/Kx.Sdk` - contracts for plugins, UI, logging, DI, window hosting, and markup
 - `apps/KxUpdater` - concrete updater application built on the framework, including its own `Assets` content
 - `apps/KxUpdateBuilder` - update package builder tool
-- `apps/KxUpdater/Plugins/KxUpdater.Plugin.KalOnline` - updater-specific plugin scaffold for the KalOnline theme and updater-specific UI work
+- `apps/KxUpdater/Plugins/KalTheme` - updater-specific visual plugin scaffold for the KalOnline style and updater-specific UI work
 - `tests/Kx.Tests` - framework and runtime tests
 
 ### Reusable plugins

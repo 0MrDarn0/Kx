@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Core.Extensions;
 using Kx.Sdk.Events;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
-using Kx.Core.Extensions;
 
 using SkiaSharp;
 
@@ -105,13 +105,16 @@ public class Button : UIElement {
             if (!IsEnabled) {
                 _bgPaint.Color = new SKColor(240, 240, 240, 255);
                 _textPaint.Color = new SKColor(160, 160, 160, 255);
-            } else if (_isPressed) {
+            }
+            else if (_isPressed) {
                 _bgPaint.Color = new SKColor(200, 200, 200, 255);
                 _textPaint.Color = new SKColor(0, 0, 0, 255);
-            } else if (_isHovered || IsFocused) {
+            }
+            else if (_isHovered || IsFocused) {
                 _bgPaint.Color = new SKColor(220, 220, 220, 255);
                 _textPaint.Color = new SKColor(0, 0, 0, 255);
-            } else {
+            }
+            else {
                 _bgPaint.Color = new SKColor(245, 245, 245, 255);
                 _textPaint.Color = new SKColor(0, 0, 0, 255);
             }
@@ -153,12 +156,15 @@ public class Button : UIElement {
         var wasPressed = _isPressed;
         _isPressed = false;
 
+        if (wasPressed)
+            Invalidate();
+
         if (wasPressed && Bounds.Contains(p)) {
             Click?.Invoke();
             return true;
         }
 
-        return false;
+        return wasPressed;
     }
 
     public override bool OnMouseMove(Point p) {
@@ -169,6 +175,7 @@ public class Button : UIElement {
         if (hovered != _isHovered) {
             _isHovered = hovered;
             Invalidate();
+            return true;
         }
 
         return _isHovered;

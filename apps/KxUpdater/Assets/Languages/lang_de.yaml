@@ -10,6 +10,17 @@ button:
 
 status:
   waiting: "Prüfe Version..."
+  client_not_configured: "Spielstart ist noch nicht konfiguriert."
+  client_file_missing: "Spielclient-Datei wurde nicht gefunden: {0}"
+  client_launch_started: "Starte Spielclient..."
+  client_launch_failed: "Spielclient konnte nicht gestartet werden: {0}"
+  settings_not_configured: "Settings-Befehl ist noch nicht konfiguriert."
+  settings_file_missing: "Settings-Datei wurde nicht gefunden: {0}"
+  settings_launch_started: "Öffne Client-Einstellungen..."
+  settings_launch_failed: "Einstellungen konnten nicht geöffnet werden: {0}"
+  website_not_configured: "Webseiten-Link ist noch nicht konfiguriert."
+  website_opening: "Öffne Webseite..."
+  website_open_failed: "Webseite konnte nicht geöffnet werden: {0}"
   up_to_date: "(v{0})."
   update_required: "Update erforderlich: {0} → {1}"
   applying_update: "Wende Update an..."
@@ -24,6 +35,7 @@ status:
 info:
   current_version: "Derzeitige Version: {0}"
   latest_version: "Letzte Version: {0}"
+  changelog_loading: "Lade Changelog..."
 
 error:
   network: "Netzwerkfehler. Bitte überprüfe deine Verbindung."
