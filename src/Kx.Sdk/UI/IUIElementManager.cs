@@ -8,6 +8,7 @@ using Kx.Sdk.UI.VisualTree;
 namespace Kx.Sdk.UI;
 
 public interface IUIElementManager {
+    IVisual? HoveredElement { get; }
     bool MouseMove(Point location);
     bool MouseDown(Point location);
     bool MouseUp(Point location);

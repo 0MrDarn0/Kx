@@ -28,6 +28,7 @@ using KxUpdater.Configuration;
 namespace KxUpdater;
 
 public sealed class MainWindow : Window {
+    private const string PrimaryActionCommandName = "kxUpdater.primaryAction";
     private const string StartGameCommandName = "kxUpdater.startGame";
     private const string OpenSettingsCommandName = "kxUpdater.openSettings";
     private const string OpenWebsiteCommandName = "kxUpdater.openWebsite";
@@ -37,12 +38,16 @@ public sealed class MainWindow : Window {
     private static readonly UiStateKey<string> _changelogState = new("updater.changelog");
     private static readonly UiStateKey<float> _progressState = new("updater.progress");
     private static readonly UiStateKey<string> _startButtonTextState = new("updater.buttons.start");
+    private static readonly UiStateKey<bool> _primaryButtonEnabledState = new("updater.buttons.primaryEnabled");
+    private static readonly UiStateKey<bool> _updateRequiredState = new("updater.buttons.updateRequired");
     private static readonly UiStateKey<string> _settingsButtonTextState = new("updater.buttons.settings");
+    private static readonly UiStateKey<bool> _settingsButtonEnabledState = new("updater.buttons.settingsEnabled");
     private static readonly UiStateKey<string> _websiteButtonTextState = new("updater.buttons.website");
 
     private readonly AppConfig _appConfig;
     private bool _updaterEventsRegistered;
-    private bool _pipelineStarted;
+    private bool _initialUpdateCheckStarted;
+    private bool _primaryActionInProgress;
 
     public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
         : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, themeRegistry, windowRegistry) {
@@ -65,20 +70,29 @@ public sealed class MainWindow : Window {
         base.OnShown();
 
         RegisterUpdaterEvents();
-        if (_pipelineStarted)
+        if (_initialUpdateCheckStarted)
             return;
 
-        _pipelineStarted = true;
+        _initialUpdateCheckStarted = true;
+        await RunInitialUpdateCheckAsync();
+    }
 
+    private async Task RunInitialUpdateCheckAsync() {
         try {
-            if (string.IsNullOrWhiteSpace(_appConfig.Updater.Url))
+            if (string.IsNullOrWhiteSpace(_appConfig.Updater.Url)) {
+                SetUpdaterInteractionState(updateRequired: false, primaryEnabled: true, settingsEnabled: true);
                 return;
+            }
 
             var runner = new UpdaterPipelineRunner(_ctx.Events, new HttpUpdateSource(), _appConfig.Updater.Url, AppContext.BaseDirectory);
-            await runner.RunAsync(AppContext.BaseDirectory);
+            SetUpdaterInteractionState(updateRequired: false, primaryEnabled: false, settingsEnabled: false);
+
+            bool updateRequired = await runner.CheckForUpdatesAsync(AppContext.BaseDirectory);
+            SetUpdaterInteractionState(updateRequired, primaryEnabled: true, settingsEnabled: !updateRequired);
         }
         catch (Exception ex) {
             _logger?.Error("Failed to start updater pipeline.", ex);
+            SetUpdaterInteractionState(updateRequired: false, primaryEnabled: true, settingsEnabled: true);
         }
     }
 
@@ -88,8 +102,12 @@ public sealed class MainWindow : Window {
         StateStore.Set(_changelogState, LanguageService.Translate("info.changelog_loading"));
         StateStore.Set(_progressState, 0f);
         StateStore.Set(_startButtonTextState, LanguageService.Translate("button.start"));
+        StateStore.Set(_primaryButtonEnabledState, false);
+        StateStore.Set(_updateRequiredState, false);
         StateStore.Set(_settingsButtonTextState, LanguageService.Translate("button.settings"));
+        StateStore.Set(_settingsButtonEnabledState, false);
         StateStore.Set(_websiteButtonTextState, LanguageService.Translate("button.website"));
+        _logger?.Info(LanguageService.Translate("info.overlay_hotkeys"));
     }
 
     private void RegisterUpdaterEvents() {
@@ -100,11 +118,18 @@ public sealed class MainWindow : Window {
         _ctx.Events.Register<StatusEvent>(updateStatus => StateStore.Set(_statusState, updateStatus.Text));
         _ctx.Events.Register<ChangelogEvent>(changelog => StateStore.Set(_changelogState, changelog.Text));
         _ctx.Events.Register<ProgressEvent>(progress => StateStore.Set(_progressState, progress.Percent));
-        _ctx.Events.Register<UpdatePipelineCompleted>(_ => StateStore.Set(_progressState, 0f));
+        _ctx.Events.Register<UpdateRequired>(_ => SetUpdaterInteractionState(updateRequired: true, primaryEnabled: true, settingsEnabled: false));
+        _ctx.Events.Register<UpdatePipelineStarted>(_ => SetUpdaterInteractionState(GetUpdateRequiredState(), primaryEnabled: false, settingsEnabled: false));
+        _ctx.Events.Register<UpdatePipelineCompleted>(_ => {
+            StateStore.Set(_progressState, 0f);
+            SetUpdaterInteractionState(updateRequired: false, primaryEnabled: true, settingsEnabled: true);
+        });
     }
 
     private void RegisterUpdaterCommands(IUiCommandRegistry commandRegistry) {
         ArgumentNullException.ThrowIfNull(commandRegistry);
+
+        commandRegistry.Register(PrimaryActionCommandName, _ => ExecutePrimaryAction());
 
         commandRegistry.Register(StartGameCommandName, _ => ExecuteProcessCommand(
             _appConfig.Launcher.Start,
@@ -121,6 +146,55 @@ public sealed class MainWindow : Window {
             "status.settings_launch_failed"));
 
         commandRegistry.Register(OpenWebsiteCommandName, _ => ExecuteWebsiteCommand());
+    }
+
+    private async void ExecutePrimaryAction() {
+        if (_primaryActionInProgress || !GetPrimaryButtonEnabledState())
+            return;
+
+        bool updateRequired = GetUpdateRequiredState();
+
+        try {
+            _primaryActionInProgress = true;
+
+            if (updateRequired) {
+                SetUpdaterInteractionState(updateRequired: true, primaryEnabled: false, settingsEnabled: false);
+                await ExecuteUpdateAsync();
+                return;
+            }
+
+            ExecuteProcessCommand(
+                _appConfig.Launcher.Start,
+                "status.client_not_configured",
+                "status.client_file_missing",
+                "status.client_launch_started",
+                "status.client_launch_failed");
+        }
+        catch (Exception ex) {
+            _logger?.Error("Failed to execute updater primary action.", ex);
+            bool currentUpdateRequired = GetUpdateRequiredState();
+            SetUpdaterInteractionState(currentUpdateRequired, primaryEnabled: true, settingsEnabled: !currentUpdateRequired);
+        }
+        finally {
+            _primaryActionInProgress = false;
+
+            if (!updateRequired)
+                SetUpdaterInteractionState(updateRequired: false, primaryEnabled: true, settingsEnabled: true);
+        }
+    }
+
+    private async Task ExecuteUpdateAsync() {
+        if (string.IsNullOrWhiteSpace(_appConfig.Updater.Url)) {
+            SetUpdaterInteractionState(updateRequired: false, primaryEnabled: true, settingsEnabled: true);
+            return;
+        }
+
+        var runner = new UpdaterPipelineRunner(_ctx.Events, new HttpUpdateSource(), _appConfig.Updater.Url, AppContext.BaseDirectory);
+        SetUpdaterInteractionState(updateRequired: true, primaryEnabled: false, settingsEnabled: false);
+        await runner.RunAsync(AppContext.BaseDirectory);
+
+        if (GetUpdateRequiredState())
+            SetUpdaterInteractionState(updateRequired: true, primaryEnabled: true, settingsEnabled: false);
     }
 
     private void ExecuteProcessCommand(ProcessLaunchConfig config, string notConfiguredStatusKey, string fileMissingStatusKey, string startedStatusKey, string failedStatusKey) {
@@ -222,6 +296,21 @@ public sealed class MainWindow : Window {
             return AppContext.BaseDirectory;
 
         return Path.GetDirectoryName(fileName) ?? AppContext.BaseDirectory;
+    }
+
+    private bool GetUpdateRequiredState() {
+        return StateStore.TryGet(_updateRequiredState, out bool updateRequired) && updateRequired;
+    }
+
+    private bool GetPrimaryButtonEnabledState() {
+        return StateStore.TryGet(_primaryButtonEnabledState, out bool isEnabled) && isEnabled;
+    }
+
+    private void SetUpdaterInteractionState(bool updateRequired, bool primaryEnabled, bool settingsEnabled) {
+        StateStore.Set(_updateRequiredState, updateRequired);
+        StateStore.Set(_primaryButtonEnabledState, primaryEnabled);
+        StateStore.Set(_settingsButtonEnabledState, settingsEnabled);
+        StateStore.Set(_startButtonTextState, LanguageService.Translate(updateRequired ? "button.update" : "button.start"));
     }
 
     private void BuildUI() {

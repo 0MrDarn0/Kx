@@ -67,12 +67,16 @@ public abstract class UIElement : Visual, IDockable {
         if (!DebugOverlay.Enabled)
             return;
 
+        if (DebugOverlay.ShowOnlyHoveredElement && !ReferenceEquals(Context.UIElementManager.HoveredElement, this))
+            return;
+
         var fontSize = DebugOverlay.FontSize * DpiScale;
         using var font = new SKFont(SKTypeface.Default, fontSize);
         using var textPaint = new SKPaint { IsAntialias = true, Color = DebugOverlay.TextColor };
         using var bgPaint = new SKPaint { IsAntialias = true, Color = DebugOverlay.TextBgColor, Style = SKPaintStyle.Fill };
         using var boundsPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 1f, IsAntialias = true, Color = DebugOverlay.BoundsColor };
         using var layoutPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 1f, IsAntialias = true, Color = DebugOverlay.LayoutColor };
+        using var contentPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 1f, IsAntialias = true, Color = DebugOverlay.ContentColor };
 
         var clip = canvas.LocalClipBounds;
         var canvasRect = new SKRect(0, 0, clip.Width, clip.Height);
@@ -83,20 +87,16 @@ public abstract class UIElement : Visual, IDockable {
         if (DebugOverlay.ShowLayoutRect)
             canvas.DrawRect(ToSkRect(LayoutRect), layoutPaint);
 
-        var metaItems = new List<string>();
-        if (DebugOverlay.ShowMeta)
-            metaItems.Add($"{Id}  L:{Layer} Z:{ZIndex}  {LayoutRect.Width}x{LayoutRect.Height}");
+        if (DebugOverlay.ShowContentRect)
+            canvas.DrawRect(ToSkRect(ContentRect), contentPaint);
 
-        var parentItems = new List<string>();
-        if (DebugOverlay.ShowParentChain) {
-            var current = this;
-            int depth = 0;
-            while (current != null && depth < DebugOverlay.MaxParentItems) {
-                parentItems.Add($"{new string(' ', depth * 2)}{current.Id} (L:{current.Layer} Z:{current.ZIndex})");
-                current = current.Parent;
-                depth++;
-            }
-        }
+        var metaItems = DebugOverlay.ShowMeta
+            ? GetDebugMetaItems()
+            : [];
+
+        var parentItems = DebugOverlay.ShowParentChain
+            ? GetDebugParentItems()
+            : [];
 
         if (metaItems.Count == 0 && parentItems.Count == 0)
             return;
@@ -173,6 +173,34 @@ public abstract class UIElement : Visual, IDockable {
 
     protected abstract void OnDraw(SKCanvas canvas);
 
+    private List<string> GetDebugMetaItems() {
+        List<string> items = [
+            $"{GetType().Name}#{Id}  L:{Layer} Z:{ZIndex}  visible:{Visible} focused:{IsFocused}",
+            $"bounds {FormatRectangle(Bounds)}  layout {FormatRectangle(LayoutRect)}  content {FormatRectangle(ContentRect)}",
+            $"dock {Dock}  grid r{GridRow}/c{GridColumn}  span {GridRowSpan}x{GridColumnSpan}",
+            $"margin {FormatThickness(Margin)}  padding {FormatThickness(Padding)}  dpi {DpiScale:0.##}"
+        ];
+
+        if (FixedBounds is Rectangle fixedBounds)
+            items.Add($"fixed {FormatRectangle(fixedBounds)}");
+
+        return items;
+    }
+
+    private List<string> GetDebugParentItems() {
+        List<string> items = [];
+
+        var current = this;
+        int depth = 0;
+        while (current != null && depth < DebugOverlay.MaxParentItems) {
+            items.Add($"{new string(' ', depth * 2)}{current.GetType().Name}#{current.Id} (L:{current.Layer} Z:{current.ZIndex})");
+            current = current.Parent;
+            depth++;
+        }
+
+        return items;
+    }
+
     private static Size AddMargin(Size size, Thickness margin, float dpi) {
         return new Size(
             size.Width + (int)(margin.Horizontal * dpi),
@@ -218,6 +246,14 @@ public abstract class UIElement : Visual, IDockable {
 
     private static SKRect ToSkRect(Rectangle rect) {
         return new SKRect(rect.Left, rect.Top, rect.Right, rect.Bottom);
+    }
+
+    private static string FormatRectangle(Rectangle rect) {
+        return $"[{rect.X},{rect.Y},{rect.Width},{rect.Height}]";
+    }
+
+    private static string FormatThickness(Thickness thickness) {
+        return $"[{thickness.Left},{thickness.Top},{thickness.Right},{thickness.Bottom}]";
     }
 
     private static string TruncateTextToWidth(string text, SKFont font, float maxWidth) {

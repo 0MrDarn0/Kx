@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Sdk.Events;
+using Kx.Sdk.UI.Layout;
 using Kx.Sdk.WindowHost;
 
 namespace Kx.App;
@@ -21,6 +22,8 @@ public class WindowInteraction {
 
     private readonly int _minClientWidth;
     private readonly int _minClientHeight;
+    private bool _isShiftDown;
+    private bool _isControlDown;
 
     public WindowInteraction(IWindowHost windowHost, WindowContext ctx, bool allowResizing = true, int minClientWidth = 450, int minClientHeight = 300) {
         _windowHost = windowHost;
@@ -33,6 +36,8 @@ public class WindowInteraction {
         windowHost.MouseDown += OnMouseDown;
         windowHost.MouseUp += OnMouseUp;
         windowHost.MouseWheel += OnMouseWheel;
+        windowHost.KeyDown += OnKeyDown;
+        windowHost.KeyUp += OnKeyUp;
         windowHost.Resized += OnResize;
     }
 
@@ -142,5 +147,66 @@ public class WindowInteraction {
         var location = new Point(e.X, e.Y);
         if (_ctx.UIElementManager.MouseWheel(e.Delta, location))
             _ctx.Renderer.RequestRender();
+    }
+
+    private void OnKeyDown(KeyEvent e) {
+        UpdateModifierState(e.Key, isDown: true);
+
+        if (!e.IsRepeat && TryHandleDebugOverlayHotkey(e.Key)) {
+            _ctx.Renderer.RequestRender();
+            return;
+        }
+
+        if (_ctx.UIElementManager.KeyDown(e.Key))
+            _ctx.Renderer.RequestRender();
+    }
+
+    private void OnKeyUp(KeyEvent e) {
+        UpdateModifierState(e.Key, isDown: false);
+
+        if (_ctx.UIElementManager.KeyUp(e.Key))
+            _ctx.Renderer.RequestRender();
+    }
+
+    private bool TryHandleDebugOverlayHotkey(KeyCode key) {
+        if (!_isControlDown || !_isShiftDown)
+            return false;
+
+        switch (key) {
+            case KeyCode.D:
+                DebugOverlay.CyclePreset();
+                return true;
+
+            case KeyCode.D0:
+                DebugOverlay.ApplyPreset(DebugOverlay.OverlayPreset.Off);
+                return true;
+
+            case KeyCode.D1:
+                DebugOverlay.ApplyPreset(DebugOverlay.OverlayPreset.Layout);
+                return true;
+
+            case KeyCode.D2:
+                DebugOverlay.ApplyPreset(DebugOverlay.OverlayPreset.Hierarchy);
+                return true;
+
+            case KeyCode.D3:
+                DebugOverlay.ApplyPreset(DebugOverlay.OverlayPreset.Inspect);
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    private void UpdateModifierState(KeyCode key, bool isDown) {
+        switch (key) {
+            case KeyCode.Control:
+                _isControlDown = isDown;
+                break;
+
+            case KeyCode.Shift:
+                _isShiftDown = isDown;
+                break;
+        }
     }
 }

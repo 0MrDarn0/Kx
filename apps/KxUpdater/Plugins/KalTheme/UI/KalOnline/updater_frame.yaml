@@ -60,7 +60,7 @@ controls:
     pressedImage: "Themes:KalOnline:Buttons:btn_exit_click.png"
     onClick: closeWindow
     bounds:
-      x: -34
+      x: -16
       y: 16
       width: 17
       height: 17

@@ -15,6 +15,7 @@ public class Button : UIElement {
     public float FontSize { get; set; } = 14f;
     public bool IsEnabled { get; set; } = true;
     public override bool CanFocus => IsEnabled;
+    public SKColor ForegroundColor { get; set; } = new(0, 0, 0, 255);
 
     public event Action? Click;
 
@@ -100,6 +101,9 @@ public class Button : UIElement {
 
         if (stateImage is not null) {
             canvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
+            _textPaint.Color = IsEnabled
+                ? ForegroundColor
+                : new SKColor(160, 160, 160, 255);
         }
         else {
             if (!IsEnabled) {
@@ -108,15 +112,15 @@ public class Button : UIElement {
             }
             else if (_isPressed) {
                 _bgPaint.Color = new SKColor(200, 200, 200, 255);
-                _textPaint.Color = new SKColor(0, 0, 0, 255);
+                _textPaint.Color = ForegroundColor;
             }
             else if (_isHovered || IsFocused) {
                 _bgPaint.Color = new SKColor(220, 220, 220, 255);
-                _textPaint.Color = new SKColor(0, 0, 0, 255);
+                _textPaint.Color = ForegroundColor;
             }
             else {
                 _bgPaint.Color = new SKColor(245, 245, 245, 255);
-                _textPaint.Color = new SKColor(0, 0, 0, 255);
+                _textPaint.Color = ForegroundColor;
             }
 
             var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);

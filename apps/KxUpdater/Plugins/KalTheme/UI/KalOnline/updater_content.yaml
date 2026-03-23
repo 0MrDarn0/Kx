@@ -18,7 +18,7 @@ controls:
           value: 20
           unit: Pixel
       - height:
-          value: 8
+          value: 6
           unit: Pixel
       - height:
           value: 28
@@ -91,6 +91,11 @@ controls:
         gridRow: 3
         gridColumn: 0
         gridColumnSpan: 6
+        margin:
+          left: 5
+          top: 2
+          right: 5
+          bottom: 2
         properties:
           progressBinding: updater.progress
           fillColor: "#DAA520"
@@ -100,9 +105,15 @@ controls:
       - type: Button
         id: updater_website_button
         textBinding: updater.buttons.website
+        color: "#E8D9B4"
         onClick: runCommand:kxUpdater.openWebsite
         gridRow: 4
         gridColumn: 1
+        margin:
+          left: -4
+          top: 0
+          right: 4
+          bottom: 0
         normalImage: "Themes:KalOnline:Buttons:btn_default_normal.png"
         hoverImage: "Themes:KalOnline:Buttons:btn_default_hover.png"
         pressedImage: "Themes:KalOnline:Buttons:btn_default_click.png"
@@ -113,9 +124,16 @@ controls:
       - type: Button
         id: updater_settings_button
         textBinding: updater.buttons.settings
+        enabledBinding: updater.buttons.settingsEnabled
+        color: "#E8D9B4"
         onClick: runCommand:kxUpdater.openSettings
         gridRow: 4
         gridColumn: 3
+        margin:
+          left: -4
+          top: 0
+          right: 4
+          bottom: 0
         normalImage: "Themes:KalOnline:Buttons:btn_default_normal.png"
         hoverImage: "Themes:KalOnline:Buttons:btn_default_hover.png"
         pressedImage: "Themes:KalOnline:Buttons:btn_default_click.png"
@@ -126,8 +144,16 @@ controls:
       - type: Button
         id: updater_start_button
         textBinding: updater.buttons.start
+        enabledBinding: updater.buttons.primaryEnabled
+        color: "#E8D9B4"
+        onClick: runCommand:kxUpdater.primaryAction
         gridRow: 4
         gridColumn: 5
+        margin:
+          left: -4
+          top: 0
+          right: 4
+          bottom: 0
         normalImage: "Themes:KalOnline:Buttons:btn_default_normal.png"
         hoverImage: "Themes:KalOnline:Buttons:btn_default_hover.png"
         pressedImage: "Themes:KalOnline:Buttons:btn_default_click.png"

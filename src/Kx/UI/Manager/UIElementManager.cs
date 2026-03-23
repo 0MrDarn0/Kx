@@ -19,6 +19,7 @@ public class UIElementManager : IUIElementManager {
 
     public IEnumerable<IVisual> Elements => _elements;
     public IEnumerable<IVisual> Roots => _roots;
+    public IVisual? HoveredElement => _hoveredElement;
 
     public float DpiScale { get; private set; } = 1f;
     public IVisual? FocusedElement { get; private set; }

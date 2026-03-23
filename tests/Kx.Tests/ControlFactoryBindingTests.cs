@@ -4,6 +4,8 @@ using Kx.UI.Elements.Panel;
 using Kx.UI.Markup;
 using Kx.Tests.TestInfrastructure;
 
+using SkiaSharp;
+
 namespace Kx.Tests;
 
 public sealed class ControlFactoryBindingTests {
@@ -114,6 +116,22 @@ public sealed class ControlFactoryBindingTests {
 
         var progressBar = Assert.IsType<Kx.UI.Elements.ProgressBar>(control);
         Assert.Equal(0.25f, progressBar.Progress);
+    }
+
+    [Fact]
+    public void WhenButtonColorIsConfiguredThenForegroundColorIsApplied() {
+        var context = new TestVisualContext();
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "Button",
+            Id = "start",
+            Color = "#E8D9B4"
+        });
+
+        var button = Assert.IsType<Kx.UI.Elements.Button>(control);
+        Assert.Equal(SKColor.Parse("#E8D9B4"), button.ForegroundColor);
     }
 
     private static ControlRegistry CreateControlRegistry() {

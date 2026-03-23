@@ -12,11 +12,10 @@ namespace Kx.Core.Pipeline;
 
 public class UpdaterPipelineRunner {
     private readonly IEventManager _eventManager;
-    private readonly UpdatePipeline _pipeline;
+    private readonly List<IUpdateStep> _steps = [];
 
     public UpdaterPipelineRunner(IEventManager eventManager, IUpdateSource source, string baseUrl, string rootDir) {
         _eventManager = eventManager;
-        _pipeline = new UpdatePipeline();
 
         var stepTypes = Assembly.GetExecutingAssembly().GetTypes()
             .Where(t => typeof(IUpdateStep).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
@@ -42,15 +41,40 @@ public class UpdaterPipelineRunner {
             }).ToArray();
 
             var step = (IUpdateStep)Activator.CreateInstance(stepInfo.Type, args)!;
-            _pipeline.AddStep(step);
+            _steps.Add(step);
         }
     }
 
-    public async Task RunAsync(string rootDir, CancellationToken ct = default) {
-        var ctx = new UpdateContext(rootDir);
+    public async Task<bool> CheckForUpdatesAsync(string rootDir, CancellationToken ct = default) {
+        var context = new UpdateContext(rootDir);
+        bool updateRequired = false;
+
+        void OnUpdateRequired(UpdateRequired _) => updateRequired = true;
+
+        _eventManager.Register<UpdateRequired>(OnUpdateRequired);
 
         try {
-            await _pipeline.RunAsync(ctx, _eventManager, ct);
+            await RunStepsAsync(context, _steps.TakeWhile(step => step.Name is not "DownloadAndExtract" and not "SaveVersion" and not "SelfUpdate"), ct);
+        }
+        catch (OperationCanceledException) {
+        }
+        catch (Exception ex) {
+            _eventManager.NotifyAll(new StatusEvent(
+                LanguageService.Translate("status.update_failed", ex.Message)
+            ));
+        }
+        finally {
+            _eventManager.Unregister<UpdateRequired>(OnUpdateRequired);
+        }
+
+        return updateRequired;
+    }
+
+    public async Task RunAsync(string rootDir, CancellationToken ct = default) {
+        var context = new UpdateContext(rootDir);
+
+        try {
+            await RunStepsAsync(context, _steps, ct);
         }
         catch (OperationCanceledException) {
             // Cancelled: treat as no update / user cancelled
@@ -60,5 +84,18 @@ public class UpdaterPipelineRunner {
                 LanguageService.Translate("status.update_failed", ex.Message)
             ));
         }
+    }
+
+    private async Task RunStepsAsync(UpdateContext context, IEnumerable<IUpdateStep> steps, CancellationToken ct) {
+        _eventManager.NotifyAll(new UpdatePipelineStarted());
+
+        foreach (var step in steps) {
+            ct.ThrowIfCancellationRequested();
+            _eventManager.NotifyAll(new UpdateStepStarted(step.Name));
+            await step.ExecuteAsync(context, _eventManager, ct);
+            _eventManager.NotifyAll(new UpdateStepCompleted(step.Name));
+        }
+
+        _eventManager.NotifyAll(new UpdatePipelineCompleted());
     }
 }

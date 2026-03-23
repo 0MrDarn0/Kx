@@ -16,6 +16,9 @@ namespace Kx.Tests;
 
 public sealed class MainWindowCommandTests {
     private static readonly UiStateKey<string> _statusState = new("updater.status");
+    private static readonly UiStateKey<string> _primaryButtonTextState = new("updater.buttons.start");
+    private static readonly UiStateKey<bool> _primaryButtonEnabledState = new("updater.buttons.primaryEnabled");
+    private static readonly UiStateKey<bool> _settingsButtonEnabledState = new("updater.buttons.settingsEnabled");
 
     [Fact]
     public void WhenStartGameCommandRunsWithMissingClientThenStatusExplainsIt() {
@@ -27,6 +30,17 @@ public sealed class MainWindowCommandTests {
         Assert.True(stateStore.TryGet(_statusState, out var status));
         Assert.Equal("Game client file not found: engine.exe", status);
         Assert.Equal(0, host.CloseWindowCallCount);
+    }
+
+    [Fact]
+    public void WhenPrimaryActionRunsWhileDisabledThenItIsIgnored() {
+        using var window = CreateMainWindow(out _, out var commandRegistry, out var stateStore);
+
+        bool executed = commandRegistry.TryExecute(new TestUiCommandContext("kxUpdater.primaryAction"));
+
+        Assert.True(executed);
+        Assert.True(stateStore.TryGet(_statusState, out var status));
+        Assert.Equal("Checking version...", status);
     }
 
     [Fact]
@@ -42,17 +56,43 @@ public sealed class MainWindowCommandTests {
     }
 
     [Fact]
-    public void WhenOpenWebsiteCommandRunsWithoutConfiguredUrlThenStatusExplainsIt() {
-        using var window = CreateMainWindow(out _, out var commandRegistry, out var stateStore);
+    public void WhenMainWindowInitializesThenOverlayHotkeysAreLogged() {
+        var logger = new TestLoggingService();
+        using var window = CreateMainWindow(logger, out _, out _, out _);
 
-        bool executed = commandRegistry.TryExecute(new TestUiCommandContext("kxUpdater.openWebsite"));
+        Assert.Contains(logger.InfoMessages, message => message.Contains("Ctrl+Shift+D", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void WhenMainWindowInitializesThenPrimaryActionStartsDisabledWithStartText() {
+        using var window = CreateMainWindow(out _, out _, out var stateStore);
+
+        Assert.True(stateStore.TryGet(_primaryButtonEnabledState, out bool isEnabled));
+        Assert.False(isEnabled);
+        Assert.True(stateStore.TryGet(_settingsButtonEnabledState, out bool settingsEnabled));
+        Assert.False(settingsEnabled);
+        Assert.True(stateStore.TryGet(_primaryButtonTextState, out var buttonText));
+        Assert.Equal("Start", buttonText);
+    }
+
+    [Fact]
+    public void WhenPrimaryActionRunsWithoutPendingUpdateThenGameStartBehaviorIsUsed() {
+        using var window = CreateMainWindow(out var host, out var commandRegistry, out var stateStore);
+        stateStore.Set(_primaryButtonEnabledState, true);
+
+        bool executed = commandRegistry.TryExecute(new TestUiCommandContext("kxUpdater.primaryAction"));
 
         Assert.True(executed);
         Assert.True(stateStore.TryGet(_statusState, out var status));
-        Assert.Equal("Website link is not configured yet.", status);
+        Assert.Equal("Game client file not found: engine.exe", status);
+        Assert.Equal(0, host.CloseWindowCallCount);
     }
 
     private static MainWindow CreateMainWindow(out TestWindowHost host, out UiCommandRegistry commandRegistry, out UiStateStore stateStore) {
+        return CreateMainWindow(new TestLoggingService(), out host, out commandRegistry, out stateStore);
+    }
+
+    private static MainWindow CreateMainWindow(TestLoggingService logger, out TestWindowHost host, out UiCommandRegistry commandRegistry, out UiStateStore stateStore) {
         host = new TestWindowHost();
         var uiComposition = new RuntimeUiComposition();
         commandRegistry = uiComposition.CommandRegistry;
@@ -61,7 +101,7 @@ public sealed class MainWindowCommandTests {
         return new MainWindow(
             host,
             new TestTrayService(),
-            new TestLoggingService(),
+            logger,
             uiComposition.ActionRegistry,
             commandRegistry,
             stateStore,
@@ -105,6 +145,8 @@ public sealed class MainWindowCommandTests {
     }
 
     private sealed class TestLoggingService : ILoggingService {
+        public List<string> InfoMessages { get; } = [];
+
         public void Log(LogLevel level, string message, Exception? ex = null) {
         }
 
@@ -115,6 +157,7 @@ public sealed class MainWindowCommandTests {
         }
 
         public void Info(string message) {
+            InfoMessages.Add(message);
         }
 
         public void Warning(string message) {

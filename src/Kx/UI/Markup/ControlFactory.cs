@@ -150,6 +150,9 @@ public static class ControlFactory {
         if (config.Text is not null)
             button.Text = config.Text;
 
+        if (!string.IsNullOrWhiteSpace(config.Color))
+            button.ForegroundColor = SKColor.Parse(config.Color);
+
         if (config.Font is not null)
             button.FontSize = config.Font.Size;
 

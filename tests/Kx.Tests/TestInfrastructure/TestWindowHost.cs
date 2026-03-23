@@ -73,4 +73,12 @@ internal sealed class TestWindowHost : IWindowHost {
     public void RaiseClosed(bool userInitiated = true) {
         Closed?.Invoke(new ClosedEvent(userInitiated));
     }
+
+    public void RaiseKeyDown(KeyCode key, bool isRepeat = false) {
+        KeyDown?.Invoke(new KeyEvent(key, isRepeat));
+    }
+
+    public void RaiseKeyUp(KeyCode key, bool isRepeat = false) {
+        KeyUp?.Invoke(new KeyEvent(key, isRepeat));
+    }
 }
