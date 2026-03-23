@@ -119,6 +119,85 @@ public sealed class ControlFactoryBindingTests {
     }
 
     [Fact]
+    public void WhenListBoxBindingsChangeThenItemsAndSelectionUpdate() {
+        var context = new TestVisualContext();
+        context.State.Set("updater.news.items", new[] { "First", "Second" });
+        context.State.Set("updater.news.selectedIndex", 1);
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "ListBox",
+            Id = "news",
+            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                ["itemsBinding"] = "updater.news.items",
+                ["selectedIndexBinding"] = "updater.news.selectedIndex"
+            }
+        });
+
+        var listBox = Assert.IsType<Kx.UI.Elements.ListBox>(control);
+        Assert.Equal(2, listBox.Items.Count);
+        Assert.Equal(1, listBox.SelectedIndex);
+    }
+
+    [Fact]
+    public void WhenListBoxVisualPropertiesAreConfiguredThenTheyAreApplied() {
+        var context = new TestVisualContext();
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "ListBox",
+            Id = "news",
+            Color = "#F5F5F5",
+            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                ["backgroundColor"] = "#101010",
+                ["borderColor"] = "#7C6E4B",
+                ["borderThickness"] = "3",
+                ["scrollBarColor"] = "#7C6E4B",
+                ["glowEnabled"] = "true",
+                ["glowColor"] = "#FFFFFF",
+                ["glowRadius"] = "6",
+                ["selectedItemColor"] = "#6F613F",
+                ["selectedItemBorderColor"] = "#E8D9B4",
+                ["hoveredItemColor"] = "#2F2A1D",
+                ["separatorColor"] = "#5C5238"
+            }
+        });
+
+        var listBox = Assert.IsType<Kx.UI.Elements.ListBox>(control);
+        Assert.True(listBox.GlowEnabled);
+        Assert.Equal(SKColor.Parse("#7C6E4B"), listBox.ScrollBarColor);
+        Assert.Equal(SKColor.Parse("#E8D9B4"), listBox.SelectedItemBorderColor);
+    }
+
+    [Fact]
+    public void WhenVisualOffsetPropertiesAreConfiguredThenControlLayoutIsShifted() {
+        var context = new TestVisualContext();
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "Label",
+            Id = "title",
+            Text = "Title",
+            Bounds = new BoundsConfig {
+                X = 10,
+                Y = 0,
+                Width = 100,
+                Height = 20
+            },
+            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                ["visualOffsetY"] = "-8"
+            }
+        });
+
+        control.Arrange(new Rectangle(0, 0, 400, 200), 1f);
+
+        Assert.Equal(-8, control.LayoutRect.Y);
+    }
+
+    [Fact]
     public void WhenButtonColorIsConfiguredThenForegroundColorIsApplied() {
         var context = new TestVisualContext();
         var registry = CreateControlRegistry();
@@ -138,6 +217,7 @@ public sealed class ControlFactoryBindingTests {
         var registry = new ControlRegistry();
         registry.Register("Label", (context, config) => new Kx.UI.Elements.Label(context, config.Id, config.Text ?? string.Empty, config.Font?.Size ?? 14f));
         registry.Register("Button", (context, config) => new Kx.UI.Elements.Button(context, config.Id, config.Text ?? string.Empty));
+        registry.Register("ListBox", (context, config) => new Kx.UI.Elements.ListBox(context, config.Id));
         registry.Register("TextBox", (context, config) => new Kx.UI.Elements.TextBox(context, config.Id, config.Text ?? string.Empty));
         registry.Register("ProgressBar", (context, config) => new Kx.UI.Elements.ProgressBar(context, config.Id));
         registry.Register("StackPanel", (context, config) => new StackPanel(context, config.Id));

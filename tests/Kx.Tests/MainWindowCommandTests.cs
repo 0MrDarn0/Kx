@@ -18,6 +18,7 @@ public sealed class MainWindowCommandTests {
     private static readonly UiStateKey<string> _statusState = new("updater.status");
     private static readonly UiStateKey<string> _primaryButtonTextState = new("updater.buttons.start");
     private static readonly UiStateKey<bool> _primaryButtonEnabledState = new("updater.buttons.primaryEnabled");
+    private static readonly UiStateKey<bool> _progressVisibleState = new("updater.progressVisible");
     private static readonly UiStateKey<bool> _settingsButtonEnabledState = new("updater.buttons.settingsEnabled");
 
     [Fact]
@@ -71,6 +72,8 @@ public sealed class MainWindowCommandTests {
         Assert.False(isEnabled);
         Assert.True(stateStore.TryGet(_settingsButtonEnabledState, out bool settingsEnabled));
         Assert.False(settingsEnabled);
+        Assert.True(stateStore.TryGet(_progressVisibleState, out bool progressVisible));
+        Assert.False(progressVisible);
         Assert.True(stateStore.TryGet(_primaryButtonTextState, out var buttonText));
         Assert.Equal("Start", buttonText);
     }

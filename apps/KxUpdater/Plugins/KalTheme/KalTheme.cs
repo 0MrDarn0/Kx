@@ -12,7 +12,7 @@ public sealed class KalTheme : IPlugin {
         new("MainWindow", "UpdaterFrame", "KalOnline", "updater")
     ];
 
-    public string Name => "KalOnline";
+    public string Name => "KalTheme";
 
     public void Initialize(IPluginContext context) {
         ArgumentNullException.ThrowIfNull(context);

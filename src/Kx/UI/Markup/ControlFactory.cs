@@ -58,6 +58,11 @@ public static class ControlFactory {
                 config.Bounds.Height);
         }
 
+        bool hasVisualOffsetX = TryGetIntProperty(config, "visualOffsetX", out int visualOffsetX);
+        bool hasVisualOffsetY = TryGetIntProperty(config, "visualOffsetY", out int visualOffsetY);
+        if (hasVisualOffsetX || hasVisualOffsetY)
+            control.VisualOffset = new Point(visualOffsetX, visualOffsetY);
+
         control.GridRow = config.GridRow;
         control.GridColumn = config.GridColumn;
         control.GridRowSpan = Math.Max(1, config.GridRowSpan);
@@ -70,6 +75,10 @@ public static class ControlFactory {
 
             case Kx.UI.Elements.Button button:
                 ApplyButtonProperties(actionRegistry, visualContext, button, config);
+                break;
+
+            case Kx.UI.Elements.ListBox listBox:
+                ApplyListBoxProperties(listBox, config);
                 break;
 
             case Kx.UI.Elements.TextBox textBox:
@@ -115,6 +124,11 @@ public static class ControlFactory {
                 BindText(button, config.TextBinding);
                 BindEnabled(button, config.EnabledBinding);
                 BindFontSize(button, config.FontSizeBinding);
+                break;
+
+            case Kx.UI.Elements.ListBox listBox:
+                BindItems(listBox, GetProperty(config, "itemsBinding"));
+                BindSelectedIndex(listBox, GetProperty(config, "selectedIndexBinding"));
                 break;
 
             case Kx.UI.Elements.TextBox textBox:
@@ -208,6 +222,51 @@ public static class ControlFactory {
             textBox.GlowRadius = glowRadius;
     }
 
+    private static void ApplyListBoxProperties(Kx.UI.Elements.ListBox listBox, ControlConfig config) {
+        if (!string.IsNullOrWhiteSpace(config.Color))
+            listBox.ForegroundColor = SKColor.Parse(config.Color);
+
+        if (config.Font is not null) {
+            listBox.FontFamily = config.Font.Name;
+            listBox.FontSize = config.Font.Size;
+            listBox.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
+            listBox.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
+            listBox.BackgroundColor = backgroundColor;
+
+        if (TryGetColorProperty(config, "borderColor", out var borderColor))
+            listBox.BorderColor = borderColor;
+
+        if (TryGetColorProperty(config, "scrollBarColor", out var scrollBarColor))
+            listBox.ScrollBarColor = scrollBarColor;
+
+        if (TryGetColorProperty(config, "selectedItemColor", out var selectedItemColor))
+            listBox.SelectedItemColor = selectedItemColor;
+
+        if (TryGetColorProperty(config, "selectedItemBorderColor", out var selectedItemBorderColor))
+            listBox.SelectedItemBorderColor = selectedItemBorderColor;
+
+        if (TryGetColorProperty(config, "hoveredItemColor", out var hoveredItemColor))
+            listBox.HoveredItemColor = hoveredItemColor;
+
+        if (TryGetColorProperty(config, "separatorColor", out var separatorColor))
+            listBox.SeparatorColor = separatorColor;
+
+        if (TryGetFloatProperty(config, "borderThickness", out var borderThickness))
+            listBox.BorderThickness = borderThickness;
+
+        if (TryGetBoolProperty(config, "glowEnabled", out var glowEnabled))
+            listBox.GlowEnabled = glowEnabled;
+
+        if (TryGetColorProperty(config, "glowColor", out var glowColor))
+            listBox.GlowColor = glowColor;
+
+        if (TryGetFloatProperty(config, "glowRadius", out var glowRadius))
+            listBox.GlowRadius = glowRadius;
+    }
+
     private static void ApplyProgressBarProperties(Kx.UI.Elements.ProgressBar progressBar, ControlConfig config) {
         if (TryGetColorProperty(config, "fillColor", out var fillColor))
             progressBar.FillColor = fillColor;
@@ -286,6 +345,51 @@ public static class ControlFactory {
             if (UiStateValueConverter.TryGetText(value, out var text))
                 label.Text.Value = text;
         });
+    }
+
+    private static void BindItems(Kx.UI.Elements.ListBox listBox, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(listBox, path, value => {
+            switch (value) {
+                case IEnumerable<string> items:
+                    listBox.SetItems(items);
+                    break;
+
+                case IEnumerable<object?> rawItems:
+                    listBox.SetItems(rawItems.Select(item => item?.ToString() ?? string.Empty));
+                    break;
+
+                case string item:
+                    listBox.SetItems([item]);
+                    break;
+
+                default:
+                    listBox.SetItems([]);
+                    break;
+            }
+        });
+    }
+
+    private static void BindSelectedIndex(Kx.UI.Elements.ListBox listBox, string? path) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        if (!UiBindingExpression.TryParse(path, out var binding) || binding is null)
+            throw new InvalidOperationException($"The binding expression '{path}' is invalid.");
+
+        ApplyStateValue(listBox.Context, binding, value => {
+            if (UiStateValueConverter.TryGetInt(value, out var selectedIndex))
+                listBox.SetSelectedIndex(selectedIndex, notify: false);
+        });
+
+        listBox.TrackDisposable(listBox.Context.State.Subscribe(binding.Path, value => ApplyStateValue(listBox.Context, binding, value, convertedValue => {
+            if (UiStateValueConverter.TryGetInt(convertedValue, out var selectedIndex))
+                listBox.SetSelectedIndex(selectedIndex, notify: false);
+        })));
+
+        listBox.SelectedIndexChanged += (selectedIndex, _) => listBox.Context.State.Set(binding.Path, selectedIndex);
     }
 
     private static void BindText(Kx.UI.Elements.TextBox textBox, string? path) {
@@ -458,6 +562,10 @@ public static class ControlFactory {
 
     private static bool TryGetFloatProperty(ControlConfig config, string key, out float value) {
         return float.TryParse(GetProperty(config, key), out value);
+    }
+
+    private static bool TryGetIntProperty(ControlConfig config, string key, out int value) {
+        return int.TryParse(GetProperty(config, key), out value);
     }
 
     private static bool TryGetColorProperty(ControlConfig config, string key, out SKColor color) {

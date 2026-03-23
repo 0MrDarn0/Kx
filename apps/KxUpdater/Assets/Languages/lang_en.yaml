@@ -37,6 +37,7 @@ info:
   current_version: "Current Version: {0}"
   latest_version: "Latest Version: {0}"
   changelog_loading: "Loading changelog..."
+  news_latest: "Latest News"
   overlay_hotkeys: "Debug overlays: Ctrl+Shift+D cycles presets, Ctrl+Shift+0 turns overlays off, Ctrl+Shift+1 shows layout, Ctrl+Shift+2 shows hierarchy, Ctrl+Shift+3 shows inspect mode."
 
 error:

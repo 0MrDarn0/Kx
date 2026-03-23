@@ -37,6 +37,7 @@ info:
   current_version: "Derzeitige Version: {0}"
   latest_version: "Letzte Version: {0}"
   changelog_loading: "Lade Changelog..."
+  news_latest: "Neueste Meldung"
   overlay_hotkeys: "Debug-Overlays: Strg+Umschalt+D wechselt Presets, Strg+Umschalt+0 schaltet Overlays aus, Strg+Umschalt+1 zeigt Layout, Strg+Umschalt+2 zeigt Hierarchie, Strg+Umschalt+3 zeigt Inspect-Modus."
 
 error:

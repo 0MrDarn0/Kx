@@ -36,7 +36,10 @@ public sealed class MainWindow : Window {
     private static readonly UiStateKey<string> _subtitleState = new("updater.subtitle");
     private static readonly UiStateKey<string> _statusState = new("updater.status");
     private static readonly UiStateKey<string> _changelogState = new("updater.changelog");
+    private static readonly UiStateKey<string[]> _newsTitlesState = new("updater.news.items");
+    private static readonly UiStateKey<int> _newsSelectedIndexState = new("updater.news.selectedIndex");
     private static readonly UiStateKey<float> _progressState = new("updater.progress");
+    private static readonly UiStateKey<bool> _progressVisibleState = new("updater.progressVisible");
     private static readonly UiStateKey<string> _startButtonTextState = new("updater.buttons.start");
     private static readonly UiStateKey<bool> _primaryButtonEnabledState = new("updater.buttons.primaryEnabled");
     private static readonly UiStateKey<bool> _updateRequiredState = new("updater.buttons.updateRequired");
@@ -45,6 +48,8 @@ public sealed class MainWindow : Window {
     private static readonly UiStateKey<string> _websiteButtonTextState = new("updater.buttons.website");
 
     private readonly AppConfig _appConfig;
+    private IReadOnlyList<NewsEntry> _newsEntries = [];
+    private IDisposable? _newsSelectionSubscription;
     private bool _updaterEventsRegistered;
     private bool _initialUpdateCheckStarted;
     private bool _primaryActionInProgress;
@@ -57,6 +62,8 @@ public sealed class MainWindow : Window {
 
     protected override void OnInitialize() {
         base.OnInitialize();
+
+        EnsureNewsSelectionBinding();
 
         InitializeUpdaterState();
 
@@ -100,7 +107,10 @@ public sealed class MainWindow : Window {
         StateStore.Set(_subtitleState, LanguageService.Translate("app.subtitle"));
         StateStore.Set(_statusState, LanguageService.Translate("status.waiting"));
         StateStore.Set(_changelogState, LanguageService.Translate("info.changelog_loading"));
+        StateStore.Set(_newsTitlesState, []);
+        StateStore.Set(_newsSelectedIndexState, -1);
         StateStore.Set(_progressState, 0f);
+        StateStore.Set(_progressVisibleState, false);
         StateStore.Set(_startButtonTextState, LanguageService.Translate("button.start"));
         StateStore.Set(_primaryButtonEnabledState, false);
         StateStore.Set(_updateRequiredState, false);
@@ -116,7 +126,7 @@ public sealed class MainWindow : Window {
 
         _updaterEventsRegistered = true;
         _ctx.Events.Register<StatusEvent>(updateStatus => StateStore.Set(_statusState, updateStatus.Text));
-        _ctx.Events.Register<ChangelogEvent>(changelog => StateStore.Set(_changelogState, changelog.Text));
+        _ctx.Events.Register<ChangelogEvent>(changelog => ApplyChangelogEntries(changelog.Text));
         _ctx.Events.Register<ProgressEvent>(progress => StateStore.Set(_progressState, progress.Percent));
         _ctx.Events.Register<UpdateRequired>(_ => SetUpdaterInteractionState(updateRequired: true, primaryEnabled: true, settingsEnabled: false));
         _ctx.Events.Register<UpdatePipelineStarted>(_ => SetUpdaterInteractionState(GetUpdateRequiredState(), primaryEnabled: false, settingsEnabled: false));
@@ -191,10 +201,17 @@ public sealed class MainWindow : Window {
 
         var runner = new UpdaterPipelineRunner(_ctx.Events, new HttpUpdateSource(), _appConfig.Updater.Url, AppContext.BaseDirectory);
         SetUpdaterInteractionState(updateRequired: true, primaryEnabled: false, settingsEnabled: false);
-        await runner.RunAsync(AppContext.BaseDirectory);
+        StateStore.Set(_progressVisibleState, true);
 
-        if (GetUpdateRequiredState())
-            SetUpdaterInteractionState(updateRequired: true, primaryEnabled: true, settingsEnabled: false);
+        try {
+            await runner.RunAsync(AppContext.BaseDirectory);
+
+            if (GetUpdateRequiredState())
+                SetUpdaterInteractionState(updateRequired: true, primaryEnabled: true, settingsEnabled: false);
+        }
+        finally {
+            StateStore.Set(_progressVisibleState, false);
+        }
     }
 
     private void ExecuteProcessCommand(ProcessLaunchConfig config, string notConfiguredStatusKey, string fileMissingStatusKey, string startedStatusKey, string failedStatusKey) {
@@ -306,6 +323,80 @@ public sealed class MainWindow : Window {
         return StateStore.TryGet(_primaryButtonEnabledState, out bool isEnabled) && isEnabled;
     }
 
+    private void EnsureNewsSelectionBinding() {
+        _newsSelectionSubscription ??= StateStore.Subscribe(_newsSelectedIndexState, selectedIndex => {
+            if (selectedIndex < 0 || selectedIndex >= _newsEntries.Count)
+                return;
+
+            StateStore.Set(_changelogState, _newsEntries[selectedIndex].Content);
+        });
+    }
+
+    private void ApplyChangelogEntries(string changelogText) {
+        _newsEntries = ParseNewsEntries(changelogText);
+        StateStore.Set(_newsTitlesState, _newsEntries.Select(entry => entry.Title).ToArray());
+
+        if (_newsEntries.Count == 0) {
+            StateStore.Set(_newsSelectedIndexState, -1);
+            StateStore.Set(_changelogState, changelogText);
+            return;
+        }
+
+        StateStore.Set(_newsSelectedIndexState, 0);
+    }
+
+    private static IReadOnlyList<NewsEntry> ParseNewsEntries(string changelogText) {
+        if (string.IsNullOrWhiteSpace(changelogText))
+            return [];
+
+        string normalizedText = changelogText.Replace("\r\n", "\n", StringComparison.Ordinal);
+        var lines = normalizedText.Split('\n');
+        List<NewsEntry> entries = [];
+        List<string> currentContent = [];
+        string? currentTitle = null;
+
+        foreach (string rawLine in lines) {
+            string line = rawLine.TrimEnd();
+            string trimmedLine = line.Trim();
+
+            if (trimmedLine.StartsWith("#", StringComparison.Ordinal)) {
+                AddNewsEntry(entries, currentTitle, currentContent);
+                currentTitle = trimmedLine.TrimStart('#', ' ');
+                currentContent.Clear();
+                continue;
+            }
+
+            if (currentTitle is null && !string.IsNullOrWhiteSpace(trimmedLine))
+                currentTitle = trimmedLine.Length <= 48 ? trimmedLine : trimmedLine[..48] + "...";
+
+            currentContent.Add(line);
+        }
+
+        AddNewsEntry(entries, currentTitle, currentContent);
+
+        if (entries.Count != 0)
+            return entries;
+
+        return [new NewsEntry(LanguageService.Translate("info.news_latest"), changelogText)];
+    }
+
+    private static void AddNewsEntry(List<NewsEntry> entries, string? title, List<string> contentLines) {
+        string content = string.Join(Environment.NewLine, contentLines).Trim();
+        if (string.IsNullOrWhiteSpace(content))
+            return;
+
+        string resolvedTitle = string.IsNullOrWhiteSpace(title)
+            ? content.Split(Environment.NewLine, 2, StringSplitOptions.None)[0].Trim()
+            : title.Trim();
+
+        entries.Add(new NewsEntry(resolvedTitle, content));
+    }
+
+    public override void Dispose() {
+        _newsSelectionSubscription?.Dispose();
+        base.Dispose();
+    }
+
     private void SetUpdaterInteractionState(bool updateRequired, bool primaryEnabled, bool settingsEnabled) {
         StateStore.Set(_updateRequiredState, updateRequired);
         StateStore.Set(_primaryButtonEnabledState, primaryEnabled);
@@ -356,4 +447,6 @@ public sealed class MainWindow : Window {
         grid.AddChild(btn_exit);
         _ctx.UIElementManager.Add(grid);
     }
+
+    private sealed record NewsEntry(string Title, string Content);
 }

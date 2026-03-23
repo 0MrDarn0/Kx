@@ -50,6 +50,9 @@ controls:
       y: 0
       width: 200
       height: 40
+    properties:
+      visualOffsetX: 0
+      visualOffsetY: -18
   - type: Button
     id: btn_exit
     text: ""

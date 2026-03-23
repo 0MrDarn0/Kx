@@ -18,6 +18,7 @@ public abstract class UIElement : Visual, IDockable {
     public Thickness Margin { get; set; } = new(0);
     public Thickness Padding { get; set; } = new(0);
     public Rectangle? FixedBounds { get; set; }
+    public Point VisualOffset { get; set; }
     public Rectangle LayoutRect { get; protected set; }
     public Size DesiredSize { get; protected set; }
     public Rectangle ContentRect => ApplyPadding(LayoutRect, Padding, DpiScale);
@@ -49,6 +50,7 @@ public abstract class UIElement : Visual, IDockable {
             finalRect = ResolveFixedBounds(finalRect, fixedBounds, dpi);
 
         finalRect = ApplyMargin(finalRect, Margin, dpi);
+        finalRect = ApplyVisualOffset(finalRect, VisualOffset, dpi);
         LayoutRect = finalRect;
         _bounds.Value = finalRect;
     }
@@ -178,7 +180,7 @@ public abstract class UIElement : Visual, IDockable {
             $"{GetType().Name}#{Id}  L:{Layer} Z:{ZIndex}  visible:{Visible} focused:{IsFocused}",
             $"bounds {FormatRectangle(Bounds)}  layout {FormatRectangle(LayoutRect)}  content {FormatRectangle(ContentRect)}",
             $"dock {Dock}  grid r{GridRow}/c{GridColumn}  span {GridRowSpan}x{GridColumnSpan}",
-            $"margin {FormatThickness(Margin)}  padding {FormatThickness(Padding)}  dpi {DpiScale:0.##}"
+            $"margin {FormatThickness(Margin)}  padding {FormatThickness(Padding)}  offset [{VisualOffset.X},{VisualOffset.Y}]  dpi {DpiScale:0.##}"
         ];
 
         if (FixedBounds is Rectangle fixedBounds)
@@ -227,6 +229,14 @@ public abstract class UIElement : Visual, IDockable {
             rect.Y + (int)(padding.Top * dpi),
             rect.Width - (int)(padding.Horizontal * dpi),
             rect.Height - (int)(padding.Vertical * dpi));
+    }
+
+    private static Rectangle ApplyVisualOffset(Rectangle rect, Point visualOffset, float dpi) {
+        return new Rectangle(
+            rect.X + (int)(visualOffset.X * dpi),
+            rect.Y + (int)(visualOffset.Y * dpi),
+            rect.Width,
+            rect.Height);
     }
 
     private static Rectangle ResolveFixedBounds(Rectangle layoutRect, Rectangle fixedBounds, float dpi) {

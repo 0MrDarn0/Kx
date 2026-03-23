@@ -6,6 +6,8 @@ param(
     [switch]$SkipClean
 )
 
+$stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+
 function Resolve-RepositoryRoot {
     param(
         [string[]]$CandidatePaths
@@ -59,13 +61,15 @@ if (-not $SkipClean) {
 }
 
 $projectFiles = Get-ChildItem -LiteralPath $rootPath -Recurse -Filter *.csproj -File -ErrorAction SilentlyContinue |
-    Where-Object { $_.FullName -notlike '*\bin\*' -and $_.FullName -notlike '*\obj\*' }
+    Where-Object { $_.FullName -notlike '*\bin\*' -and $_.FullName -notlike '*\obj\*' } |
+    Sort-Object FullName
 
 if (-not $projectFiles) {
     throw "No project files found under '$rootPath'."
 }
 
 $buildFailures = @()
+$builtProjects = @()
 
 foreach ($projectFile in $projectFiles) {
     $projectPath = $projectFile.FullName
@@ -74,14 +78,21 @@ foreach ($projectFile in $projectFiles) {
     }
 
     Write-Host "Building $projectPath"
-    & dotnet build $projectPath -c $Configuration
+    & dotnet msbuild $projectPath -restore -t:Build -p:Configuration=$Configuration
     if ($LASTEXITCODE -ne 0) {
         $buildFailures += $projectPath
+        continue
     }
+
+    $builtProjects += $projectPath
 }
+
+$stopwatch.Stop()
+$elapsed = $stopwatch.Elapsed.ToString('hh\:mm\:ss\.ff')
 
 if ($buildFailures.Count -gt 0) {
-    throw "Build failed for $($buildFailures.Count) project(s):`n$($buildFailures -join "`n")"
+    $failureSummary = ($buildFailures | ForEach-Object { " - $_" }) -join "`n"
+    throw "Build failed after $elapsed for $($buildFailures.Count) project(s):`n$failureSummary"
 }
 
-Write-Host "Done. Built $($projectFiles.Count) project(s) in $Configuration mode under '$rootPath'."
+Write-Host "Done in $elapsed. Built $($builtProjects.Count) project(s) in $Configuration mode under '$rootPath'."

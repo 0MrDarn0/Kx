@@ -100,6 +100,30 @@ internal static class UiStateValueConverter {
         }
     }
 
+    public static bool TryGetInt(object? value, out int result) {
+        switch (value) {
+            case int intValue:
+                result = intValue;
+                return true;
+
+            case float floatValue:
+                result = (int)floatValue;
+                return true;
+
+            case double doubleValue:
+                result = (int)doubleValue;
+                return true;
+
+            case string stringValue when int.TryParse(stringValue, out var parsed):
+                result = parsed;
+                return true;
+
+            default:
+                result = 0;
+                return false;
+        }
+    }
+
     public static bool TryGetText(object? value, out string text) {
         if (value is string stringValue) {
             text = stringValue;
