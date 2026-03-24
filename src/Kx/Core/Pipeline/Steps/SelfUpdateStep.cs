@@ -2,10 +2,11 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using Kx.Sdk.Events;
+
 using Kx.Core.Attributes;
 using Kx.Core.Event;
 using Kx.Core.Localization;
+using Kx.Sdk.Events;
 
 namespace Kx.Core.Pipeline.Steps;
 
