@@ -16,7 +16,7 @@ public class SelfUpdateStep(string rootDirectory) : IUpdateStep {
     public string Name => "SelfUpdate";
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
-        string newExe = Path.Combine(_rootDir, "KUpdater_new.exe");
+        string newExe = Path.Combine(_rootDir, "KxUpdater_new.exe");
         string bootstrapper = Path.Combine(_rootDir, "Bootstrapper.exe");
 
         // Prüfen ob neue Version und Bootstrapper vorhanden sind

@@ -1,7 +1,7 @@
 frame:
   style: Default
   default:
-    title: "KUpdater"
+    title: "KxUpdater"
     backgroundColor: "#1E1F22"
     titleBarColor: "#25262B"
     borderColor: "#3A3D46"

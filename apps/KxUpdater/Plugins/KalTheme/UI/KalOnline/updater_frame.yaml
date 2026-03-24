@@ -19,7 +19,7 @@ frame:
   fillWidthOffset: 12
   fillHeightOffset: 9
   default:
-    title: "KUpdater"
+    title: "KxUpdater"
     backgroundColor: "#1E1F22"
     titleBarColor: "#25262B"
     borderColor: "#3A3D46"
@@ -38,7 +38,7 @@ frame:
 controls:
   - type: Label
     id: title
-    text: "KUpdater"
+    text: "KxUpdater"
     layer: Frame
     color: "#FFA500"
     font:
