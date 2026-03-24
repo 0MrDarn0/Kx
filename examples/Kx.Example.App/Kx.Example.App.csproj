@@ -26,7 +26,8 @@
   <Target Name="CopyPluginExampleToBuildOutput" AfterTargets="Build">
     <PropertyGroup>
       <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>
-      <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
+      <PluginExamplePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</PluginExamplePlatformOutputSegment>
+      <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(PluginExamplePlatformOutputSegment)$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
       <PluginExampleTargetDir>$(TargetDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
       <PluginExampleMarkupTargetDir>$(PluginExampleTargetDir)Markup\</PluginExampleMarkupTargetDir>
       <PluginExampleAppRootMarkupDir>$(TargetDir)Markup\</PluginExampleAppRootMarkupDir>
@@ -57,7 +58,8 @@
   <Target Name="CopyPluginExampleToPublishOutput" AfterTargets="Publish">
     <PropertyGroup>
       <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>
-      <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
+      <PluginExamplePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</PluginExamplePlatformOutputSegment>
+      <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(PluginExamplePlatformOutputSegment)$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
       <PluginExampleTargetDir>$(PublishDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
       <PluginExampleMarkupTargetDir>$(PluginExampleTargetDir)Markup\</PluginExampleMarkupTargetDir>
       <PluginExamplePublishRootMarkupDir>$(PublishDir)Markup\</PluginExamplePublishRootMarkupDir>
