@@ -1,14 +1,14 @@
 frame:
   style: Image
-  topLeft: "Themes:KalOnline:Frame:top_left.png"
-  topCenter: "Themes:KalOnline:Frame:top_center.png"
-  topRight: "Themes:KalOnline:Frame:top_right.png"
-  rightCenter: "Themes:KalOnline:Frame:right_center.png"
-  bottomRight: "Themes:KalOnline:Frame:bottom_right.png"
-  bottomCenter: "Themes:KalOnline:Frame:bottom_center.png"
-  bottomLeft: "Themes:KalOnline:Frame:bottom_left.png"
-  leftCenter: "Themes:KalOnline:Frame:left_center.png"
-  fillBitmap: "Themes:KalOnline:Frame:fill_bitmap.bmp"
+  topLeft: "Plugins:KalTheme:Themes:KalOnline:Frame:top_left.png"
+  topCenter: "Plugins:KalTheme:Themes:KalOnline:Frame:top_center.png"
+  topRight: "Plugins:KalTheme:Themes:KalOnline:Frame:top_right.png"
+  rightCenter: "Plugins:KalTheme:Themes:KalOnline:Frame:right_center.png"
+  bottomRight: "Plugins:KalTheme:Themes:KalOnline:Frame:bottom_right.png"
+  bottomCenter: "Plugins:KalTheme:Themes:KalOnline:Frame:bottom_center.png"
+  bottomLeft: "Plugins:KalTheme:Themes:KalOnline:Frame:bottom_left.png"
+  leftCenter: "Plugins:KalTheme:Themes:KalOnline:Frame:left_center.png"
+  fillBitmap: "Plugins:KalTheme:Themes:KalOnline:Frame:fill_bitmap.bmp"
   fillColor: "#282828"
   useFillColor: false
   topWidthOffset: 7
@@ -58,9 +58,9 @@ controls:
     text: ""
     color: "#FFA500"
     layer: Frame
-    normalImage: "Themes:KalOnline:Buttons:btn_exit_normal.png"
-    hoverImage: "Themes:KalOnline:Buttons:btn_exit_hover.png"
-    pressedImage: "Themes:KalOnline:Buttons:btn_exit_click.png"
+    normalImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_exit_normal.png"
+    hoverImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_exit_hover.png"
+    pressedImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_exit_click.png"
     onClick: closeWindow
     bounds:
       x: -16
