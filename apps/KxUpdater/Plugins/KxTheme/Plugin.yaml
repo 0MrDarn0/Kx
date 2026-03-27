@@ -1,0 +1,7 @@
+name: KxTheme
+version: 1.0.0
+apiVersion: 1.0.0
+entryType: KxUpdater.Plugin.KxTheme
+description: "KxTheme updater visual theme plugin"
+author: "Christian Schnuck"
+dependencies: []

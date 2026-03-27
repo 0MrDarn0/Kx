@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
 using Kx.Core.DI;
 using Kx.Sdk.DI;
 using Kx.Sdk.Logging;
@@ -6,15 +9,16 @@ using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.Themes;
 using Kx.UI.Markup;
 using Kx.UI.Themes;
+
 using KxUpdater.Plugin;
 
 namespace Kx.Tests;
 
-public sealed class KalThemeTests {
+public sealed class KxThemeTests {
     [Fact]
-    public void WhenKalThemeInitializesThenItRegistersUpdaterFrameTheme() {
+    public void WhenKxThemeInitializesThenItRegistersUpdaterFrameTheme() {
         using var testContext = new TestPluginContext();
-        var plugin = new KalTheme();
+        var plugin = new KxTheme();
 
         plugin.Initialize(testContext);
 
@@ -24,9 +28,9 @@ public sealed class KalThemeTests {
     }
 
     [Fact]
-    public void WhenKalThemeInitializesThenItRegistersMainWindowDefinition() {
+    public void WhenKxThemeInitializesThenItRegistersMainWindowDefinition() {
         using var testContext = new TestPluginContext();
-        var plugin = new KalTheme();
+        var plugin = new KxTheme();
 
         plugin.Initialize(testContext);
 
@@ -36,9 +40,9 @@ public sealed class KalThemeTests {
     }
 
     [Fact]
-    public void WhenKalThemeInitializesThenMainWindowContainsContentControls() {
+    public void WhenKxThemeInitializesThenMainWindowContainsContentControls() {
         using var testContext = new TestPluginContext();
-        var plugin = new KalTheme();
+        var plugin = new KxTheme();
 
         plugin.Initialize(testContext);
 

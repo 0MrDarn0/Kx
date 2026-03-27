@@ -29,92 +29,88 @@
     </Content>
   </ItemGroup>
 
-  <Target Name="BuildKalThemePlugin">
+  <ItemGroup>
+    <Compile Include="Plugins\KxTheme\KxTheme.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Plugins\KxTheme\KxTheme.csproj" />
+    <None Include="Plugins\KxTheme\Plugin.yaml" />
+    <None Include="Plugins\KxTheme\UI\KalOnline\updater_content.yaml" />
+    <None Include="Plugins\KxTheme\UI\KalOnline\updater_frame.yaml" />
+  </ItemGroup>
+
+  <Target Name="BuildKxThemePlugin">
     <PropertyGroup>
-      <KalThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KalTheme\</KalThemeProjectDir>
-      <KalThemeProjectFile>$(KalThemeProjectDir)KalTheme.csproj</KalThemeProjectFile>
-      <KalThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KalThemePlatformOutputSegment>
-      <KalThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KalThemeRuntimeOutputSegment>
+      <KxThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KxTheme\</KxThemeProjectDir>
+      <KxThemeProjectFile>$(KxThemeProjectDir)KxTheme.csproj</KxThemeProjectFile>
+      <KxThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KxThemePlatformOutputSegment>
+      <KxThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KxThemeRuntimeOutputSegment>
     </PropertyGroup>
 
-    <MSBuild Projects="$(KalThemeProjectFile)"
-             Targets="Restore;Build"
-             Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);TargetFramework=$(TargetFramework)" />
+    <MSBuild Projects="$(KxThemeProjectFile)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);TargetFramework=$(TargetFramework)" />
   </Target>
 
-  <Target Name="CopyKalThemeToBuildOutput" AfterTargets="Build" DependsOnTargets="BuildKalThemePlugin">
+  <Target Name="CopyKxThemeToBuildOutput" AfterTargets="Build" DependsOnTargets="BuildKxThemePlugin">
     <PropertyGroup>
-      <KalThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KalTheme\</KalThemeProjectDir>
-      <KalThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KalThemePlatformOutputSegment>
-      <KalThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KalThemeRuntimeOutputSegment>
-      <KalThemeOutputDir>$(KalThemeProjectDir)bin\$(KalThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KalThemeRuntimeOutputSegment)</KalThemeOutputDir>
-      <KalThemeTargetDir>$(TargetDir)Assets\Plugins\KalTheme\</KalThemeTargetDir>
-      <KalThemeUiTargetDir>$(KalThemeTargetDir)UI\</KalThemeUiTargetDir>
-      <KalThemeAssetTargetDir>$(TargetDir)Assets\</KalThemeAssetTargetDir>
+      <KxThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KxTheme\</KxThemeProjectDir>
+      <KxThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KxThemePlatformOutputSegment>
+      <KxThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KxThemeRuntimeOutputSegment>
+      <KxThemeOutputDir>$(KxThemeProjectDir)bin\$(KxThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KxThemeRuntimeOutputSegment)</KxThemeOutputDir>
+      <KxThemeTargetDir>$(TargetDir)Assets\Plugins\KxTheme\</KxThemeTargetDir>
+      <KxThemeUiTargetDir>$(KxThemeTargetDir)UI\</KxThemeUiTargetDir>
+      <KxThemeAssetTargetDir>$(TargetDir)Assets\</KxThemeAssetTargetDir>
     </PropertyGroup>
 
     <RemoveDir Directories="$(TargetDir)UI" Condition="Exists('$(TargetDir)UI')" />
     <Delete Files="$(TargetDir)Plugin.yaml" Condition="Exists('$(TargetDir)Plugin.yaml')" />
 
-    <MakeDir Directories="$(KalThemeTargetDir);$(KalThemeUiTargetDir);$(KalThemeAssetTargetDir)" />
+    <MakeDir Directories="$(KxThemeTargetDir);$(KxThemeUiTargetDir);$(KxThemeAssetTargetDir)" />
 
     <ItemGroup>
-      <KalThemeFiles Include="$(KalThemeOutputDir)KalTheme.dll" />
-      <KalThemeFiles Include="$(KalThemeOutputDir)KalTheme.pdb" Condition="Exists('$(KalThemeOutputDir)KalTheme.pdb')" />
-      <KalThemeFiles Include="$(KalThemeOutputDir)Plugin.yaml" />
-      <KalThemeUiFiles Include="$(KalThemeOutputDir)UI\**\*.yaml" />
-      <KalThemeAssetFiles Include="$(KalThemeOutputDir)Assets\**\*" />
+      <KxThemeFiles Include="$(KxThemeOutputDir)KxTheme.dll" />
+      <KxThemeFiles Include="$(KxThemeOutputDir)KxTheme.pdb" Condition="Exists('$(KxThemeOutputDir)KxTheme.pdb')" />
+      <KxThemeFiles Include="$(KxThemeOutputDir)Plugin.yaml" />
+      <KxThemeUiFiles Include="$(KxThemeOutputDir)UI\**\*.yaml" />
+      <KxThemeAssetFiles Include="$(KxThemeOutputDir)Assets\**\*" />
     </ItemGroup>
 
-    <Copy SourceFiles="@(KalThemeFiles)"
-          DestinationFiles="@(KalThemeFiles->'$(KalThemeTargetDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(KxThemeFiles)" DestinationFiles="@(KxThemeFiles->'$(KxThemeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 
-    <Copy SourceFiles="@(KalThemeUiFiles)"
-          DestinationFiles="@(KalThemeUiFiles->'$(KalThemeUiTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(KxThemeUiFiles)" DestinationFiles="@(KxThemeUiFiles->'$(KxThemeUiTargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 
-    <Copy SourceFiles="@(KalThemeAssetFiles)"
-          DestinationFiles="@(KalThemeAssetFiles->'$(KalThemeAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(KxThemeAssetFiles)" DestinationFiles="@(KxThemeAssetFiles->'$(KxThemeAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="CopyKalThemeToPublishOutput" AfterTargets="Publish" DependsOnTargets="BuildKalThemePlugin">
+  <Target Name="CopyKxThemeToPublishOutput" AfterTargets="Publish" DependsOnTargets="BuildKxThemePlugin">
     <PropertyGroup>
-      <KalThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KalTheme\</KalThemeProjectDir>
-      <KalThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KalThemePlatformOutputSegment>
-      <KalThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KalThemeRuntimeOutputSegment>
-      <KalThemeOutputDir>$(KalThemeProjectDir)bin\$(KalThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KalThemeRuntimeOutputSegment)</KalThemeOutputDir>
-      <KalThemeTargetDir>$(PublishDir)Assets\Plugins\KalTheme\</KalThemeTargetDir>
-      <KalThemeUiTargetDir>$(KalThemeTargetDir)UI\</KalThemeUiTargetDir>
-      <KalThemeAssetTargetDir>$(PublishDir)Assets\</KalThemeAssetTargetDir>
+      <KxThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KxTheme\</KxThemeProjectDir>
+      <KxThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KxThemePlatformOutputSegment>
+      <KxThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KxThemeRuntimeOutputSegment>
+      <KxThemeOutputDir>$(KxThemeProjectDir)bin\$(KxThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KxThemeRuntimeOutputSegment)</KxThemeOutputDir>
+      <KxThemeTargetDir>$(PublishDir)Assets\Plugins\KxTheme\</KxThemeTargetDir>
+      <KxThemeUiTargetDir>$(KxThemeTargetDir)UI\</KxThemeUiTargetDir>
+      <KxThemeAssetTargetDir>$(PublishDir)Assets\</KxThemeAssetTargetDir>
     </PropertyGroup>
 
     <RemoveDir Directories="$(PublishDir)UI" Condition="Exists('$(PublishDir)UI')" />
     <Delete Files="$(PublishDir)Plugin.yaml" Condition="Exists('$(PublishDir)Plugin.yaml')" />
-    <Delete Files="$(KalThemeTargetDir)KalTheme.deps.json;$(KalThemeTargetDir)Kx.Sdk.dll;$(KalThemeTargetDir)Kx.Sdk.pdb;$(KalThemeTargetDir)Kx.Sdk.xml"
-            Condition="Exists('$(KalThemeTargetDir)KalTheme.deps.json') Or Exists('$(KalThemeTargetDir)Kx.Sdk.dll') Or Exists('$(KalThemeTargetDir)Kx.Sdk.pdb') Or Exists('$(KalThemeTargetDir)Kx.Sdk.xml')" />
+    <Delete Files="$(KxThemeTargetDir)KxTheme.deps.json;$(KxThemeTargetDir)Kx.Sdk.dll;$(KxThemeTargetDir)Kx.Sdk.pdb;$(KxThemeTargetDir)Kx.Sdk.xml" Condition="Exists('$(KxThemeTargetDir)KxTheme.deps.json') Or Exists('$(KxThemeTargetDir)Kx.Sdk.dll') Or Exists('$(KxThemeTargetDir)Kx.Sdk.pdb') Or Exists('$(KxThemeTargetDir)Kx.Sdk.xml')" />
 
-    <MakeDir Directories="$(KalThemeTargetDir);$(KalThemeUiTargetDir);$(KalThemeAssetTargetDir)" />
+    <MakeDir Directories="$(KxThemeTargetDir);$(KxThemeUiTargetDir);$(KxThemeAssetTargetDir)" />
 
     <ItemGroup>
-      <KalThemePublishFiles Include="$(KalThemeOutputDir)KalTheme.dll" />
-      <KalThemePublishFiles Include="$(KalThemeOutputDir)Plugin.yaml" />
-      <KalThemePublishUiFiles Include="$(KalThemeOutputDir)UI\**\*.yaml" />
-      <KalThemePublishAssetFiles Include="$(KalThemeOutputDir)Assets\**\*" />
+      <KxThemePublishFiles Include="$(KxThemeOutputDir)KxTheme.dll" />
+      <KxThemePublishFiles Include="$(KxThemeOutputDir)Plugin.yaml" />
+      <KxThemePublishUiFiles Include="$(KxThemeOutputDir)UI\**\*.yaml" />
+      <KxThemePublishAssetFiles Include="$(KxThemeOutputDir)Assets\**\*" />
     </ItemGroup>
 
-    <Copy SourceFiles="@(KalThemePublishFiles)"
-          DestinationFolder="$(KalThemeTargetDir)"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(KxThemePublishFiles)" DestinationFolder="$(KxThemeTargetDir)" SkipUnchangedFiles="true" />
 
-    <Copy SourceFiles="@(KalThemePublishUiFiles)"
-          DestinationFiles="@(KalThemePublishUiFiles->'$(KalThemeUiTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(KxThemePublishUiFiles)" DestinationFiles="@(KxThemePublishUiFiles->'$(KxThemeUiTargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
 
-    <Copy SourceFiles="@(KalThemePublishAssetFiles)"
-          DestinationFiles="@(KalThemePublishAssetFiles->'$(KalThemeAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(KxThemePublishAssetFiles)" DestinationFiles="@(KxThemePublishAssetFiles->'$(KxThemeAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
   <Target Name="RemoveSingleFilePublishSymbols" AfterTargets="Publish" Condition="'$(PublishSingleFile)' == 'true'">

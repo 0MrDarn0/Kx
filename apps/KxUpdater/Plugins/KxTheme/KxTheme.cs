@@ -7,12 +7,12 @@ using Kx.Sdk.UI.Themes;
 
 namespace KxUpdater.Plugin;
 
-public sealed class KalTheme : IPlugin {
+public sealed class KxTheme : IPlugin {
     private static readonly WindowMarkupPair[] _windowMarkupPairs = [
         new("MainWindow", "UpdaterFrame", "KalOnline", "updater")
     ];
 
-    public string Name => "KalTheme";
+    public string Name => "KxTheme";
 
     public void Initialize(IPluginContext context) {
         ArgumentNullException.ThrowIfNull(context);
@@ -55,11 +55,10 @@ public sealed class KalTheme : IPlugin {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
         return Path.Combine(
-            Path.GetDirectoryName(typeof(KalTheme).Assembly.Location) ?? AppContext.BaseDirectory,
+            Path.GetDirectoryName(typeof(KxTheme).Assembly.Location) ?? AppContext.BaseDirectory,
             "UI",
             styleName,
             fileName);
     }
-
     private readonly record struct WindowMarkupPair(string WindowName, string ThemeName, string StyleName, string WindowKey);
 }

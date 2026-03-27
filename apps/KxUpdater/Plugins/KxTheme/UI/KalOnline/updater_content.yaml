@@ -214,9 +214,9 @@ controls:
               top: 0
               right: 4
               bottom: 0
-            normalImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_click.png"
+            normalImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_click.png"
             font:
               name: "Segoe UI"
               size: 11
@@ -234,9 +234,9 @@ controls:
               top: 0
               right: 4
               bottom: 0
-            normalImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_click.png"
+            normalImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_click.png"
             font:
               name: "Segoe UI"
               size: 11
@@ -254,9 +254,9 @@ controls:
               top: 0
               right: 4
               bottom: 0
-            normalImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Themes:KalOnline:Buttons:btn_default_click.png"
+            normalImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_default_click.png"
             font:
               name: "Segoe UI"
               size: 11
