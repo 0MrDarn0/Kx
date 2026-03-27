@@ -24,7 +24,7 @@ public sealed class KxThemeTests {
 
         Assert.True(testContext.ThemeRegistry.TryGet("UpdaterFrame", out var theme));
         Assert.NotNull(theme);
-        Assert.Equal("Themes:KalOnline:Frame:top_left.png", theme!.Frame.TopLeft);
+        Assert.Equal("Plugins:KxTheme:Themes:KalOnline:Frame:top_left.png", theme!.Frame.TopLeft);
     }
 
     [Fact]

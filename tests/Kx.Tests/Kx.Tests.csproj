@@ -22,5 +22,6 @@
     <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
     <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
     <ProjectReference Include="..\..\apps\KxUpdater\KxUpdater.csproj" />
+    <ProjectReference Include="..\..\apps\KxUpdater\Plugins\KxTheme\KxTheme.csproj" />
   </ItemGroup>
 </Project>
