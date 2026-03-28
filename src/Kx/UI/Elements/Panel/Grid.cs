@@ -41,6 +41,13 @@ public class Grid(IVisualContext ctx, string id) : Panel(ctx, id) {
         float fixedWidth = 0;
         float fixedHeight = 0;
 
+        // Ensure at least one column/row exists to avoid index errors when children assume defaults
+        if (Columns.Count == 0)
+            Columns.Add(new ColumnDefinition { Width = GridLength.Star(1) });
+
+        if (Rows.Count == 0)
+            Rows.Add(new RowDefinition { Height = GridLength.Star(1) });
+
         foreach (var col in Columns) {
             if (col.Width.UnitType == GridUnitType.Pixel)
                 fixedWidth += col.Width.Value * dpi;
@@ -62,6 +69,13 @@ public class Grid(IVisualContext ctx, string id) : Panel(ctx, id) {
         float remainingWidth = finalRect.Width - fixedWidth;
         float remainingHeight = finalRect.Height - fixedHeight;
 
+        if (remainingWidth < 0) remainingWidth = 0;
+        if (remainingHeight < 0) remainingHeight = 0;
+
+        // If there are star columns but totalStarWidth is zero (defensive), treat each star as weight 1
+        if (totalStarWidth == 0 && Columns.Any(c => c.Width.UnitType == GridUnitType.Star))
+            totalStarWidth = Columns.Count(c => c.Width.UnitType == GridUnitType.Star);
+
         foreach (var col in Columns) {
             if (col.Width.UnitType == GridUnitType.Pixel)
                 col.ActualWidth = col.Width.Value * dpi;
@@ -70,6 +84,9 @@ public class Grid(IVisualContext ctx, string id) : Panel(ctx, id) {
             else
                 col.ActualWidth = (col.Width.Value / totalStarWidth) * remainingWidth;
         }
+
+        if (totalStarHeight == 0 && Rows.Any(r => r.Height.UnitType == GridUnitType.Star))
+            totalStarHeight = Rows.Count(r => r.Height.UnitType == GridUnitType.Star);
 
         foreach (var row in Rows) {
             if (row.Height.UnitType == GridUnitType.Pixel)

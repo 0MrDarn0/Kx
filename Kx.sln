@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kx.Plugin.Example", "exampl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KxTheme", "apps\KxUpdater\Plugins\KxTheme\KxTheme.csproj", "{C7160AF7-8C4D-EE2F-4FB4-2FF0409EA581}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KxEdit", "apps\KxEdit\KxEdit.csproj", "{C384551C-77DC-C685-5AE8-C25A2C637E28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -73,6 +75,10 @@ Global
 		{C7160AF7-8C4D-EE2F-4FB4-2FF0409EA581}.Debug|x64.Build.0 = Debug|x64
 		{C7160AF7-8C4D-EE2F-4FB4-2FF0409EA581}.Release|x64.ActiveCfg = Release|x64
 		{C7160AF7-8C4D-EE2F-4FB4-2FF0409EA581}.Release|x64.Build.0 = Release|x64
+		{C384551C-77DC-C685-5AE8-C25A2C637E28}.Debug|x64.ActiveCfg = Debug|x64
+		{C384551C-77DC-C685-5AE8-C25A2C637E28}.Debug|x64.Build.0 = Debug|x64
+		{C384551C-77DC-C685-5AE8-C25A2C637E28}.Release|x64.ActiveCfg = Release|x64
+		{C384551C-77DC-C685-5AE8-C25A2C637E28}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,6 +94,7 @@ Global
 		{C89534FB-88BB-07EA-9E47-89E3758B617F} = {38929936-D788-4EF2-AB87-66B020BF0805}
 		{C3E2A66F-FC83-A8F5-4461-854EC2D2E756} = {38929936-D788-4EF2-AB87-66B020BF0805}
 		{C7160AF7-8C4D-EE2F-4FB4-2FF0409EA581} = {D118F548-D181-4BAE-9D44-C1B35E7F9B4B}
+		{C384551C-77DC-C685-5AE8-C25A2C637E28} = {8B90F8F7-40A7-46D5-8D45-A14FD977AF6B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {AF77C094-9F76-49E7-94D1-909464E050A5}

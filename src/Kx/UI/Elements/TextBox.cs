@@ -1,10 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Drawing;
-
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
+using Kx.Sdk.Events;
 
 using SkiaSharp;
 
@@ -128,6 +127,7 @@ public sealed class TextBox : UIElement {
 
     public bool Multiline { get; set; } = true;
     public bool ReadOnly { get; set; } = true;
+    public override bool CanFocus => true;
     public bool GlowEnabled { get; set; }
 
     public SKColor GlowColor {
@@ -210,6 +210,62 @@ public sealed class TextBox : UIElement {
         if (point.X >= Bounds.Right - ScrollBarWidth) {
             JumpToScrollPosition(point.Y);
             return true;
+        }
+
+        // Click inside content area -> request focus so keyboard input is routed here
+        try {
+            Context.UIElementManager.SetFocus(this);
+        }
+        catch {
+            // best-effort, don't throw during input handling
+        }
+
+        return true;
+    }
+
+    public override bool OnKeyDown(KeyCode key) {
+        if (!IsFocused || ReadOnly)
+            return false;
+
+        // Basic editing behavior: backspace, enter, space, tab and simple char keys
+        try {
+            switch (key) {
+                case KeyCode.Backspace:
+                    if (!string.IsNullOrEmpty(_text)) {
+                        _text = _text.Substring(0, Math.Max(0, _text.Length - 1));
+                        Invalidate();
+                        return true;
+                    }
+                    return false;
+                case KeyCode.Enter:
+                    if (Multiline) {
+                        _text += "\n";
+                        Invalidate();
+                        return true;
+                    }
+                    return false;
+                case KeyCode.Space:
+                    _text += ' ';
+                    Invalidate();
+                    return true;
+                case KeyCode.Tab:
+                    _text += '\t';
+                    Invalidate();
+                    return true;
+                default:
+                    // Try to append single-character key names (A, B, C, 0..9)
+                    var name = key.ToString();
+                    if (!string.IsNullOrEmpty(name) && name.Length == 1) {
+                        // append lowercase
+                        _text += char.ToLowerInvariant(name[0]);
+                        Invalidate();
+                        return true;
+                    }
+                    break;
+            }
+        }
+        catch {
+            // ignore errors in best-effort input handling
         }
 
         return false;
