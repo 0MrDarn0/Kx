@@ -92,6 +92,8 @@ public class WinFormsWindowHost : Form, IWindowHost {
         DoubleBuffered = true;
         Width = 950;
         Height = 600;
+        // Ensure the form receives key events even when child controls have focus
+        KeyPreview = true;
     }
 
     protected override CreateParams CreateParams {
@@ -278,6 +280,14 @@ public class WinFormsWindowHost : Form, IWindowHost {
             Keys.Space => KeyCode.Space,
             Keys.Back => KeyCode.Backspace,
             Keys.Tab => KeyCode.Tab,
+            Keys.Insert => KeyCode.Insert,
+            Keys.Delete => KeyCode.Delete,
+            Keys.Home => KeyCode.Home,
+            Keys.End => KeyCode.End,
+            Keys.PageUp => KeyCode.PageUp,
+            Keys.PageDown => KeyCode.PageDown,
+            Keys.CapsLock => KeyCode.CapsLock,
+            Keys.NumLock => KeyCode.NumLock,
             Keys.Left => KeyCode.Left,
             Keys.Right => KeyCode.Right,
             Keys.Up => KeyCode.Up,

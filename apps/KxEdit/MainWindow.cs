@@ -147,7 +147,8 @@ public sealed class MainWindow : Window {
 
     // Helper to build tree nodes from path parts
     static void AddToTree(List<Kx.UI.Elements.TreeView.Node> roots, string[] parts, int idx) {
-        if (idx >= parts.Length) return;
+        if (idx >= parts.Length)
+            return;
         var name = parts[idx];
         var node = roots.Find(n => n.Name == name);
         if (node is null) {

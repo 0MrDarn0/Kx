@@ -4,7 +4,6 @@
 using System.Drawing;
 
 using Kx.Sdk.Events;
-using Kx.Sdk.UI;
 using Kx.Sdk.UI.Binding;
 
 using SkiaSharp;
@@ -38,7 +37,6 @@ public abstract class Visual : IVisual, IDisposable {
     }
 
     public IVisualContext Context => _ctx;
-
     public virtual bool CanFocus => false;
     public bool IsFocused { get; private set; }
     public float DpiScale { get; private set; } = 1f;
@@ -47,6 +45,22 @@ public abstract class Visual : IVisual, IDisposable {
     public virtual void OnFocusLost() { }
     public virtual bool OnKeyDown(KeyCode key) => false;
     public virtual bool OnKeyUp(KeyCode key) => false;
+    public virtual bool OnTextInput(string text) => false;
+    public virtual bool OnCopy() => false;
+    public virtual bool OnCut() => false;
+    public virtual bool OnPaste(string text) => false;
+    public virtual bool OnSelectAll() => false;
+    public virtual bool OnUndo() => false;
+    public virtual bool OnRedo() => false;
+    public virtual bool DeleteWordLeft() => false;
+    public virtual bool DeleteWordRight() => false;
+    public virtual void Measure(float dpi) { }
+    public virtual void Arrange(Rectangle rect, float dpi) { }
+    public virtual void Draw(SKCanvas canvas) { }
+    public virtual bool OnMouseMove(Point p) => false;
+    public virtual bool OnMouseDown(Point p) => false;
+    public virtual bool OnMouseUp(Point p) => false;
+    public virtual bool OnMouseWheel(int delta, Point p) => false;
 
     protected bool _initializing = true;
     private bool _disposed;
@@ -63,14 +77,6 @@ public abstract class Visual : IVisual, IDisposable {
         _layer = new Property<VisualLayer>(ctx.UiThread, VisualLayer.Content, Invalidate);
         _initializing = false;
     }
-
-    public virtual void Measure(float dpi) { }
-    public virtual void Arrange(Rectangle rect, float dpi) { }
-    public virtual void Draw(SKCanvas canvas) { }
-    public virtual bool OnMouseMove(Point p) => false;
-    public virtual bool OnMouseDown(Point p) => false;
-    public virtual bool OnMouseUp(Point p) => false;
-    public virtual bool OnMouseWheel(int delta, Point p) => false;
 
     protected void Invalidate() {
         if (!_initializing)

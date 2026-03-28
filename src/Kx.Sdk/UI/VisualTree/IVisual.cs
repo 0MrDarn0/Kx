@@ -30,4 +30,13 @@ public interface IVisual : IDisposable {
     bool OnMouseWheel(int delta, Point p);
     void Measure(float dpiScale);
     void Arrange(Rectangle bounds, float dpiScale);
+    bool OnTextInput(string text);
+    bool OnCopy();
+    bool OnCut();
+    bool OnPaste(string text);
+    bool OnSelectAll();
+    bool OnUndo();
+    bool OnRedo();
+    bool DeleteWordLeft();
+    bool DeleteWordRight();
 }

@@ -39,6 +39,7 @@ public class WindowInteraction {
         windowHost.KeyDown += OnKeyDown;
         windowHost.KeyUp += OnKeyUp;
         windowHost.Resized += OnResize;
+        windowHost.TextInput += OnTextInput;
     }
 
     private void OnResize(ResizeEvent e) {
@@ -159,12 +160,57 @@ public class WindowInteraction {
 
         if (_ctx.UIElementManager.KeyDown(e.Key))
             _ctx.Renderer.RequestRender();
+
+        if (_isControlDown && !e.IsRepeat) {
+            switch (e.Key) {
+                case KeyCode.C:
+                    if (_ctx.UIElementManager.Copy())
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.V:
+                    if (_ctx.UIElementManager.PasteFromClipboard())
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.X:
+                    if (_ctx.UIElementManager.Cut())
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.A:
+                    if (_ctx.UIElementManager.SelectAll())
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.Z:
+                    if (_ctx.UIElementManager.Undo())
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.Y:
+                    if (_ctx.UIElementManager.Redo())
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.Backspace:
+                    if ((_isControlDown && _ctx.UIElementManager.DeleteWordLeft()))
+                        _ctx.Renderer.RequestRender();
+                    break;
+                case KeyCode.Delete:
+                    if ((_isControlDown && _ctx.UIElementManager.DeleteWordRight()))
+                        _ctx.Renderer.RequestRender();
+                    break;
+            }
+        }
     }
 
     private void OnKeyUp(KeyEvent e) {
         UpdateModifierState(e.Key, isDown: false);
 
         if (_ctx.UIElementManager.KeyUp(e.Key))
+            _ctx.Renderer.RequestRender();
+    }
+
+    private void OnTextInput(TextInputEvent e) {
+        if (char.IsControl(e.Character))
+            return;
+
+        if (_ctx.UIElementManager.TextInput(e.Character.ToString()))
             _ctx.Renderer.RequestRender();
     }
 

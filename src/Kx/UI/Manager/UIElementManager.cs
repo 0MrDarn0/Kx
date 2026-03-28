@@ -4,9 +4,10 @@
 using Kx.Core.Extensions;
 using Kx.Sdk.Events;
 using Kx.Sdk.UI;
-using Kx.Sdk.UI.VisualTree;
-using SkiaSharp;
 using Kx.Sdk.UI.Elements;
+using Kx.Sdk.UI.VisualTree;
+
+using SkiaSharp;
 
 namespace Kx.UI.Manager;
 
@@ -31,7 +32,6 @@ public class UIElementManager : IUIElementManager {
 
         _elements.Add(el);
 
-        // Wenn das Element keinen Parent hat, behandeln wir es als Root
         if (el is not UIElement { Parent: not null } && !_roots.Contains(el))
             _roots.Add(el);
 
@@ -59,7 +59,6 @@ public class UIElementManager : IUIElementManager {
         if (!_elements.Contains(root))
             _elements.Add(root);
 
-        // Root hat explizit keinen Parent
         if (root is UIElement element)
             element.SetParent(null);
 
@@ -90,7 +89,6 @@ public class UIElementManager : IUIElementManager {
             return a.ZIndex.CompareTo(b.ZIndex);
         });
 
-        // Roots sollten ebenfalls nach Layer/ZIndex sortiert sein (falls relevant)
         _roots.Sort((a, b) => {
             int layer = a.Layer.CompareTo(b.Layer);
             if (layer != 0)
@@ -108,11 +106,9 @@ public class UIElementManager : IUIElementManager {
     public void LayoutAll(SKRect contentRect, SKRect windowRect) {
         var dpi = DpiScale;
 
-        // Zuerst messen (Bottom-up)
         foreach (var root in _roots)
             root.Measure(dpi);
 
-        // Dann arrangieren (Top-down). Entscheide pro Root, ob ContentArea oder WindowRect verwendet wird.
         foreach (var root in _roots) {
             var target = root.UseContentArea ? contentRect.ToRectangle() : windowRect.ToRectangle();
             root.Arrange(target, dpi);
@@ -183,7 +179,6 @@ public class UIElementManager : IUIElementManager {
     }
 
     public void Render(SKCanvas canvas) {
-        // Render in _elements-Reihenfolge (bereits sortiert nach Layer/ZIndex)
         foreach (var el in _elements)
             if (el.Visible)
                 el.Draw(canvas);
@@ -248,8 +243,7 @@ public class UIElementManager : IUIElementManager {
     }
 
     private static bool TryDispatchHitRecursive(IVisual el, Point p, Func<IVisual, bool> action, out IVisual? handledElement) {
-        if (!el.Visible)
-        {
+        if (!el.Visible) {
             handledElement = null;
             return false;
         }
@@ -355,18 +349,26 @@ public class UIElementManager : IUIElementManager {
         return TryDispatchHit(p, el => el.OnMouseWheel(delta, p), out _);
     }
 
-    public bool KeyDown(KeyCode key) {
-        if (FocusedElement != null)
-            return FocusedElement.OnKeyDown(key);
+    public bool KeyDown(KeyCode key) => FocusedElement?.OnKeyDown(key) ?? false;
+    public bool KeyUp(KeyCode key) => FocusedElement?.OnKeyUp(key) ?? false;
+    public bool TextInput(string text) => FocusedElement?.OnTextInput(text) ?? false;
+    public bool Copy() => FocusedElement?.OnCopy() ?? false;
+    public bool Cut() => FocusedElement?.OnCut() ?? false;
+    public bool SelectAll() => FocusedElement?.OnSelectAll() ?? false;
+    public bool Undo() => FocusedElement?.OnUndo() ?? false;
+    public bool Redo() => FocusedElement?.OnRedo() ?? false;
+    public bool DeleteWordLeft() => FocusedElement?.DeleteWordLeft() ?? false;
+    public bool DeleteWordRight() => FocusedElement?.DeleteWordRight() ?? false;
+    public bool PasteFromClipboard() {
+        try {
+            if (!System.Windows.Forms.Clipboard.ContainsText())
+                return false;
 
-        return false;
-    }
-
-    public bool KeyUp(KeyCode key) {
-        if (FocusedElement != null)
-            return FocusedElement.OnKeyUp(key);
-
-        return false;
+            return FocusedElement?.OnPaste(System.Windows.Forms.Clipboard.GetText()) ?? false;
+        }
+        catch {
+            return false;
+        }
     }
 
     public void Dispose() {

@@ -11,7 +11,9 @@ public enum KeyCode {
     O, P, Q, R, S, T, U, V, W, X, Y, Z,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9,
     Enter, Escape, Space, Backspace, Tab,
-    Shift, Control, Alt, Left, Right, Up, Down
+    Insert, Delete, Home, End, PageUp, PageDown,
+    Shift, Control, Alt, CapsLock, NumLock,
+    Left, Right, Up, Down
 }
 
 public record ResizeEvent(int Width, int Height) : IEvent {
