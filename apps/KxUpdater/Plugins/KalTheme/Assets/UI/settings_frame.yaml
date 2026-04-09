@@ -1,16 +1,15 @@
 frame:
   style: Image
-  topLeft: "Plugins:KxTheme:Themes:KalOnline:Frame:top_left.png"
-  topCenter: "Plugins:KxTheme:Themes:KalOnline:Frame:top_center.png"
-  topRight: "Plugins:KxTheme:Themes:KalOnline:Frame:top_right.png"
-  rightCenter: "Plugins:KxTheme:Themes:KalOnline:Frame:right_center.png"
-  bottomRight: "Plugins:KxTheme:Themes:KalOnline:Frame:bottom_right.png"
-  bottomCenter: "Plugins:KxTheme:Themes:KalOnline:Frame:bottom_center.png"
-  bottomLeft: "Plugins:KxTheme:Themes:KalOnline:Frame:bottom_left.png"
-  leftCenter: "Plugins:KxTheme:Themes:KalOnline:Frame:left_center.png"
-  fillBitmap: "Plugins:KxTheme:Themes:KalOnline:Frame:fill_bitmap.bmp"
+  topLeft: "Plugins:KalTheme:Frame:top_left.png"
+  topCenter: "Plugins:KalTheme:Frame:top_center.png"
+  topRight: "Plugins:KalTheme:Frame:top_right.png"
+  rightCenter: "Plugins:KalTheme:Frame:right_center.png"
+  bottomRight: "Plugins:KalTheme:Frame:bottom_right.png"
+  bottomCenter: "Plugins:KalTheme:Frame:bottom_center.png"
+  bottomLeft: "Plugins:KalTheme:Frame:bottom_left.png"
+  leftCenter: "Plugins:KalTheme:Frame:left_center.png"
   fillColor: "#282828"
-  useFillColor: false
+  useFillColor: true
   topWidthOffset: 7
   bottomWidthOffset: 15
   leftHeightOffset: 5
@@ -19,7 +18,7 @@ frame:
   fillWidthOffset: 12
   fillHeightOffset: 9
   default:
-    title: "KxUpdater"
+    title: "Settings"
     backgroundColor: "#1E1F22"
     titleBarColor: "#25262B"
     borderColor: "#3A3D46"
@@ -38,12 +37,12 @@ frame:
 controls:
   - type: Label
     id: title
-    text: "KxUpdater"
+    text: "Settings"
     layer: Frame
     color: "#FFA500"
     font:
       name: "Chiller"
-      size: 40
+      size: 32
       style: "Italic"
     bounds:
       x: 35
@@ -52,15 +51,15 @@ controls:
       height: 40
     properties:
       visualOffsetX: 0
-      visualOffsetY: -18
+      visualOffsetY: -16
   - type: Button
     id: btn_exit
     text: ""
     color: "#FFA500"
     layer: Frame
-    normalImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_exit_normal.png"
-    hoverImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_exit_hover.png"
-    pressedImage: "Plugins:KxTheme:Themes:KalOnline:Buttons:btn_exit_click.png"
+    normalImage: "Plugins:KalTheme:Buttons:btn_exit_normal.png"
+    hoverImage: "Plugins:KalTheme:Buttons:btn_exit_hover.png"
+    pressedImage: "Plugins:KalTheme:Buttons:btn_exit_click.png"
     onClick: closeWindow
     bounds:
       x: -16

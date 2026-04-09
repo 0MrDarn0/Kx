@@ -18,7 +18,7 @@ public sealed class KxThemeTests {
     [Fact]
     public void WhenKxThemeInitializesThenItRegistersUpdaterFrameTheme() {
         using var testContext = new TestPluginContext();
-        var plugin = new KxTheme();
+        var plugin = new KalTheme();
 
         plugin.Initialize(testContext);
 
@@ -30,7 +30,7 @@ public sealed class KxThemeTests {
     [Fact]
     public void WhenKxThemeInitializesThenItRegistersMainWindowDefinition() {
         using var testContext = new TestPluginContext();
-        var plugin = new KxTheme();
+        var plugin = new KalTheme();
 
         plugin.Initialize(testContext);
 
@@ -42,7 +42,7 @@ public sealed class KxThemeTests {
     [Fact]
     public void WhenKxThemeInitializesThenMainWindowContainsContentControls() {
         using var testContext = new TestPluginContext();
-        var plugin = new KxTheme();
+        var plugin = new KalTheme();
 
         plugin.Initialize(testContext);
 

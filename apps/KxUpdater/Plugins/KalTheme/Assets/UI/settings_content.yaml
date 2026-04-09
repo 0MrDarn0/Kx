@@ -1,0 +1,89 @@
+controls:
+  - type: Grid
+    id: settings_layout
+    layer: Content
+    padding:
+      left: 24
+      top: 14
+      right: 24
+      bottom: 18
+    rows:
+      - height:
+          value: 28
+          unit: Pixel
+      - height:
+          value: 1
+          unit: Star
+      - height:
+          value: 10
+          unit: Pixel
+      - height:
+          value: 32
+          unit: Pixel
+    columns:
+      - width:
+          value: 1
+          unit: Star
+    children:
+      - type: Label
+        id: settings_subtitle
+        textBinding: settings.subtitle
+        color: "#F5F5F5"
+        font:
+          name: "Malgun Gothic"
+          size: 13
+          style: "Bold"
+        gridRow: 0
+        gridColumn: 0
+      - type: Grid
+        id: settings_body
+        gridRow: 1
+        gridColumn: 0
+        columns:
+          - width:
+              value: 1
+              unit: Star
+        rows:
+          - height:
+              value: 1
+              unit: Star
+        children: []
+      - type: Grid
+        id: settings_footer
+        gridRow: 3
+        gridColumn: 0
+        columns:
+          - width:
+              value: 1
+              unit: Star
+          - width:
+              value: 8
+              unit: Pixel
+          - width:
+              value: 1
+              unit: Star
+        rows:
+          - height:
+              value: 1
+              unit: Star
+        children:
+          - type: Button
+            id: btn_save
+            textBinding: settings.btn_save
+            color: "#F5F5F5"
+            normalImage: "Plugins:KalTheme:Buttons:btn_normal.png"
+            hoverImage: "Plugins:KalTheme:Buttons:btn_hover.png"
+            pressedImage: "Plugins:KalTheme:Buttons:btn_click.png"
+            onClick: settingsSave
+            gridRow: 0
+            gridColumn: 0
+          - type: Button
+            id: btn_cancel
+            textBinding: settings.btn_cancel
+            color: "#F5F5F5"
+            normalImage: "Plugins:KalTheme:Buttons:btn_normal.png"
+            hoverImage: "Plugins:KalTheme:Buttons:btn_hover.png"
+            pressedImage: "Plugins:KalTheme:Buttons:btn_click.png"
+            onClick: settingsCancel
+            gridRow: 0
+            gridColumn: 2

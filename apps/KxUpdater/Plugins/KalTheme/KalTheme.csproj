@@ -6,7 +6,7 @@
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>KxTheme</AssemblyName>
+    <AssemblyName>KalTheme</AssemblyName>
     <RootNamespace>KxUpdater.Plugin</RootNamespace>
 	<LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -15,12 +15,9 @@
     <Content Include="Plugin.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="UI\\**\\*.yaml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Assets\\**\\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>$(AssemblyName)\Plugins\KxTheme\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      <TargetPath>$(AssemblyName)\Plugins\KalTheme\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
