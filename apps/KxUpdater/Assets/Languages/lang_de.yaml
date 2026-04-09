@@ -45,4 +45,6 @@ error:
   file_missing: "Benötigte Datei wurde nicht gefunden."
   unauthorized: "Du bist nicht berechtigt, diese Aktion auszuführen."
   hash_mismatch: "Hash stimmt nicht überein für {0}"
+  invalid_url: "Ungültige URL."
+  process_no_handle: "Prozess lieferte kein Handle zurück."
 

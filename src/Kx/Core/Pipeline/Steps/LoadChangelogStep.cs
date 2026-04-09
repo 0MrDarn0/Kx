@@ -26,7 +26,7 @@ public class LoadChangelogStep(IUpdateSource source, string baseUrl) : IUpdateSt
         }
         catch (Exception ex) {
             eventManager.NotifyAll(new StatusEvent(
-                LanguageService.Translate("status.changelog_failed", ex.Message)
+                LanguageService.Translate(KxLanguageKeys.Status.ChangelogFailed, ex.Message)
             ));
         }
     }

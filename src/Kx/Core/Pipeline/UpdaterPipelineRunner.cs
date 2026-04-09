@@ -60,7 +60,7 @@ public class UpdaterPipelineRunner {
         }
         catch (Exception ex) {
             _eventManager.NotifyAll(new StatusEvent(
-                LanguageService.Translate("status.update_failed", ex.Message)
+                LanguageService.Translate(KxLanguageKeys.Status.UpdateFailed, ex.Message)
             ));
         }
         finally {
@@ -81,7 +81,7 @@ public class UpdaterPipelineRunner {
         }
         catch (Exception ex) {
             _eventManager.NotifyAll(new StatusEvent(
-                LanguageService.Translate("status.update_failed", ex.Message)
+                LanguageService.Translate(KxLanguageKeys.Status.UpdateFailed, ex.Message)
             ));
         }
     }

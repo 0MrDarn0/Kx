@@ -87,7 +87,7 @@ internal sealed class NewsCoordinator : IDisposable {
         if (entries.Count != 0)
             return entries;
 
-        return [new NewsEntry(LanguageService.Translate("info.news_latest"), changelogText)];
+        return [new NewsEntry(LanguageService.Translate(UpdaterLanguageKeys.Info.NewsLatest), changelogText)];
     }
 
     private static void AddNewsEntry(List<NewsEntry> entries, string? title, List<string> contentLines) {

@@ -1,0 +1,22 @@
+status:
+  waiting: "Checking version..."
+  changelog_failed: "Failed to load changelog: {0}"
+  up_to_date: "(v{0})."
+  update_required: "Update required: {0} -> {1}"
+  update_applied: "Update applied successfully."
+  update_failed: "Update failed: {0}"
+  downloading_pkg: "Downloading update package..."
+  extracting_files: "Extracting files..."
+  update_complete: "Update complete!"
+  selfupdate_started: "Self-update started"
+  selfupdate_failed: "Self-update failed: {0}"
+
+dialog:
+  single_instance:
+    title: "Application Already Running"
+    zombie_message: "Another application instance is already running but has no visible window.\n\nDetected process IDs: {0}\n\nPossible causes:\n- The previous instance crashed during initialization\n- The application is hung without a visible window\n\nResolution:\n1. Open Task Manager (Ctrl+Shift+Esc)\n2. End the listed processes\n3. Start the application again"
+    background_message: "Another application instance is already running but has no visible window.\n\nPossible causes:\n- The application is still starting (please wait)\n- The previous instance is running in the background\n\nEnd all running instances in Task Manager and try again."
+
+error:
+  invalid_entry_path: "Invalid archive entry path: {0}"
+  hash_mismatch: "Hash mismatch for {0}"

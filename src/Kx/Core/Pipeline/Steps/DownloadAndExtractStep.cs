@@ -23,7 +23,7 @@ public class DownloadAndExtractStep(IUpdateSource source) : IUpdateStep {
 
         try {
             // Download
-            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.downloading_pkg")));
+            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate(KxLanguageKeys.Status.DownloadingPackage)));
             await using (var stream = await source.GetPackageStreamAsync(ctx.Metadata.PackageUrl, ct).ConfigureAwait(false))
             await using (var fs = new FileStream(tempZip, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
                 byte[] buffer = new byte[UpdaterConstants.BufferSize];
@@ -41,7 +41,7 @@ public class DownloadAndExtractStep(IUpdateSource source) : IUpdateStep {
             }
 
             // Extract
-            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.extracting_files")));
+            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate(KxLanguageKeys.Status.ExtractingFiles)));
 
             using (var archive = ZipFile.OpenRead(tempZip)) {
                 int count = archive.Entries.Count;
@@ -60,7 +60,7 @@ public class DownloadAndExtractStep(IUpdateSource source) : IUpdateStep {
                     var normalizedEntry = entry.FullName.Replace('/', Path.DirectorySeparatorChar);
                     var destinationPath = Path.GetFullPath(Path.Combine(rootFullPath, normalizedEntry));
                     if (!destinationPath.StartsWith(rootFullPath, StringComparison.OrdinalIgnoreCase)) {
-                        throw new InvalidDataException(LanguageService.Translate("error.invalid_entry_path", entry.FullName));
+                        throw new InvalidDataException(LanguageService.Translate(KxLanguageKeys.Error.InvalidEntryPath, entry.FullName));
                     }
 
                     var destDir = Path.GetDirectoryName(destinationPath);
@@ -79,7 +79,7 @@ public class DownloadAndExtractStep(IUpdateSource source) : IUpdateStep {
                         if (!fileInfo.VerifySha256(metaFile.Sha256)) {
                             try { File.Delete(tempDest); }
                             catch { }
-                            throw new InvalidDataException(LanguageService.Translate("error.hash_mismatch", entry.FullName));
+                            throw new InvalidDataException(LanguageService.Translate(KxLanguageKeys.Error.HashMismatch, entry.FullName));
                         }
                     }
 
@@ -93,7 +93,7 @@ public class DownloadAndExtractStep(IUpdateSource source) : IUpdateStep {
                 }
             }
 
-            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.update_complete")));
+            eventManager.NotifyAll(new StatusEvent(LanguageService.Translate(KxLanguageKeys.Status.UpdateComplete)));
         }
         finally {
             try {

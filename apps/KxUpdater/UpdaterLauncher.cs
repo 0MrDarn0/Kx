@@ -12,8 +12,8 @@ using KxUpdater.Configuration;
 namespace KxUpdater;
 
 internal sealed class UpdaterLauncher {
-    private const string InvalidUrlError = "Invalid URL.";
-    private const string MissingProcessHandleError = "Process returned no handle.";
+    private static readonly LanguageKey _invalidUrlErrorKey = UpdaterLanguageKeys.Error.InvalidUrl;
+    private static readonly LanguageKey _missingProcessHandleErrorKey = UpdaterLanguageKeys.Error.ProcessNoHandle;
 
     private readonly ILoggingService _logger;
     private readonly Action<string> _setStatusText;
@@ -29,12 +29,8 @@ internal sealed class UpdaterLauncher {
         _closeWindow = closeWindow;
     }
 
-    public void ExecuteProcessCommand(ProcessLaunchConfig config, string notConfiguredStatusKey, string fileMissingStatusKey, string startedStatusKey, string failedStatusKey) {
+    public void ExecuteProcessCommand(ProcessLaunchConfig config, LanguageKey notConfiguredStatusKey, LanguageKey fileMissingStatusKey, LanguageKey startedStatusKey, LanguageKey failedStatusKey) {
         ArgumentNullException.ThrowIfNull(config);
-        ArgumentException.ThrowIfNullOrWhiteSpace(notConfiguredStatusKey);
-        ArgumentException.ThrowIfNullOrWhiteSpace(fileMissingStatusKey);
-        ArgumentException.ThrowIfNullOrWhiteSpace(startedStatusKey);
-        ArgumentException.ThrowIfNullOrWhiteSpace(failedStatusKey);
 
         if (string.IsNullOrWhiteSpace(config.FileName)) {
             _setStatusText(LanguageService.Translate(notConfiguredStatusKey));
@@ -49,7 +45,7 @@ internal sealed class UpdaterLauncher {
             }
 
             if (Process.Start(startInfo) is null) {
-                _setStatusText(LanguageService.Translate(failedStatusKey, MissingProcessHandleError));
+                _setStatusText(LanguageService.Translate(failedStatusKey, LanguageService.Translate(_missingProcessHandleErrorKey)));
                 return;
             }
 
@@ -71,30 +67,30 @@ internal sealed class UpdaterLauncher {
     public void ExecuteWebsiteCommand(string? url) {
         string? trimmedUrl = url?.Trim();
         if (string.IsNullOrWhiteSpace(trimmedUrl)) {
-            _setStatusText(LanguageService.Translate("status.website_not_configured"));
+            _setStatusText(LanguageService.Translate(UpdaterLanguageKeys.Status.WebsiteNotConfigured));
             return;
         }
 
         if (!Uri.TryCreate(trimmedUrl, UriKind.Absolute, out var targetUri)) {
-            _setStatusText(LanguageService.Translate("status.website_open_failed", InvalidUrlError));
+            _setStatusText(LanguageService.Translate(UpdaterLanguageKeys.Status.WebsiteOpenFailed, LanguageService.Translate(_invalidUrlErrorKey)));
             return;
         }
 
         try {
             if (Process.Start(new ProcessStartInfo(targetUri.AbsoluteUri) { UseShellExecute = true }) is null) {
-                _setStatusText(LanguageService.Translate("status.website_open_failed", MissingProcessHandleError));
+                _setStatusText(LanguageService.Translate(UpdaterLanguageKeys.Status.WebsiteOpenFailed, LanguageService.Translate(_missingProcessHandleErrorKey)));
                 return;
             }
 
-            _setStatusText(LanguageService.Translate("status.website_opening"));
+            _setStatusText(LanguageService.Translate(UpdaterLanguageKeys.Status.WebsiteOpening));
         }
         catch (InvalidOperationException ex) {
             _logger.Error($"Failed to open website '{targetUri.AbsoluteUri}'.", ex);
-            _setStatusText(LanguageService.Translate("status.website_open_failed", ex.Message));
+            _setStatusText(LanguageService.Translate(UpdaterLanguageKeys.Status.WebsiteOpenFailed, ex.Message));
         }
         catch (Win32Exception ex) {
             _logger.Error($"Failed to open website '{targetUri.AbsoluteUri}'.", ex);
-            _setStatusText(LanguageService.Translate("status.website_open_failed", ex.Message));
+            _setStatusText(LanguageService.Translate(UpdaterLanguageKeys.Status.WebsiteOpenFailed, ex.Message));
         }
     }
 

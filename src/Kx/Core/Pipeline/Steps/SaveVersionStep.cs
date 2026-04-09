@@ -18,9 +18,7 @@ public class SaveVersionStep(string rootDirectory) : IUpdateStep {
         File.WriteAllText(_localVersionFile, ctx.Metadata.Version);
 
         eventManager.NotifyAll(new StatusEvent(
-            LanguageService.Translate("status.update_applied")
+            LanguageService.Translate(KxLanguageKeys.Status.UpdateApplied)
         ));
-
-        await Task.CompletedTask;
     }
 }

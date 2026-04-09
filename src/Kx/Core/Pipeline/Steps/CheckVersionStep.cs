@@ -36,14 +36,14 @@ public class CheckVersionStep(string rootDirectory) : IUpdateStep {
 
         if (!needsUpdate) {
             eventManager.NotifyAll(new StatusEvent(
-                LanguageService.Translate("status.up_to_date", ctx.CurrentVersion)
+                LanguageService.Translate(KxLanguageKeys.Status.UpToDate, ctx.CurrentVersion)
             ));
             // Pipeline hier abbrechen
             throw new OperationCanceledException("No update required");
         }
 
         eventManager.NotifyAll(new StatusEvent(
-            LanguageService.Translate("status.update_required", ctx.CurrentVersion, ctx.Metadata.Version)
+            LanguageService.Translate(KxLanguageKeys.Status.UpdateRequired, ctx.CurrentVersion, ctx.Metadata.Version)
         ));
 
         eventManager.NotifyAll(new UpdateRequired());

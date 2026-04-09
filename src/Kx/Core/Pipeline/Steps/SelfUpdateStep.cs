@@ -22,7 +22,7 @@ public class SelfUpdateStep(string rootDirectory) : IUpdateStep {
         // Prüfen ob neue Version und Bootstrapper vorhanden sind
         if (File.Exists(newExe) && File.Exists(bootstrapper)) {
             eventManager.NotifyAll(new StatusEvent(
-                LanguageService.Translate("status.selfupdate_started")));
+                LanguageService.Translate(KxLanguageKeys.Status.SelfUpdateStarted)));
 
             try {
                 // Pfad der aktuell laufenden EXE holen
@@ -40,7 +40,7 @@ public class SelfUpdateStep(string rootDirectory) : IUpdateStep {
             }
             catch (Exception ex) {
                 eventManager.NotifyAll(new StatusEvent(
-                    LanguageService.Translate("status.selfupdate_failed", ex.Message)));
+                    LanguageService.Translate(KxLanguageKeys.Status.SelfUpdateFailed, ex.Message)));
             }
         }
 

@@ -95,20 +95,20 @@ public sealed class MainWindow : Window {
     }
 
     private void InitializeUpdaterState() {
-        StateStore.Set(_subtitleState, LanguageService.Translate("app.subtitle"));
-        StateStore.Set(_statusState, LanguageService.Translate("status.waiting"));
-        StateStore.Set(_changelogState, LanguageService.Translate("info.changelog_loading"));
+        StateStore.Set(_subtitleState, LanguageService.Translate(UpdaterLanguageKeys.App.Subtitle));
+        StateStore.Set(_statusState, LanguageService.Translate(UpdaterLanguageKeys.Status.Waiting));
+        StateStore.Set(_changelogState, LanguageService.Translate(UpdaterLanguageKeys.Info.ChangelogLoading));
         StateStore.Set(_newsTitlesState, []);
         StateStore.Set(_newsSelectedIndexState, -1);
         StateStore.Set(_progressState, 0f);
         StateStore.Set(_progressVisibleState, false);
-        StateStore.Set(_startButtonTextState, LanguageService.Translate("button.start"));
+        StateStore.Set(_startButtonTextState, LanguageService.Translate(UpdaterLanguageKeys.Button.Start));
         StateStore.Set(_primaryButtonEnabledState, false);
         StateStore.Set(_updateRequiredState, false);
-        StateStore.Set(_settingsButtonTextState, LanguageService.Translate("button.settings"));
+        StateStore.Set(_settingsButtonTextState, LanguageService.Translate(UpdaterLanguageKeys.Button.Settings));
         StateStore.Set(_settingsButtonEnabledState, false);
-        StateStore.Set(_websiteButtonTextState, LanguageService.Translate("button.website"));
-        _logger?.Info(LanguageService.Translate("info.overlay_hotkeys"));
+        StateStore.Set(_websiteButtonTextState, LanguageService.Translate(UpdaterLanguageKeys.Button.Website));
+        _logger?.Info(LanguageService.Translate(UpdaterLanguageKeys.Info.OverlayHotkeys));
     }
 
     private void BuildUI() {
@@ -162,17 +162,17 @@ public sealed class MainWindow : Window {
 
         commandRegistry.Register(StartGameCommandName, _ => ExecuteProcessCommand(
             _appConfig.Launcher.Start,
-            "status.client_not_configured",
-            "status.client_file_missing",
-            "status.client_launch_started",
-            "status.client_launch_failed"));
+            UpdaterLanguageKeys.Status.ClientNotConfigured,
+            UpdaterLanguageKeys.Status.ClientFileMissing,
+            UpdaterLanguageKeys.Status.ClientLaunchStarted,
+            UpdaterLanguageKeys.Status.ClientLaunchFailed));
 
         commandRegistry.Register(OpenSettingsCommandName, _ => ExecuteProcessCommand(
             _appConfig.Launcher.Settings,
-            "status.settings_not_configured",
-            "status.settings_file_missing",
-            "status.settings_launch_started",
-            "status.settings_launch_failed"));
+            UpdaterLanguageKeys.Status.SettingsNotConfigured,
+            UpdaterLanguageKeys.Status.SettingsFileMissing,
+            UpdaterLanguageKeys.Status.SettingsLaunchStarted,
+            UpdaterLanguageKeys.Status.SettingsLaunchFailed));
 
         commandRegistry.Register(OpenWebsiteCommandName, _ => ExecuteWebsiteCommand());
     }
@@ -194,10 +194,10 @@ public sealed class MainWindow : Window {
 
             ExecuteProcessCommand(
                 _appConfig.Launcher.Start,
-                "status.client_not_configured",
-                "status.client_file_missing",
-                "status.client_launch_started",
-                "status.client_launch_failed");
+                UpdaterLanguageKeys.Status.ClientNotConfigured,
+                UpdaterLanguageKeys.Status.ClientFileMissing,
+                UpdaterLanguageKeys.Status.ClientLaunchStarted,
+                UpdaterLanguageKeys.Status.ClientLaunchFailed);
         }
         catch (Exception ex) {
             _logger?.Error("Failed to execute updater primary action.", ex);
@@ -212,7 +212,7 @@ public sealed class MainWindow : Window {
         }
     }
 
-    private void ExecuteProcessCommand(ProcessLaunchConfig config, string notConfiguredStatusKey, string fileMissingStatusKey, string startedStatusKey, string failedStatusKey) {
+    private void ExecuteProcessCommand(ProcessLaunchConfig config, LanguageKey notConfiguredStatusKey, LanguageKey fileMissingStatusKey, LanguageKey startedStatusKey, LanguageKey failedStatusKey) {
         _launcher.ExecuteProcessCommand(config, notConfiguredStatusKey, fileMissingStatusKey, startedStatusKey, failedStatusKey);
     }
 
@@ -256,7 +256,7 @@ public sealed class MainWindow : Window {
         StateStore.Set(_updateRequiredState, updateRequired);
         StateStore.Set(_primaryButtonEnabledState, primaryEnabled);
         StateStore.Set(_settingsButtonEnabledState, settingsEnabled);
-        StateStore.Set(_startButtonTextState, LanguageService.Translate(updateRequired ? "button.update" : "button.start"));
+        StateStore.Set(_startButtonTextState, LanguageService.Translate(updateRequired ? UpdaterLanguageKeys.Button.Update : UpdaterLanguageKeys.Button.Start));
     }
 
     private NewsCoordinator GetNewsCoordinator() {

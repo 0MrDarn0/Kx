@@ -9,6 +9,11 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
 	<LangVersion>latest</LangVersion>
+    <LanguageKeySourceFile>$(MSBuildProjectDirectory)\Assets\Languages\lang_en.yaml</LanguageKeySourceFile>
+    <LanguageKeyGeneratedFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\Generated\UpdaterLanguageKeys.g.cs</LanguageKeyGeneratedFile>
+    <LanguageKeysNamespace>KxUpdater</LanguageKeysNamespace>
+    <LanguageKeysClassName>UpdaterLanguageKeys</LanguageKeysClassName>
+    <LanguageKeysVisibility>internal</LanguageKeysVisibility>
   </PropertyGroup>
 
   <ItemGroup>
@@ -119,4 +124,5 @@
     <Delete Files="@(PublishedSymbols)" />
   </Target>
 
+  <Import Project="..\..\build\LanguageKeyGeneration.targets" />
 </Project>

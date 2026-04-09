@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <LanguageKeyGeneratorProject Condition="'$(LanguageKeyGeneratorProject)' == ''">$(MSBuildThisFileDirectory)..\tools\Kx.LanguageKeyGenerator\Kx.LanguageKeyGenerator.csproj</LanguageKeyGeneratorProject>
+    <LanguageKeyGeneratorPlatformOutputSegment Condition="'$(LanguageKeyGeneratorPlatformOutputSegment)' == '' and '$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</LanguageKeyGeneratorPlatformOutputSegment>
+    <LanguageKeyGeneratorOutputDir Condition="'$(LanguageKeyGeneratorOutputDir)' == ''">$(MSBuildThisFileDirectory)..\tools\Kx.LanguageKeyGenerator\bin\$(LanguageKeyGeneratorPlatformOutputSegment)$(Configuration)\net10.0\</LanguageKeyGeneratorOutputDir>
+    <LanguageKeyGeneratorDll Condition="'$(LanguageKeyGeneratorDll)' == ''">$(LanguageKeyGeneratorOutputDir)Kx.LanguageKeyGenerator.dll</LanguageKeyGeneratorDll>
+    <LanguageKeyGeneratedFile Condition="'$(LanguageKeyGeneratedFile)' == ''">$(IntermediateOutputPath)Generated\$(LanguageKeysClassName).g.cs</LanguageKeyGeneratedFile>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(LanguageKeySourceFile)' != '' and '$(LanguageKeysClassName)' != ''">
+    <Compile Include="$(LanguageKeyGeneratedFile)" Visible="false" AutoGen="true" />
+  </ItemGroup>
+
+  <Target Name="GenerateLanguageKeys" BeforeTargets="CoreCompile" Condition="'$(LanguageKeySourceFile)' != '' and '$(LanguageKeysNamespace)' != '' and '$(LanguageKeysClassName)' != '' and '$(LanguageKeysVisibility)' != ''">
+    <MSBuild Projects="$(LanguageKeyGeneratorProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(LanguageKeyGeneratedFile)'))" />
+    <Exec Command="dotnet &quot;$(LanguageKeyGeneratorDll)&quot; &quot;$(LanguageKeySourceFile)&quot; &quot;$(LanguageKeyGeneratedFile)&quot; &quot;$(LanguageKeysNamespace)&quot; &quot;$(LanguageKeysClassName)&quot; &quot;$(LanguageKeysVisibility)&quot;" />
+  </Target>
+</Project>

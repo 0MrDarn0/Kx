@@ -12,16 +12,49 @@ public static class LanguageService {
         LanguageService._fallback = fallback;
     }
 
+    /// <summary>
+    /// Resolves a localized string for the specified strongly typed key.
+    /// </summary>
+    /// <param name="key">The localization key.</param>
+    /// <param name="args">Optional format arguments.</param>
+    public static string Translate(LanguageKey key, params object[] args) {
+        return Translate(key.Value, args);
+    }
+
     public static string Translate(string key, params object[] args) {
-        if (_lang == null || _fallback == null)
-            return Format(key, args);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        string? raw = Lookup(_lang, key) ?? Lookup(_fallback, key);
-
-        if (raw == null)
-            raw = $"[MISSING:{key}]";
-
+        string raw = ResolveRaw(key, returnKeyWhenUninitialized: true) ?? $"[MISSING:{key}]";
         return Format(raw, args);
+    }
+
+    /// <summary>
+    /// Attempts to resolve a localized string for the specified strongly typed key.
+    /// </summary>
+    /// <param name="key">The localization key.</param>
+    /// <param name="value">The resolved string when the lookup succeeds.</param>
+    public static bool TryTranslate(LanguageKey key, out string value) {
+        return TryTranslate(key.Value, out value);
+    }
+
+    /// <summary>
+    /// Attempts to resolve a localized string for the specified localization id.
+    /// </summary>
+    /// <param name="key">The dotted localization id.</param>
+    /// <param name="value">The resolved string when the lookup succeeds.</param>
+    public static bool TryTranslate(string key, out string value) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+
+        string? raw = ResolveRaw(key, returnKeyWhenUninitialized: false);
+        value = raw ?? string.Empty;
+        return raw is not null;
+    }
+
+    private static string? ResolveRaw(string key, bool returnKeyWhenUninitialized) {
+        if (_lang == null || _fallback == null)
+            return returnKeyWhenUninitialized ? key : null;
+
+        return Lookup(_lang, key) ?? Lookup(_fallback, key);
     }
 
     private static string? Lookup(IDictionary<string, object> root, string key) {

@@ -47,6 +47,7 @@
 - Designer files (`*.designer.cs` / `InitializeComponent`) are serialization-only. Do not introduce control flow, lambdas, or modern constructs there — move logic to the main `.cs` file.
 - Keep diffs small and minimal; follow existing project structure for new code and unit tests.
 - Follow the two-context WinForms rule: designer files conservative; modern C# for rest of code.
+- Ensure runtime error messages/dialog texts are in English.
 
 ## Conventions and patterns in this repo
 - YAML configuration and UI markup are used extensively. Keep YAML keys camel-cased where existing files do so.
@@ -58,6 +59,7 @@
 - Preview packages — some projects reference preview package versions. If `dotnet restore` fails because of package feed constraints, use the same SDK version used by the project or run a `dotnet nuget locals --clear all` and retry.
 - No top-level solution file: build specific projects when in doubt (for example `dotnet build src/Kx/Kx.csproj`).
 - Avoid running repository-wide recursive shell tools that assume POSIX (some builds contain Windows path expectations and MSBuild targets that use backslashes).
+- When a terminal command fails in this environment, continue with repository inspection tools and do not stall waiting on the failed command.
 
 ## Search tips for agents
 - Use repo-aware search (IDE symbols, `find` within repo root) rather than blind network searches.

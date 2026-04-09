@@ -8,6 +8,11 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
+		<LanguageKeySourceFile>$(MSBuildProjectDirectory)\Assets\Languages\lang_en.yaml</LanguageKeySourceFile>
+		<LanguageKeyGeneratedFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\Generated\KxLanguageKeys.g.cs</LanguageKeyGeneratedFile>
+		<LanguageKeysNamespace>Kx.Core.Localization</LanguageKeysNamespace>
+		<LanguageKeysClassName>KxLanguageKeys</LanguageKeysClassName>
+		<LanguageKeysVisibility>public</LanguageKeysVisibility>
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Remove="UI\VisualTree\**" />
@@ -35,8 +40,14 @@
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
 	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Assets\Languages\*.yaml" />
+	</ItemGroup>
 	
 	<ItemGroup>
 	  <ProjectReference Include="..\Kx.Sdk\Kx.Sdk.csproj" />
 	</ItemGroup>
+
+	<Import Project="..\..\build\LanguageKeyGeneration.targets" />
 </Project>

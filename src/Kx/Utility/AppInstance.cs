@@ -39,8 +39,10 @@ public sealed class AppInstance : IDisposable {
 
     /// <summary>
     /// Bring an existing instance's main window to front (best effort).
+    /// Returns true if a window was found and brought to front, false otherwise.
     /// </summary>
-    public static void BringExistingInstanceToFront(string processName) {
+    public static bool BringExistingInstanceToFront(string processName) {
+        bool foundWindow = false;
         try {
             var current = Process.GetCurrentProcess();
             foreach (var process in Process.GetProcessesByName(processName)) {
@@ -54,12 +56,38 @@ public sealed class AppInstance : IDisposable {
                     NativeMethods.ShowWindow(hWnd, NativeMethods.SW_RESTORE);
 
                 NativeMethods.SetForegroundWindow(hWnd);
+                foundWindow = true;
                 break;
             }
         }
         catch {
             // best-effort: swallow exceptions to avoid crashing the caller
         }
+        return foundWindow;
+    }
+
+    /// <summary>
+    /// Checks if there are any processes with the given name that have no main window (potential zombie processes).
+    /// Returns the process IDs of such processes.
+    /// </summary>
+    public static List<int> FindZombieProcesses(string processName) {
+        var zombies = new List<int>();
+        try {
+            var current = Process.GetCurrentProcess();
+            foreach (var process in Process.GetProcessesByName(processName)) {
+                if (process.Id == current.Id)
+                    continue;
+
+                // A process without a main window is potentially a zombie
+                if (process.MainWindowHandle == IntPtr.Zero) {
+                    zombies.Add(process.Id);
+                }
+            }
+        }
+        catch {
+            // best-effort: swallow exceptions
+        }
+        return zombies;
     }
 
     public void Dispose() {

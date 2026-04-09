@@ -21,7 +21,7 @@ public class LoadMetadataStep(IUpdateSource source, string baseUrl) : IUpdateSte
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         // Status-Event
-        eventManager.NotifyAll(new StatusEvent(LanguageService.Translate("status.waiting")));
+        eventManager.NotifyAll(new StatusEvent(LanguageService.Translate(KxLanguageKeys.Status.Waiting)));
 
         // Metadaten laden
         var json = await _source.GetMetadataJsonAsync(_metadataUrl);

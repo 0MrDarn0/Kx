@@ -45,4 +45,6 @@ error:
   file_missing: "Required file not found."
   unauthorized: "You are not authorized to perform this action."
   hash_mismatch: "Hash mismatch for {0}"
+  invalid_url: "Invalid URL."
+  process_no_handle: "Process returned no handle."
 

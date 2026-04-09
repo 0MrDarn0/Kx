@@ -3,6 +3,8 @@
 
 using System.Diagnostics;
 
+using Kx.Core.Configuration;
+using Kx.Core.Localization;
 using Kx.Utility;
 using Kx.WindowHost.WinForms;
 
@@ -36,9 +38,26 @@ public static class WinFormsApp {
     public static void Run<TWindow>(WinFormsAppDefinition<TWindow> definition) where TWindow : Window {
         ArgumentNullException.ThrowIfNull(definition);
 
+        GlobalExceptionHandler.Register();
+        EnsureLocalizationLoaded();
+
         using var instance = AppInstance.Acquire(definition.MutexName);
         if (instance == null) {
-            AppInstance.BringExistingInstanceToFront(Process.GetCurrentProcess().ProcessName);
+            // Another instance is running - try to bring it to front
+            bool broughtToFront = AppInstance.BringExistingInstanceToFront(Process.GetCurrentProcess().ProcessName);
+
+            if (!broughtToFront) {
+                // Check if there are zombie processes
+                var zombieProcessIds = AppInstance.FindZombieProcesses(Process.GetCurrentProcess().ProcessName);
+                string message = CreateSingleInstanceMessage(zombieProcessIds);
+
+                MessageBox.Show(
+                    message,
+                    LanguageService.Translate(KxLanguageKeys.Dialog.SingleInstance.Title),
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+
             return;
         }
 
@@ -60,5 +79,18 @@ public static class WinFormsApp {
         };
 
         Application.Run(windowHost);
+    }
+
+    private static void EnsureLocalizationLoaded() {
+        string languageCode = ConfigLoader.Load<RuntimeConfig>(Paths.GetConfig("app.yaml")).Ui.Language;
+        LanguageLoader.Load(languageCode);
+    }
+
+    private static string CreateSingleInstanceMessage(IReadOnlyCollection<int> zombieProcessIds) {
+        ArgumentNullException.ThrowIfNull(zombieProcessIds);
+
+        return zombieProcessIds.Count > 0
+            ? LanguageService.Translate(KxLanguageKeys.Dialog.SingleInstance.ZombieMessage, string.Join(", ", zombieProcessIds))
+            : LanguageService.Translate(KxLanguageKeys.Dialog.SingleInstance.BackgroundMessage);
     }
 }
