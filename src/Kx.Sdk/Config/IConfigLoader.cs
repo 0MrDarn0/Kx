@@ -6,3 +6,4 @@ namespace Kx.Sdk.Config;
 public interface IConfigLoader {
     T Load<T>(string path) where T : class, new();
 }
+

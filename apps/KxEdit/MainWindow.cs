@@ -89,51 +89,11 @@ public sealed class MainWindow : Window {
 
         // Wire button actions
         openButton.Click += () => {
-            try {
-                using var dlg = new OpenFileDialog();
-                if (dlg.ShowDialog() == DialogResult.OK) {
-                    // If package contains multiple files, TreeView will list entries and textbox shows selected file(s)
-                    var combined = PackageLoader.LoadAsText(dlg.FileName);
-                    textBox.Text = combined;
-                    // Populate tree with top-level entries if it's a zip
-                    try {
-                        using var s = File.OpenRead(dlg.FileName);
-                        if (PackageLoader.IsZipStream(s)) {
-                            s.Seek(0, SeekOrigin.Begin);
-                            using var archive = new System.IO.Compression.ZipArchive(s, System.IO.Compression.ZipArchiveMode.Read, true);
-                            var roots = new List<Kx.UI.Elements.TreeView.Node>();
-                            foreach (var entry in archive.Entries) {
-                                var parts = entry.FullName.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                                AddToTree(roots, parts, 0);
-                            }
-                            tree.SetNodes(roots);
-                        }
-                    }
-                    catch { }
 
-                    statusBar.Text.Value = $"Loaded: {Path.GetFileName(dlg.FileName)}";
-                    _logger?.Info($"Loaded file {dlg.FileName}");
-                }
-            }
-            catch (Exception ex) {
-                _logger?.Error($"Open failed: {ex.Message}", ex);
-                statusBar.Text.Value = "Error loading file";
-            }
         };
 
         saveButton.Click += () => {
-            try {
-                using var dlg = new SaveFileDialog();
-                if (dlg.ShowDialog() == DialogResult.OK) {
-                    File.WriteAllText(dlg.FileName, textBox.Text);
-                    statusBar.Text.Value = $"Saved: {Path.GetFileName(dlg.FileName)}";
-                    _logger?.Info($"Saved file {dlg.FileName}");
-                }
-            }
-            catch (Exception ex) {
-                _logger?.Error($"Save failed: {ex.Message}", ex);
-                statusBar.Text.Value = "Error saving file";
-            }
+
         };
 
         grid.AddChild(toolbar);

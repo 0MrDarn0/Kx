@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,9 +16,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="KxEdit\Configs\" />
-    <Folder Include="KxEdit\Icons\" />
-    <Folder Include="KxEdit\Languages\" />
+    <Folder Include="Assets\Configs\" />
+    <Folder Include="Assets\Languages\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Assets\Icons\app.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

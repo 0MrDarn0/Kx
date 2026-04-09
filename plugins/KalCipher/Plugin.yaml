@@ -1,0 +1,7 @@
+name: KalCipher
+version: 1.0.0
+apiVersion: 1.0.0
+entryType: KalCipher.EntryPoint
+description: "Kalonline encryption plugin"
+author: "Christian Schnuck"
+dependencies: []

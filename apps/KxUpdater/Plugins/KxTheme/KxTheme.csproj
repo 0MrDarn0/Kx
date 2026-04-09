@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>KxTheme</AssemblyName>
     <RootNamespace>KxUpdater.Plugin</RootNamespace>
+	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

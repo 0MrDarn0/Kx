@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Kx.Plugin.Example</AssemblyName>
     <RootNamespace>Kx.Plugin</RootNamespace>
+	<LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

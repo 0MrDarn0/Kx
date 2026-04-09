@@ -42,10 +42,9 @@ public sealed class TextBox : UIElement {
     private int _selectionEnd = 0;
     private bool _isSelecting = false;
     private readonly SKPaint _selectionPaint = new() { IsAntialias = false, Color = new SKColor(255, 255, 255, 60), Style = SKPaintStyle.Fill };
-    // Undo/Redo stacks
     private record TextSnapshot(string Text, int CaretIndex, int SelectionStart, int SelectionEnd);
-    private readonly List<TextSnapshot> _undoStack = new();
-    private readonly List<TextSnapshot> _redoStack = new();
+    private readonly List<TextSnapshot> _undoStack = [];
+    private readonly List<TextSnapshot> _redoStack = [];
     private const int UndoLimit = 200;
 
     private int GetCaretIndexFromPoint(Point point, Rectangle contentRect, List<string> wrappedLines, int lineHeight) {
@@ -59,7 +58,7 @@ public sealed class TextBox : UIElement {
 
         string textLine = wrappedLines[line];
         for (int i = 0; i <= textLine.Length; i++) {
-            var left = _font.MeasureText(textLine.Substring(0, i));
+            var left = _font?.MeasureText(textLine.AsSpan(0, i));
             if (left >= x)
                 return GetGlobalIndexForLineStart(wrappedLines, line) + i;
         }
@@ -506,7 +505,6 @@ public sealed class TextBox : UIElement {
                         Invalidate();
                         return true;
                     }
-
                     if (_caretIndex > 0) {
                         PushUndoSnapshot();
                         _text = _text.Remove(_caretIndex - 1, 1);
@@ -580,10 +578,8 @@ public sealed class TextBox : UIElement {
                         Invalidate();
                         return true;
                     }
-
                     return false;
                 default:
-                    // other keys are handled via TextInputEvent
                     break;
             }
         }
