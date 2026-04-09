@@ -9,6 +9,7 @@ using Kx.UI.Commands;
 using Kx.UI.Platform;
 using Kx.UI.State;
 using Kx.Tests.TestInfrastructure;
+using Kx.Utility;
 
 using KxUpdater;
 
@@ -96,6 +97,8 @@ public sealed class MainWindowCommandTests {
     }
 
     private static MainWindow CreateMainWindow(TestLoggingService logger, out TestWindowHost host, out UiCommandRegistry commandRegistry, out UiStateStore stateStore) {
+        EnsureUpdaterAssetsForTests();
+
         host = new TestWindowHost();
         var uiComposition = new RuntimeUiComposition();
         commandRegistry = uiComposition.CommandRegistry;
@@ -111,6 +114,60 @@ public sealed class MainWindowCommandTests {
             uiComposition.ControlRegistry,
             uiComposition.ThemeRegistry,
             uiComposition.WindowRegistry);
+    }
+
+    private static void EnsureUpdaterAssetsForTests() {
+        Directory.CreateDirectory(Paths.CfgFolder);
+        Directory.CreateDirectory(Paths.LangFolder);
+
+        File.WriteAllText(Paths.GetConfig("app.yaml"),
+            """
+            updater:
+              url: https://update.idb-lab.de/
+            launcher:
+              start:
+                fileName: "engine.exe"
+                arguments: "/load /config debug"
+                workingDirectory: ""
+                resolveFromAppDirectory: true
+                closeUpdaterOnSuccess: true
+              settings:
+                fileName: "engine.exe"
+                arguments: "/setup"
+                workingDirectory: ""
+                resolveFromAppDirectory: true
+                closeUpdaterOnSuccess: false
+              website:
+                url: http://www.idb-lab.de/
+            ui:
+              language: en
+            window:
+              icon: Icons:app.ico
+            """);
+
+        File.WriteAllText(Paths.GetLang("en"),
+            """
+            app:
+              subtitle: "Updater"
+            status:
+              waiting: "Checking version..."
+              client_not_configured: "Game client not configured."
+              client_file_missing: "Game client file not found: {0}"
+              settings_not_configured: "Settings executable not configured."
+              settings_file_missing: "Settings executable not found: {0}"
+              client_launch_started: "Game client started."
+              client_launch_failed: "Failed to start game client."
+              settings_launch_started: "Settings started."
+              settings_launch_failed: "Failed to start settings executable."
+            button:
+              start: "Start"
+              update: "Update"
+              settings: "Settings"
+              website: "Website"
+            info:
+              changelog_loading: "Loading changelog..."
+              overlay_hotkeys: "Overlay hotkeys: Ctrl+Shift+D"
+            """);
     }
 
     private sealed class TestUiCommandContext(string commandName) : IUiCommandContext {

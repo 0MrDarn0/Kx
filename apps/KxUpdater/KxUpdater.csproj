@@ -27,6 +27,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <TargetPath>$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
@@ -54,9 +55,9 @@
       <KxThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KxThemePlatformOutputSegment>
       <KxThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KxThemeRuntimeOutputSegment>
       <KxThemeOutputDir>$(KxThemeProjectDir)bin\$(KxThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KxThemeRuntimeOutputSegment)</KxThemeOutputDir>
-      <KxThemeTargetDir>$(TargetDir)Assets\Plugins\KxTheme\</KxThemeTargetDir>
+      <KxThemeTargetDir>$(TargetDir)$(AssemblyName)\Plugins\KxTheme\</KxThemeTargetDir>
       <KxThemeUiTargetDir>$(KxThemeTargetDir)UI\</KxThemeUiTargetDir>
-      <KxThemeAssetTargetDir>$(TargetDir)Assets\</KxThemeAssetTargetDir>
+      <KxThemeAssetTargetDir>$(TargetDir)$(AssemblyName)\</KxThemeAssetTargetDir>
     </PropertyGroup>
 
     <RemoveDir Directories="$(TargetDir)UI" Condition="Exists('$(TargetDir)UI')" />
@@ -69,7 +70,7 @@
       <KxThemeFiles Include="$(KxThemeOutputDir)KxTheme.pdb" Condition="Exists('$(KxThemeOutputDir)KxTheme.pdb')" />
       <KxThemeFiles Include="$(KxThemeOutputDir)Plugin.yaml" />
       <KxThemeUiFiles Include="$(KxThemeOutputDir)UI\**\*.yaml" />
-      <KxThemeAssetFiles Include="$(KxThemeOutputDir)Assets\**\*" />
+      <KxThemeAssetFiles Include="$(KxThemeOutputDir)KxTheme\**\*" />
     </ItemGroup>
 
     <Copy SourceFiles="@(KxThemeFiles)" DestinationFiles="@(KxThemeFiles->'$(KxThemeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
@@ -85,9 +86,9 @@
       <KxThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KxThemePlatformOutputSegment>
       <KxThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KxThemeRuntimeOutputSegment>
       <KxThemeOutputDir>$(KxThemeProjectDir)bin\$(KxThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KxThemeRuntimeOutputSegment)</KxThemeOutputDir>
-      <KxThemeTargetDir>$(PublishDir)Assets\Plugins\KxTheme\</KxThemeTargetDir>
+      <KxThemeTargetDir>$(PublishDir)$(AssemblyName)\Plugins\KxTheme\</KxThemeTargetDir>
       <KxThemeUiTargetDir>$(KxThemeTargetDir)UI\</KxThemeUiTargetDir>
-      <KxThemeAssetTargetDir>$(PublishDir)Assets\</KxThemeAssetTargetDir>
+      <KxThemeAssetTargetDir>$(PublishDir)$(AssemblyName)\</KxThemeAssetTargetDir>
     </PropertyGroup>
 
     <RemoveDir Directories="$(PublishDir)UI" Condition="Exists('$(PublishDir)UI')" />
@@ -100,7 +101,7 @@
       <KxThemePublishFiles Include="$(KxThemeOutputDir)KxTheme.dll" />
       <KxThemePublishFiles Include="$(KxThemeOutputDir)Plugin.yaml" />
       <KxThemePublishUiFiles Include="$(KxThemeOutputDir)UI\**\*.yaml" />
-      <KxThemePublishAssetFiles Include="$(KxThemeOutputDir)Assets\**\*" />
+      <KxThemePublishAssetFiles Include="$(KxThemeOutputDir)KxTheme\**\*" />
     </ItemGroup>
 
     <Copy SourceFiles="@(KxThemePublishFiles)" DestinationFolder="$(KxThemeTargetDir)" SkipUnchangedFiles="true" />

@@ -27,6 +27,7 @@
   <ItemGroup>
     <None Update="Assets\Icons\app.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>$(AssemblyName)\Icons\app.ico</TargetPath>
     </None>
   </ItemGroup>
 

@@ -219,7 +219,7 @@ public class KalPKCipherServiceTests {
     [InlineData("<html>test</html>")]
     [InlineData("test\0null")]
     [InlineData("line1\nline2")]
-    [InlineData("tab\there")]
+    [InlineData(@"tab\here")]
     [InlineData("emoji: 😀🎉")]
     [InlineData("unicode: \u00A9\u00AE")]
     [InlineData("quotes: \"'`")]
@@ -387,7 +387,7 @@ public class KalPKCipherServiceTests {
         var service = new KalPKCipherService();
 
         // Act & Assert
-        await Assert.ThrowsAsync<NullReferenceException>(async () =>
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
             await service.SaveArchiveAsync(null!));
     }
 

@@ -9,8 +9,8 @@ using System.IO;
 namespace KalCipher;
 
 public class Encryptor {
-    private readonly Lazy<byte[]> _encryptTable = new(() => File.ReadAllBytes("Assets/Table/Encrypt_2006.bin"));
-    private readonly Lazy<byte[]> _decryptTable = new(() => File.ReadAllBytes("Assets/Table/Decrypt_2006.bin"));
+    private readonly Lazy<byte[]> _encryptTable = new(() => File.ReadAllBytes(ResolveTablePath("Encrypt_2006.bin")));
+    private readonly Lazy<byte[]> _decryptTable = new(() => File.ReadAllBytes(ResolveTablePath("Decrypt_2006.bin")));
     private readonly ConcurrentDictionary<int, byte[]> _encryptSlices = new();
     private readonly ConcurrentDictionary<int, byte[]> _decryptSlices = new();
     private readonly Encoding _tableEncoding;
@@ -75,5 +75,26 @@ public class Encryptor {
         var utf = Encoding.UTF8;
         var utfBytes = Encoding.Convert(euc, utf, output);
         return utf.GetString(utfBytes);
+    }
+
+    private static string ResolveTablePath(string fileName) {
+        if (string.IsNullOrWhiteSpace(fileName))
+            throw new ArgumentException("The table file name must not be null or whitespace.", nameof(fileName));
+
+        string baseDirectory = AppContext.BaseDirectory;
+        string assemblyFolder = typeof(Encryptor).Assembly.GetName().Name ?? "KalCipher";
+
+        string[] candidates = [
+            Path.Combine(baseDirectory, assemblyFolder, "Table", fileName),
+            Path.Combine(baseDirectory, "Assets", "Table", fileName),
+            Path.Combine(baseDirectory, "Table", fileName)
+        ];
+
+        foreach (var path in candidates) {
+            if (File.Exists(path))
+                return path;
+        }
+
+        throw new FileNotFoundException($"Unable to locate cipher table '{fileName}'.", candidates[0]);
     }
 }

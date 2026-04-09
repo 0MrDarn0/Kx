@@ -21,6 +21,7 @@
   <ItemGroup>
     <Content Include="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
@@ -29,7 +30,7 @@
       <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>
       <PluginExamplePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</PluginExamplePlatformOutputSegment>
       <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(PluginExamplePlatformOutputSegment)$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
-      <PluginExampleTargetDir>$(TargetDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
+      <PluginExampleTargetDir>$(TargetDir)$(AssemblyName)\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
       <PluginExampleMarkupTargetDir>$(PluginExampleTargetDir)Markup\</PluginExampleMarkupTargetDir>
       <PluginExampleAppRootMarkupDir>$(TargetDir)Markup\</PluginExampleAppRootMarkupDir>
       <PluginExampleLegacyThemesDir>$(PluginExampleTargetDir)Themes\</PluginExampleLegacyThemesDir>
@@ -61,7 +62,7 @@
       <PluginExampleProjectDir>$(MSBuildProjectDirectory)\..\Kx.Plugin.Example\</PluginExampleProjectDir>
       <PluginExamplePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</PluginExamplePlatformOutputSegment>
       <PluginExampleOutputDir>$(PluginExampleProjectDir)bin\$(PluginExamplePlatformOutputSegment)$(Configuration)\$(TargetFramework)\</PluginExampleOutputDir>
-      <PluginExampleTargetDir>$(PublishDir)Assets\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
+      <PluginExampleTargetDir>$(PublishDir)$(AssemblyName)\Plugins\Kx.Plugin.Example\</PluginExampleTargetDir>
       <PluginExampleMarkupTargetDir>$(PluginExampleTargetDir)Markup\</PluginExampleMarkupTargetDir>
       <PluginExamplePublishRootMarkupDir>$(PublishDir)Markup\</PluginExamplePublishRootMarkupDir>
     </PropertyGroup>

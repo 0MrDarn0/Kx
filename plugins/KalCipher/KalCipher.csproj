@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -16,12 +16,15 @@
   <ItemGroup>
     <Content Include="Assets\Configs\kalcipher.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>$(AssemblyName)\Configs\kalcipher.yaml</TargetPath>
     </Content>
     <Content Include="Assets\Table\Decrypt_2006.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>$(AssemblyName)\Table\Decrypt_2006.bin</TargetPath>
     </Content>
     <Content Include="Assets\Table\Encrypt_2006.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>$(AssemblyName)\Table\Encrypt_2006.bin</TargetPath>
     </Content>
     <Content Include="Plugin.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
