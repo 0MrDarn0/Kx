@@ -29,6 +29,8 @@
   - `apps/*/Assets/Configs/*.yaml` and `Markup`/`UI` YAML files for themes and windows
 - Project rules and style
   - `.editorconfig` — code style and naming rules
+- Documentation
+  - `docs/language-key-generation.md` — generated localization key setup and new-project integration
 
 ## Build and test (recommended)
 - Use PowerShell (repo was developed on Windows):
