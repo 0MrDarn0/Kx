@@ -5,15 +5,15 @@ using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.UI.VisualTree;
+using Kx.Tests.TestInfrastructure;
 using Kx.UI.Commands;
 using Kx.UI.Platform;
 using Kx.UI.State;
-using Kx.Tests.TestInfrastructure;
 using Kx.Utility;
 
 using KxUpdater;
 
-namespace Kx.Tests;
+namespace KxUpdater.Tests;
 
 public sealed class MainWindowCommandTests {
     private static readonly UiStateKey<string> _statusState = new("updater.status");

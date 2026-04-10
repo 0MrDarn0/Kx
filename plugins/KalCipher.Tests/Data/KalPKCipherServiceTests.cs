@@ -5,8 +5,7 @@ using Kx.Sdk.Cipher;
 
 using Moq;
 
-namespace KalCipher.Data.UnitTests;
-
+namespace KalCipher.Data.Tests;
 
 /// <summary>
 /// Unit tests for <see cref="KalPKCipherService"/>.

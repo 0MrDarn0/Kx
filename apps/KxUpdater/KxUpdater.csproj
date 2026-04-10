@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -20,6 +20,7 @@
     <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
   </ItemGroup>
 
+
   <ItemGroup>
     <Compile Remove="Plugins\**" />
     <EmbeddedResource Remove="Plugins\**" />
@@ -27,6 +28,7 @@
     <Content Remove="Plugins\**" />
   </ItemGroup>
 
+	
   <ItemGroup>
     <Content Include="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -36,89 +38,15 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="Plugins\KalTheme\KalTheme.csproj" />
-    <None Include="Plugins\KalTheme\Plugin.yaml" />
-    <None Include="Plugins\KalTheme\Assets\KalTheme\UI\updater_frame.yaml" />
-    <None Include="Plugins\KalTheme\Assets\KalTheme\UI\updater_content.yaml" />
-    <None Include="Plugins\KalTheme\Assets\KalTheme\UI\msgbox_frame.yaml" />
-    <None Include="Plugins\KalTheme\Assets\KalTheme\UI\msgbox_content.yaml" />
-    <None Include="Plugins\KalTheme\Assets\KalTheme\UI\settings_frame.yaml" />
-    <None Include="Plugins\KalTheme\Assets\KalTheme\UI\settings_content.yaml" />
-  </ItemGroup>
+	<ItemGroup>
+		<!-- IDE visibility for plugin source files -->
+		<None Include="Plugins\**\*" Exclude="Plugins\**\bin\**;Plugins\**\obj\**" />
+	</ItemGroup>
 
-  <Target Name="BuildKalThemePlugin">
-    <PropertyGroup>
-      <KalThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KalTheme\</KalThemeProjectDir>
-      <KalThemeProjectFile>$(KalThemeProjectDir)KalTheme.csproj</KalThemeProjectFile>
-      <KalThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KalThemePlatformOutputSegment>
-      <KalThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KalThemeRuntimeOutputSegment>
-    </PropertyGroup>
+	<ItemGroup>
+		<PluginProject Include="Plugins\KalTheme\KalTheme.csproj" />
+	</ItemGroup>
 
-    <MSBuild Projects="$(KalThemeProjectFile)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);TargetFramework=$(TargetFramework)" />
-  </Target>
-
-  <Target Name="CopyKalThemeToBuildOutput" AfterTargets="Build" DependsOnTargets="BuildKalThemePlugin">
-    <PropertyGroup>
-      <KalThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KalTheme\</KalThemeProjectDir>
-      <KalThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KalThemePlatformOutputSegment>
-      <KalThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KalThemeRuntimeOutputSegment>
-      <KalThemeOutputDir>$(KalThemeProjectDir)bin\$(KalThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KalThemeRuntimeOutputSegment)</KalThemeOutputDir>
-      <KalThemeTargetDir>$(TargetDir)$(AssemblyName)\Plugins\KalTheme\</KalThemeTargetDir>
-      <KalThemeAssetTargetDir>$(TargetDir)$(AssemblyName)\</KalThemeAssetTargetDir>
-    </PropertyGroup>
-
-    <RemoveDir Directories="$(TargetDir)UI" Condition="Exists('$(TargetDir)UI')" />
-    <Delete Files="$(TargetDir)Plugin.yaml" Condition="Exists('$(TargetDir)Plugin.yaml')" />
-
-    <MakeDir Directories="$(KalThemeTargetDir);$(KalThemeAssetTargetDir)" />
-
-    <ItemGroup>
-      <KalThemeFiles Include="$(KalThemeOutputDir)KalTheme.dll" />
-      <KalThemeFiles Include="$(KalThemeOutputDir)KalTheme.pdb" Condition="Exists('$(KalThemeOutputDir)KalTheme.pdb')" />
-      <KalThemeFiles Include="$(KalThemeOutputDir)Plugin.yaml" />
-      <KalThemeAssetFiles Include="$(KalThemeOutputDir)KalTheme\**\*" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(KalThemeFiles)" DestinationFiles="@(KalThemeFiles->'$(KalThemeTargetDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-
-    <Copy SourceFiles="@(KalThemeAssetFiles)" DestinationFiles="@(KalThemeAssetFiles->'$(KalThemeAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="CopyKalThemeToPublishOutput" AfterTargets="Publish" DependsOnTargets="BuildKalThemePlugin">
-    <PropertyGroup>
-      <KalThemeProjectDir>$(MSBuildProjectDirectory)\Plugins\KalTheme\</KalThemeProjectDir>
-      <KalThemePlatformOutputSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</KalThemePlatformOutputSegment>
-      <KalThemeRuntimeOutputSegment Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</KalThemeRuntimeOutputSegment>
-      <KalThemeOutputDir>$(KalThemeProjectDir)bin\$(KalThemePlatformOutputSegment)$(Configuration)\$(TargetFramework)\$(KalThemeRuntimeOutputSegment)</KalThemeOutputDir>
-      <KalThemeTargetDir>$(PublishDir)$(AssemblyName)\Plugins\KalTheme\</KalThemeTargetDir>
-      <KalThemeAssetTargetDir>$(PublishDir)$(AssemblyName)\</KalThemeAssetTargetDir>
-    </PropertyGroup>
-
-    <RemoveDir Directories="$(PublishDir)UI" Condition="Exists('$(PublishDir)UI')" />
-    <Delete Files="$(PublishDir)Plugin.yaml" Condition="Exists('$(PublishDir)Plugin.yaml')" />
-    <Delete Files="$(KalThemeTargetDir)KalTheme.deps.json;$(KalThemeTargetDir)Kx.Sdk.dll;$(KalThemeTargetDir)Kx.Sdk.pdb;$(KalThemeTargetDir)Kx.Sdk.xml" Condition="Exists('$(KalThemeTargetDir)KalTheme.deps.json') Or Exists('$(KalThemeTargetDir)Kx.Sdk.dll') Or Exists('$(KalThemeTargetDir)Kx.Sdk.pdb') Or Exists('$(KalThemeTargetDir)Kx.Sdk.xml')" />
-
-    <MakeDir Directories="$(KalThemeTargetDir);$(KalThemeAssetTargetDir)" />
-
-    <ItemGroup>
-      <KalThemePublishFiles Include="$(KalThemeOutputDir)KalTheme.dll" />
-      <KalThemePublishFiles Include="$(KalThemeOutputDir)Plugin.yaml" />
-      <KalThemePublishAssetFiles Include="$(KalThemeOutputDir)KalTheme\**\*" />
-    </ItemGroup>
-
-    <Copy SourceFiles="@(KalThemePublishFiles)" DestinationFolder="$(KalThemeTargetDir)" SkipUnchangedFiles="true" />
-
-    <Copy SourceFiles="@(KalThemePublishAssetFiles)" DestinationFiles="@(KalThemePublishAssetFiles->'$(KalThemeAssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="RemoveSingleFilePublishSymbols" AfterTargets="Publish" Condition="'$(PublishSingleFile)' == 'true'">
-    <ItemGroup>
-      <PublishedSymbols Include="$(PublishDir)*.pdb" />
-    </ItemGroup>
-
-    <Delete Files="@(PublishedSymbols)" />
-  </Target>
-
+  <Import Project="..\..\build\PluginCopy.targets" />
   <Import Project="..\..\build\LanguageKeyGeneration.targets" />
 </Project>

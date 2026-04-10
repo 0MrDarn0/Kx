@@ -3,7 +3,7 @@
 
 using KxUpdater.Configuration;
 
-namespace Kx.Tests;
+namespace KxUpdater.Tests;
 
 public sealed class AppConfigTests {
     [Fact]

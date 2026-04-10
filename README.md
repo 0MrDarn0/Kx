@@ -18,9 +18,12 @@ The repository now contains five main areas:
 - `apps/KxUpdateBuilder` - update package builder tool
 - `apps/KxUpdater/Plugins/KalTheme` - updater-specific visual plugin scaffold for the KalOnline style and updater-specific UI work
 - `tests/Kx.Tests` - framework and runtime tests
+- `tests/KxUpdater.Tests` - updater application tests
 
 ### Reusable plugins
 - `plugins` - home for reusable plugins that are not tied to a single application
+- `plugins/KalCipher` - reusable cipher plugin
+- `plugins/KalCipher.Tests` - tests for the reusable cipher plugin
 
 ### Examples
 - `examples/Kx.Plugin.Example` - reference plugin that registers controls, actions, commands, themes, and window definitions
@@ -58,6 +61,11 @@ Open the solution in Visual Studio 2026 or build from the repository root and ru
 ### Run the sample app
 Build and run `examples/Kx.Example.App`. It is intended as the smallest reference host for the framework and the example plugin.
 
+### Run tests
+- framework/runtime tests: `dotnet test tests/Kx.Tests/Kx.Tests.csproj`
+- updater app tests: `dotnet test tests/KxUpdater.Tests/KxUpdater.Tests.csproj`
+- reusable plugin tests: `dotnet test plugins/KalCipher.Tests/KalCipher.Tests.csproj`
+
 ### Main entry points
 - updater app startup: `apps/KxUpdater/Program.cs`
 - sample app startup: `examples/Kx.Example.App/Program.cs`
@@ -89,6 +97,15 @@ Current examples:
 - sample app assets now live under `examples/Kx.Example.App/Assets`
   - `Assets/Icons/app.ico`
 - `Kx` keeps generic asset resolution infrastructure, not updater-specific content files
+
+## Plugin and test structure
+
+- app-local plugins live beside their owning app, for example `apps/KxUpdater/Plugins/KalTheme`
+- reusable plugins live under `plugins`, for example `plugins/KalCipher`
+- app hosts include plugins through the shared MSBuild `PluginProject` + `build/PluginCopy.targets` pattern
+- framework tests stay in `tests/Kx.Tests`
+- app-specific tests stay in dedicated app test projects such as `tests/KxUpdater.Tests`
+- reusable plugin tests stay beside the plugin under `plugins/<PluginName>.Tests`
 
 ## Goals of the framework
 

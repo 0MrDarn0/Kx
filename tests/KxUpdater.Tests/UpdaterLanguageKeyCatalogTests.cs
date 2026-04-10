@@ -2,13 +2,16 @@ using System.Reflection;
 
 using Kx.Core.Localization;
 
-namespace Kx.Tests;
+using KxUpdater;
 
-public sealed class LanguageKeyCatalogTests {
+namespace KxUpdater.Tests;
+
+public sealed class UpdaterLanguageKeyCatalogTests {
     [Fact]
-    public void WhenFrameworkLanguageFileIsGeneratedThenAllYamlLeafKeysExistInTheCatalog() {
-        string[] expected = GetYamlLeafKeys(GetRepoPath("src", "Kx", "Assets", "Languages", "lang_en.yaml"));
-        string[] actual = GetCatalogKeys(typeof(KxLanguageKeys));
+    public void WhenUpdaterLanguageFileIsGeneratedThenAllYamlLeafKeysExistInTheCatalog() {
+        Type updaterLanguageKeysType = typeof(MainWindow).Assembly.GetType("KxUpdater.UpdaterLanguageKeys", throwOnError: true)!;
+        string[] expected = GetYamlLeafKeys(GetRepoPath("apps", "KxUpdater", "Assets", "Languages", "lang_en.yaml"));
+        string[] actual = GetCatalogKeys(updaterLanguageKeysType);
 
         Assert.Equal(expected, actual);
     }

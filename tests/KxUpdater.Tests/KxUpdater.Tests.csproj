@@ -19,7 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
-    <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
+    <ProjectReference Include="..\..\apps\KxUpdater\KxUpdater.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Kx.Tests\TestInfrastructure\TestVisualContext.cs" Link="TestInfrastructure\TestVisualContext.cs" />
+    <Compile Include="..\Kx.Tests\TestInfrastructure\TestWindowHost.cs" Link="TestInfrastructure\TestWindowHost.cs" />
   </ItemGroup>
 </Project>
