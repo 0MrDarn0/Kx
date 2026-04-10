@@ -40,6 +40,7 @@
 - Notes:
   - Some projects are Windows-only (WinForms). Run build on Windows or in an environment that supports the Windows SDK.
   - Project files include custom targets that build and copy plugin projects; building top-level app projects (for example `apps/KxUpdater/KxUpdater.csproj` or `examples/Kx.Example.App`) will trigger those targets.
+  - Plugin outputs must be copied automatically into the publish directory; matching debug/release build behavior is required.
 
 ## Coding guidelines (high-priority, follow these first)
 - Respect `.editorconfig` naming and formatting rules (file header, underscore-prefixed private fields, PascalCase public APIs).

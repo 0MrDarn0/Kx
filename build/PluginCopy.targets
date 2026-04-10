@@ -19,7 +19,8 @@
   <Target Name="BuildPlugins" Condition="'@(PluginProject)' != ''">
     <MSBuild Projects="@(PluginProject)"
              Targets="Restore;Build"
-             Properties="Configuration=$(Configuration);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);SelfContained=$(SelfContained);TargetFramework=$(TargetFramework)"
+             Properties="Configuration=$(Configuration);Platform=$(Platform)"
+             RemoveProperties="TargetFramework;TargetPlatformIdentifier;TargetPlatformVersion;TargetPlatformMinVersion;SupportedOSPlatformVersion;RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot;UseWindowsForms"
              BuildInParallel="false" />
   </Target>
 
@@ -35,7 +36,8 @@
     -->
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
              Targets="_DeployPlugin"
-             Properties="PluginProjectFile=%(PluginProject.FullPath);PluginName=%(PluginProject.Filename);DeployTargetDir=$(TargetDir);AppAssemblyName=$(AssemblyName);Configuration=$(Configuration);TargetFramework=$(TargetFramework);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);CleanSharedDeps=false" />
+             Properties="PluginProjectFile=%(PluginProject.FullPath);PluginName=%(PluginProject.Filename);DeployTargetDir=$([System.IO.Path]::GetFullPath('$(TargetDir)'));AppAssemblyName=$(AssemblyName);Configuration=$(Configuration);TargetFramework=$(TargetFramework);Platform=$(Platform);CleanSharedDeps=false"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot" />
   </Target>
 
   <!-- After Publish: copy each plugin to the publish output directory. -->
@@ -45,7 +47,8 @@
           Condition="'@(PluginProject)' != ''">
     <MSBuild Projects="$(MSBuildThisFileFullPath)"
              Targets="_DeployPlugin"
-             Properties="PluginProjectFile=%(PluginProject.FullPath);PluginName=%(PluginProject.Filename);DeployTargetDir=$(PublishDir);AppAssemblyName=$(AssemblyName);Configuration=$(Configuration);TargetFramework=$(TargetFramework);Platform=$(Platform);RuntimeIdentifier=$(RuntimeIdentifier);CleanSharedDeps=true" />
+             Properties="PluginProjectFile=%(PluginProject.FullPath);PluginName=%(PluginProject.Filename);DeployTargetDir=$([System.IO.Path]::GetFullPath('$(PublishDir)'));AppAssemblyName=$(AssemblyName);Configuration=$(Configuration);TargetFramework=$(TargetFramework);Platform=$(Platform);CleanSharedDeps=true"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot" />
   </Target>
 
   <!--

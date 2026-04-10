@@ -9,7 +9,7 @@ namespace KxUpdater.Plugin;
 
 public sealed class KalTheme : IPlugin {
     private static readonly WindowMarkupPair[] _windowMarkupPairs = [
-        new("MainWindow", "UpdaterFrame",    "updater"),
+        new("MainWindow", "MainWindowFrame", "main"),
         new("MessageBox", "MessageBoxFrame", "msgbox"),
         new("Settings",   "SettingsFrame",   "settings")
     ];

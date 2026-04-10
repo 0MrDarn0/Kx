@@ -12,7 +12,10 @@
   </ItemGroup>
 
   <Target Name="GenerateLanguageKeys" BeforeTargets="CoreCompile" Condition="'$(LanguageKeySourceFile)' != '' and '$(LanguageKeysNamespace)' != '' and '$(LanguageKeysClassName)' != '' and '$(LanguageKeysVisibility)' != ''">
-    <MSBuild Projects="$(LanguageKeyGeneratorProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=$(Platform)" />
+    <MSBuild Projects="$(LanguageKeyGeneratorProject)"
+             Targets="Restore;Build"
+             Properties="Configuration=$(Configuration);Platform=$(Platform)"
+             RemoveProperties="TargetFramework;TargetPlatformIdentifier;TargetPlatformVersion;TargetPlatformMinVersion;SupportedOSPlatformVersion;RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot;UseWindowsForms" />
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(LanguageKeyGeneratedFile)'))" />
     <Exec Command="dotnet &quot;$(LanguageKeyGeneratorDll)&quot; &quot;$(LanguageKeySourceFile)&quot; &quot;$(LanguageKeyGeneratedFile)&quot; &quot;$(LanguageKeysNamespace)&quot; &quot;$(LanguageKeysClassName)&quot; &quot;$(LanguageKeysVisibility)&quot;" />
   </Target>
