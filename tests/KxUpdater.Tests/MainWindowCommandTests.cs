@@ -112,8 +112,8 @@ public sealed class MainWindowCommandTests {
             commandRegistry,
             stateStore,
             uiComposition.ControlRegistry,
-            uiComposition.ThemeRegistry,
-            uiComposition.WindowRegistry);
+            uiComposition.WindowFrameRegistry,
+            uiComposition.WindowContentRegistry);
     }
 
     private static void EnsureUpdaterAssetsForTests() {

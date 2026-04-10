@@ -69,8 +69,8 @@ public static class RuntimeServiceConfiguration {
         services.Register<Kx.Sdk.UI.Commands.IUiCommandRegistry>(uiComposition.CommandRegistry);
         services.Register<Kx.Sdk.UI.State.IUiStateStore>(uiComposition.StateStore);
         services.Register<Kx.Sdk.UI.Markup.IControlRegistry>(uiComposition.ControlRegistry);
-        services.Register<Kx.Sdk.UI.Themes.IThemeRegistry>(uiComposition.ThemeRegistry);
-        services.Register<Kx.Sdk.UI.Markup.IWindowRegistry>(uiComposition.WindowRegistry);
+        services.Register<Kx.Sdk.UI.Themes.IWindowFrameRegistry>(uiComposition.WindowFrameRegistry);
+        services.Register<Kx.Sdk.UI.Markup.IWindowContentRegistry>(uiComposition.WindowContentRegistry);
 
         services.RegisterFactory<Kx.Core.Lifecycle.StartupManager>(Lifetime.Singleton, c => shellComposition.CreateStartupManager(c));
         services.RegisterFactory<Kx.Core.Lifecycle.ShutdownManager>(Lifetime.Singleton, c => shellComposition.CreateShutdownManager(c));

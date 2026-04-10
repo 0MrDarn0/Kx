@@ -34,13 +34,13 @@ public abstract class Window : IDisposable {
     private readonly IUiCommandRegistry? _commandRegistry;
     private readonly IUiStateStore? _stateStore;
     private readonly IControlRegistry? _controlRegistry;
-    private readonly IThemeRegistry? _themeRegistry;
-    private readonly IWindowRegistry? _windowRegistry;
+    private readonly IWindowFrameRegistry? _windowFrameRegistry;
+    private readonly IWindowContentRegistry? _windowContentRegistry;
     private readonly List<IVisual> _configuredControls = [];
-    private WindowConfig? _resolvedWindowConfig;
-    private WindowTheme? _resolvedTheme;
+    private WindowContentDefinition? _resolvedWindowContentDefinition;
+    private WindowFrameDefinition? _resolvedWindowFrameDefinition;
 
-    protected Window(IWindowHost host, ITrayService? tray, ILoggingService? log, IMarkupActionRegistry? actionRegistry = null, IUiCommandRegistry? commandRegistry = null, IUiStateStore? stateStore = null, IControlRegistry? controlRegistry = null, IThemeRegistry? themeRegistry = null, IWindowRegistry? windowRegistry = null) {
+    protected Window(IWindowHost host, ITrayService? tray, ILoggingService? log, IMarkupActionRegistry? actionRegistry = null, IUiCommandRegistry? commandRegistry = null, IUiStateStore? stateStore = null, IControlRegistry? controlRegistry = null, IWindowFrameRegistry? windowFrameRegistry = null, IWindowContentRegistry? windowContentRegistry = null) {
         _host = host;
         _tray = tray;
         _logger = log;
@@ -48,8 +48,8 @@ public abstract class Window : IDisposable {
         _commandRegistry = commandRegistry;
         _stateStore = stateStore;
         _controlRegistry = controlRegistry;
-        _themeRegistry = themeRegistry;
-        _windowRegistry = windowRegistry;
+        _windowFrameRegistry = windowFrameRegistry;
+        _windowContentRegistry = windowContentRegistry;
 
         _ctx = new WindowContext(
             target: host,
@@ -61,7 +61,7 @@ public abstract class Window : IDisposable {
             _ctx.SetCommandRegistry(_commandRegistry);
         if (_stateStore is not null)
             _ctx.SetStateStore(_stateStore);
-        _ctx.SetOpenWindowAction(OpenWindowDefinition);
+        _ctx.SetOpenWindowAction(OpenWindowContent);
 
         InitializeFrame();
         InitializeRenderer();
@@ -71,15 +71,15 @@ public abstract class Window : IDisposable {
         OnInitialize();
     }
 
-    protected virtual string WindowDefinitionName => GetType().Name;
-    protected virtual string WindowConfigPath => Paths.GetConfig("frame.yaml");
+    protected virtual string WindowContentDefinitionName => GetType().Name;
+    protected virtual string WindowContentDefinitionPath => Paths.GetConfig("frame.yaml");
     protected virtual string? WindowIconResource => null;
 
     protected virtual void InitializeFrame() {
-        _resolvedWindowConfig = ResolveWindowConfig();
-        _resolvedTheme = ResolveWindowTheme(_resolvedWindowConfig);
+        _resolvedWindowContentDefinition = ResolveWindowContentDefinition();
+        _resolvedWindowFrameDefinition = ResolveWindowFrameDefinition(_resolvedWindowContentDefinition);
 
-        ApplyFrame(WindowDefinitionMerger.MergeFrame(_resolvedWindowConfig.Frame, _resolvedTheme));
+        ApplyFrame(WindowCompositionMerger.MergeFrame(_resolvedWindowContentDefinition.Frame, _resolvedWindowFrameDefinition));
     }
 
     protected virtual void InitializeRenderer() {
@@ -122,14 +122,14 @@ public abstract class Window : IDisposable {
     }
 
     protected virtual void InitializeConfiguredControls() {
-        if (_actionRegistry is null || _controlRegistry is null || _resolvedWindowConfig is null)
+        if (_actionRegistry is null || _controlRegistry is null || _resolvedWindowContentDefinition is null)
             return;
 
         ClearConfiguredControls();
         HasConfiguredControls = false;
         HasConfiguredContentControls = false;
 
-        foreach (var config in WindowDefinitionMerger.MergeControls(_resolvedWindowConfig.Controls, _resolvedTheme)) {
+        foreach (var config in WindowCompositionMerger.MergeControls(_resolvedWindowContentDefinition.Controls, _resolvedWindowFrameDefinition)) {
             var control = ControlFactory.Create(_controlRegistry, _actionRegistry, _ctx, config);
             _ctx.UIElementManager.Add(control);
             _configuredControls.Add(control);
@@ -158,32 +158,32 @@ public abstract class Window : IDisposable {
         return _ctx.Config.Window.Icon;
     }
 
-    private WindowConfig ResolveWindowConfig() {
-        if (_windowRegistry?.TryGet(WindowDefinitionName, out var config) == true && config is not null)
-            return config;
+    private WindowContentDefinition ResolveWindowContentDefinition() {
+        if (_windowContentRegistry?.TryGet(WindowContentDefinitionName, out var contentDefinition) == true && contentDefinition is not null)
+            return contentDefinition;
 
-        return ConfigLoader.Load<WindowConfig>(WindowConfigPath);
+        return ConfigLoader.Load<WindowContentDefinition>(WindowContentDefinitionPath);
     }
 
-    private WindowTheme? ResolveWindowTheme(WindowConfig config) {
-        if (!string.IsNullOrWhiteSpace(config.Theme) &&
-            _themeRegistry?.TryGet(config.Theme, out var theme) == true) {
-            return theme;
+    private WindowFrameDefinition? ResolveWindowFrameDefinition(WindowContentDefinition contentDefinition) {
+        if (!string.IsNullOrWhiteSpace(contentDefinition.FrameDefinition) &&
+            _windowFrameRegistry?.TryGet(contentDefinition.FrameDefinition, out var frameDefinition) == true) {
+            return frameDefinition;
         }
 
         return null;
     }
 
-    private void OpenWindowDefinition(string name) {
-        if (_windowRegistry?.TryGet(name, out var config) != true || config is null)
+    private void OpenWindowContent(string name) {
+        if (_windowContentRegistry?.TryGet(name, out var contentDefinition) != true || contentDefinition is null)
             throw new InvalidOperationException($"No window definition named '{name}' is registered.");
 
-        _resolvedWindowConfig = config;
-        _resolvedTheme = ResolveWindowTheme(config);
+        _resolvedWindowContentDefinition = contentDefinition;
+        _resolvedWindowFrameDefinition = ResolveWindowFrameDefinition(contentDefinition);
         HasConfiguredControls = false;
         HasConfiguredContentControls = false;
 
-        ApplyFrame(WindowDefinitionMerger.MergeFrame(config.Frame, _resolvedTheme));
+        ApplyFrame(WindowCompositionMerger.MergeFrame(contentDefinition.Frame, _resolvedWindowFrameDefinition));
         InitializeConfiguredControls();
     }
 

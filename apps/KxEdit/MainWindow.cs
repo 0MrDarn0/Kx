@@ -18,8 +18,8 @@ using Kx.UI.Platform;
 namespace KxEdit;
 
 public sealed class MainWindow : Window {
-    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
-        : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, themeRegistry, windowRegistry) {
+    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IWindowFrameRegistry windowFrameRegistry, IWindowContentRegistry windowContentRegistry)
+        : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, windowFrameRegistry, windowContentRegistry) {
     }
 
     protected override string? WindowIconResource => "Icons:app.ico";

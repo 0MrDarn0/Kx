@@ -48,8 +48,8 @@ public sealed class MainWindow : Window {
     private bool _initialUpdateCheckStarted;
     private bool _primaryActionInProgress;
 
-    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IThemeRegistry themeRegistry, IWindowRegistry windowRegistry)
-        : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, themeRegistry, windowRegistry) {
+    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IWindowFrameRegistry windowFrameRegistry, IWindowContentRegistry windowContentRegistry)
+        : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, windowFrameRegistry, windowContentRegistry) {
         _appConfig = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
         _launcher = new UpdaterLauncher(log, SetStatusText, _ctx.CloseWindow);
         _updaterWorkflow = new UpdaterWorkflow(

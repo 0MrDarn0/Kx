@@ -13,14 +13,14 @@ public sealed class WindowFallbackTests {
     public void WhenWindowHasNoConfiguredControlsThenFallbackUiRuns() {
         var composition = new RuntimeUiComposition();
         var windowHost = new TestWindowHost();
-        composition.WindowRegistry.Register(nameof(FallbackWindow), new WindowConfig());
+        composition.WindowContentRegistry.Register(nameof(FallbackWindow), new WindowContentDefinition());
 
         using var window = new FallbackWindow(
             windowHost,
             composition.ActionRegistry,
             composition.ControlRegistry,
-            composition.ThemeRegistry,
-            composition.WindowRegistry);
+            composition.WindowFrameRegistry,
+            composition.WindowContentRegistry);
 
         Assert.True(window.FallbackBuilt);
     }
@@ -29,7 +29,7 @@ public sealed class WindowFallbackTests {
     public void WhenWindowHasConfiguredOverlayControlsThenFallbackUiDoesNotRun() {
         var composition = new RuntimeUiComposition();
         var windowHost = new TestWindowHost();
-        composition.WindowRegistry.Register(nameof(FallbackWindow), new WindowConfig {
+        composition.WindowContentRegistry.Register(nameof(FallbackWindow), new WindowContentDefinition {
             Controls = [
                 new ControlConfig {
                     Type = "Label",
@@ -44,8 +44,8 @@ public sealed class WindowFallbackTests {
             windowHost,
             composition.ActionRegistry,
             composition.ControlRegistry,
-            composition.ThemeRegistry,
-            composition.WindowRegistry);
+            composition.WindowFrameRegistry,
+            composition.WindowContentRegistry);
 
         Assert.False(window.FallbackBuilt);
         Assert.True(window.ExposedHasConfiguredControls);
@@ -61,9 +61,9 @@ public sealed class WindowFallbackTests {
             IWindowHost host,
             IMarkupActionRegistry actionRegistry,
             IControlRegistry controlRegistry,
-            IThemeRegistry themeRegistry,
-            IWindowRegistry windowRegistry)
-            : base(host, null, null, actionRegistry, null, null, controlRegistry, themeRegistry, windowRegistry) {
+            IWindowFrameRegistry windowFrameRegistry,
+            IWindowContentRegistry windowContentRegistry)
+            : base(host, null, null, actionRegistry, null, null, controlRegistry, windowFrameRegistry, windowContentRegistry) {
         }
 
         protected override void OnInitialize() {
@@ -83,7 +83,7 @@ public sealed class WindowFallbackTests {
         protected override void RegisterWindowEvents() {
         }
 
-        protected override string WindowDefinitionName => nameof(FallbackWindow);
+        protected override string WindowContentDefinitionName => nameof(FallbackWindow);
 
         public override void Dispose() {
             _ctx.Dispose();

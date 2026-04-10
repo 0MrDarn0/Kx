@@ -50,7 +50,7 @@ public sealed class RuntimeUiCompositionTests {
 
         Assert.Same(composition.ActionRegistry, services.Get<IMarkupActionRegistry>());
         Assert.Same(composition.ControlRegistry, services.Get<IControlRegistry>());
-        Assert.Same(composition.WindowRegistry, services.Get<IWindowRegistry>());
+        Assert.Same(composition.WindowContentRegistry, services.Get<IWindowContentRegistry>());
         Assert.Same(windowHost, services.Get<IWindowHost>());
     }
 

@@ -1,12 +1,11 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Sdk.UI.Themes;
+using Kx.Sdk.UI.Markup;
 
-namespace Kx.Sdk.UI.Markup;
+namespace Kx.Sdk.UI.Themes;
 
-public class WindowConfig {
-    public string? Theme { get; set; }
+public class WindowFrameDefinition {
     public FrameConfig Frame { get; set; } = new();
     public List<ControlConfig> Controls { get; set; } = new();
 }

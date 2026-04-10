@@ -34,8 +34,8 @@ public sealed class Example : IPlugin {
         var actionRegistry = context.Services.Get<IMarkupActionRegistry>();
         var commandRegistry = context.Services.Get<IUiCommandRegistry>();
         var stateStore = context.Services.Get<IUiStateStore>();
-        var themeRegistry = context.Services.Get<IThemeRegistry>();
-        var windowRegistry = context.Services.Get<IWindowRegistry>();
+        var frameRegistry = context.Services.Get<IWindowFrameRegistry>();
+        var contentRegistry = context.Services.Get<IWindowContentRegistry>();
 
         stateStore.Set(_titleState, "  Plugin Window (bound)  ");
         stateStore.Set(_titleColorState, "#F5F5F5");
@@ -49,11 +49,11 @@ public sealed class Example : IPlugin {
         controlRegistry.Register("ExampleBadge", (uiContext, config) => new ExampleBadge(uiContext, config.Id, config.Text, config.Properties.TryGetValue("textState", out var textState) ? textState : null));
         actionRegistry.Register("example.toggleVisibility", ToggleVisibility);
         commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(stateStore, commandContext));
-        RegisterTheme(themeRegistry, "Example.Dark", "Themes", "Example.Dark.yaml");
-        RegisterTheme(themeRegistry, "Example.Alternate", "Themes", "Example.Alternate.yaml");
+        RegisterFrameDefinition(frameRegistry, "Example.Dark", "Frames", "example_dark_frame.yaml");
+        RegisterFrameDefinition(frameRegistry, "Example.Alternate", "Frames", "example_alternate_frame.yaml");
 
-        RegisterWindow(windowRegistry, "MainWindow", "Windows", "MainWindow.yaml");
-        RegisterWindow(windowRegistry, "Example.Alternate", "Windows", "Example.Alternate.yaml");
+        RegisterWindowContentDefinition(contentRegistry, "MainWindow", "Content", "main_window_content.yaml");
+        RegisterWindowContentDefinition(contentRegistry, "Example.Alternate", "Content", "example_alternate_content.yaml");
 
         context.Logger.Info($"{Name} initialized");
         context.Logger.Info($"ApiVersion: {context.ApiVersion}");
@@ -76,24 +76,24 @@ public sealed class Example : IPlugin {
         stateStore.Set(_badgeTextState, payload.Text);
     }
 
-    private static void RegisterTheme(IThemeRegistry themeRegistry, string name, params string[] relativePathSegments) {
-        ArgumentNullException.ThrowIfNull(themeRegistry);
+    private static void RegisterFrameDefinition(IWindowFrameRegistry frameRegistry, string name, params string[] relativePathSegments) {
+        ArgumentNullException.ThrowIfNull(frameRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        themeRegistry.Register(name, MarkupYamlLoader.Load<WindowTheme>(GetMarkupPath(relativePathSegments)));
+        frameRegistry.Register(name, MarkupYamlLoader.Load<WindowFrameDefinition>(GetUiPath(relativePathSegments)));
     }
 
-    private static void RegisterWindow(IWindowRegistry windowRegistry, string name, params string[] relativePathSegments) {
-        ArgumentNullException.ThrowIfNull(windowRegistry);
+    private static void RegisterWindowContentDefinition(IWindowContentRegistry contentRegistry, string name, params string[] relativePathSegments) {
+        ArgumentNullException.ThrowIfNull(contentRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        windowRegistry.Register(name, MarkupYamlLoader.Load<WindowConfig>(GetMarkupPath(relativePathSegments)));
+        contentRegistry.Register(name, MarkupYamlLoader.Load<WindowContentDefinition>(GetUiPath(relativePathSegments)));
     }
 
-    private static string GetMarkupPath(params string[] relativePathSegments) {
+    private static string GetUiPath(params string[] relativePathSegments) {
         var segments = new string[relativePathSegments.Length + 2];
         segments[0] = Path.GetDirectoryName(typeof(Example).Assembly.Location) ?? AppContext.BaseDirectory;
-        segments[1] = "Markup";
+        segments[1] = "UI";
 
         for (int i = 0; i < relativePathSegments.Length; i++)
             segments[i + 2] = relativePathSegments[i];

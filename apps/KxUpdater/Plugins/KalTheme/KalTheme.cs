@@ -8,7 +8,7 @@ using Kx.Sdk.UI.Themes;
 namespace KxUpdater.Plugin;
 
 public sealed class KalTheme : IPlugin {
-    private static readonly WindowMarkupPair[] _windowMarkupPairs = [
+    private static readonly WindowDefinitionPair[] _windowDefinitionPairs = [
         new("MainWindow", "MainWindowFrame", "main"),
         new("MessageBox", "MessageBoxFrame", "msgbox"),
         new("Settings",   "SettingsFrame",   "settings")
@@ -19,11 +19,11 @@ public sealed class KalTheme : IPlugin {
     public void Initialize(IPluginContext context) {
         ArgumentNullException.ThrowIfNull(context);
 
-        var themeRegistry = context.Services.Get<IThemeRegistry>();
-        var windowRegistry = context.Services.Get<IWindowRegistry>();
+        var frameRegistry = context.Services.Get<IWindowFrameRegistry>();
+        var contentRegistry = context.Services.Get<IWindowContentRegistry>();
 
-        foreach (var pair in _windowMarkupPairs)
-            TryRegisterWindowMarkupPair(themeRegistry, windowRegistry, pair, context.Logger);
+        foreach (var pair in _windowDefinitionPairs)
+            TryRegisterWindowDefinition(frameRegistry, contentRegistry, pair, context.Logger);
 
         context.Logger.Info($"{Name} plugin initialized");
     }
@@ -31,43 +31,51 @@ public sealed class KalTheme : IPlugin {
     public void Dispose() {
     }
 
-    private static void TryRegisterWindowMarkupPair(
-        IThemeRegistry themeRegistry,
-        IWindowRegistry windowRegistry,
-        WindowMarkupPair pair,
+    private static void TryRegisterWindowDefinition(
+        IWindowFrameRegistry frameRegistry,
+        IWindowContentRegistry contentRegistry,
+        WindowDefinitionPair pair,
         Kx.Sdk.Logging.ILoggingService logger) {
-        ArgumentNullException.ThrowIfNull(themeRegistry);
-        ArgumentNullException.ThrowIfNull(windowRegistry);
+        ArgumentNullException.ThrowIfNull(frameRegistry);
+        ArgumentNullException.ThrowIfNull(contentRegistry);
 
         try {
-            themeRegistry.Register(pair.ThemeName, LoadUiDefinition<WindowTheme>($"{pair.WindowKey}_frame.yaml"));
+            frameRegistry.Register(pair.FrameDefinitionName, LoadFrameDefinition($"{pair.ResourceKey}_frame.yaml"));
 
-            var windowConfig = LoadUiDefinition<WindowConfig>($"{pair.WindowKey}_content.yaml");
-            windowConfig.Theme = string.IsNullOrWhiteSpace(windowConfig.Theme)
-                ? pair.ThemeName
-                : windowConfig.Theme;
+            var contentDefinition = LoadContentDefinition($"{pair.ResourceKey}_content.yaml");
+            contentDefinition.FrameDefinition = string.IsNullOrWhiteSpace(contentDefinition.FrameDefinition)
+                ? pair.FrameDefinitionName
+                : contentDefinition.FrameDefinition;
 
-            windowRegistry.Register(pair.WindowName, windowConfig);
+            contentRegistry.Register(pair.WindowName, contentDefinition);
         }
         catch (Exception ex) {
             logger.Warning($"[{nameof(KalTheme)}] Could not register window '{pair.WindowName}': {ex.Message}");
         }
     }
 
-    private static T LoadUiDefinition<T>(string fileName) where T : new() {
+    private static WindowFrameDefinition LoadFrameDefinition(string fileName) {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
-        return MarkupYamlLoader.Load<T>(GetUiPath(fileName));
+        return MarkupYamlLoader.Load<WindowFrameDefinition>(GetUiPath("Frames", fileName));
     }
 
-    private static string GetUiPath(string fileName) {
+    private static WindowContentDefinition LoadContentDefinition(string fileName) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+
+        return MarkupYamlLoader.Load<WindowContentDefinition>(GetUiPath("Content", fileName));
+    }
+
+    private static string GetUiPath(string folderName, string fileName) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(folderName);
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
         return Path.Combine(
             Path.GetDirectoryName(typeof(KalTheme).Assembly.Location) ?? AppContext.BaseDirectory,
             "UI",
+            folderName,
             fileName);
     }
 
-    private readonly record struct WindowMarkupPair(string WindowName, string ThemeName, string WindowKey);
+    private readonly record struct WindowDefinitionPair(string WindowName, string FrameDefinitionName, string ResourceKey);
 }

@@ -15,7 +15,7 @@ public sealed class WindowIconTests {
         CreateIconResource("frame.ico", SystemIcons.Application);
         var composition = new RuntimeUiComposition();
         var windowHost = new TestWindowHost();
-        composition.WindowRegistry.Register(nameof(IconWindow), new WindowConfig {
+        composition.WindowContentRegistry.Register(nameof(IconWindow), new WindowContentDefinition {
             Frame = new FrameConfig {
                 Default = new DefaultFrameConfig {
                     Icon = "Icons:WindowIconTests:frame.ico"
@@ -27,8 +27,8 @@ public sealed class WindowIconTests {
             windowHost,
             composition.ActionRegistry,
             composition.ControlRegistry,
-            composition.ThemeRegistry,
-            composition.WindowRegistry);
+            composition.WindowFrameRegistry,
+            composition.WindowContentRegistry);
 
         Assert.Equal(File.ReadAllBytes(Paths.GetResource("Icons\\WindowIconTests\\frame.ico")), windowHost.LastWindowIconBytes);
     }
@@ -39,7 +39,7 @@ public sealed class WindowIconTests {
         CreateIconResource("code-override.ico", SystemIcons.Warning);
         var composition = new RuntimeUiComposition();
         var windowHost = new TestWindowHost();
-        composition.WindowRegistry.Register(nameof(CodeIconWindow), new WindowConfig {
+        composition.WindowContentRegistry.Register(nameof(CodeIconWindow), new WindowContentDefinition {
             Frame = new FrameConfig {
                 Default = new DefaultFrameConfig {
                     Icon = "Icons:WindowIconTests:frame-override.ico"
@@ -51,8 +51,8 @@ public sealed class WindowIconTests {
             windowHost,
             composition.ActionRegistry,
             composition.ControlRegistry,
-            composition.ThemeRegistry,
-            composition.WindowRegistry);
+            composition.WindowFrameRegistry,
+            composition.WindowContentRegistry);
 
         Assert.Equal(File.ReadAllBytes(Paths.GetResource("Icons\\WindowIconTests\\code-override.ico")), windowHost.LastWindowIconBytes);
     }
@@ -71,9 +71,9 @@ public sealed class WindowIconTests {
             IWindowHost host,
             IMarkupActionRegistry actionRegistry,
             IControlRegistry controlRegistry,
-            IThemeRegistry themeRegistry,
-            IWindowRegistry windowRegistry)
-            : base(host, null, null, actionRegistry, null, null, controlRegistry, themeRegistry, windowRegistry) {
+            IWindowFrameRegistry windowFrameRegistry,
+            IWindowContentRegistry windowContentRegistry)
+            : base(host, null, null, actionRegistry, null, null, controlRegistry, windowFrameRegistry, windowContentRegistry) {
         }
 
         protected override void InitializeRenderer() {
@@ -86,7 +86,7 @@ public sealed class WindowIconTests {
         protected override void RegisterWindowEvents() {
         }
 
-        protected override string WindowDefinitionName => nameof(IconWindow);
+        protected override string WindowContentDefinitionName => nameof(IconWindow);
 
         public override void Dispose() {
             _ctx.Dispose();
@@ -98,12 +98,12 @@ public sealed class WindowIconTests {
             IWindowHost host,
             IMarkupActionRegistry actionRegistry,
             IControlRegistry controlRegistry,
-            IThemeRegistry themeRegistry,
-            IWindowRegistry windowRegistry)
-            : base(host, actionRegistry, controlRegistry, themeRegistry, windowRegistry) {
+            IWindowFrameRegistry windowFrameRegistry,
+            IWindowContentRegistry windowContentRegistry)
+            : base(host, actionRegistry, controlRegistry, windowFrameRegistry, windowContentRegistry) {
         }
 
-        protected override string WindowDefinitionName => nameof(CodeIconWindow);
+        protected override string WindowContentDefinitionName => nameof(CodeIconWindow);
         protected override string? WindowIconResource => "Icons:WindowIconTests:code-override.ico";
     }
 

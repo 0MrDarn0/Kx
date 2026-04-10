@@ -51,6 +51,7 @@
 - Keep diffs small and minimal; follow existing project structure for new code and unit tests.
 - Follow the two-context WinForms rule: designer files conservative; modern C# for rest of code.
 - Ensure runtime error messages/dialog texts are in English.
+- Naming should reflect the semantic split between `WindowFrameDefinition`, `WindowContentDefinition`, and `IWindowFrameRegistry` for frame/base definitions and window content definitions; avoid confusing terms like theme/window when they mix frame and content responsibilities.
 
 ## Conventions and patterns in this repo
 - YAML configuration and UI markup are used extensively. Keep YAML keys camel-cased where existing files do so.
@@ -108,5 +109,3 @@
 - Start with unit tests: `dotnet test tests/Kx.Tests`.
 - Follow `.editorconfig` rules.
 - Keep the SDK/runtime separation intact.
-
--- End of file

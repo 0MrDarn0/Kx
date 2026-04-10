@@ -6,24 +6,24 @@ using Kx.Sdk.UI.Themes;
 
 namespace Kx.App;
 
-internal static class WindowDefinitionMerger {
-    public static FrameConfig MergeFrame(FrameConfig windowFrame, WindowTheme? theme) {
+internal static class WindowCompositionMerger {
+    public static FrameConfig MergeFrame(FrameConfig windowFrame, WindowFrameDefinition? frameDefinition) {
         ArgumentNullException.ThrowIfNull(windowFrame);
 
-        var merged = theme is null
+        var merged = frameDefinition is null
             ? CloneFrame(windowFrame)
-            : CloneFrame(theme.Frame);
+            : CloneFrame(frameDefinition.Frame);
 
-        if (theme is not null)
+        if (frameDefinition is not null)
             ApplyFrameOverrides(merged, windowFrame);
 
         return merged;
     }
 
-    public static IReadOnlyList<ControlConfig> MergeControls(IReadOnlyList<ControlConfig> windowControls, WindowTheme? theme) {
+    public static IReadOnlyList<ControlConfig> MergeControls(IReadOnlyList<ControlConfig> windowControls, WindowFrameDefinition? frameDefinition) {
         ArgumentNullException.ThrowIfNull(windowControls);
 
-        return MergeControlList(theme?.Controls, windowControls);
+        return MergeControlList(frameDefinition?.Controls, windowControls);
     }
 
     private static void ApplyFrameOverrides(FrameConfig target, FrameConfig source) {
@@ -70,8 +70,8 @@ internal static class WindowDefinitionMerger {
         target.Default = MergeDefaultFrame(target.Default, source.Default);
     }
 
-    private static DefaultFrameConfig MergeDefaultFrame(DefaultFrameConfig themeDefaults, DefaultFrameConfig windowDefaults) {
-        var merged = CloneDefaultFrame(themeDefaults);
+    private static DefaultFrameConfig MergeDefaultFrame(DefaultFrameConfig frameDefaults, DefaultFrameConfig windowDefaults) {
+        var merged = CloneDefaultFrame(frameDefaults);
 
         if (windowDefaults.IsPropertySet(nameof(DefaultFrameConfig.Title)))
             merged.Title = windowDefaults.Title;
@@ -111,8 +111,8 @@ internal static class WindowDefinitionMerger {
         return merged;
     }
 
-    private static IReadOnlyList<ControlConfig> MergeControlList(IReadOnlyList<ControlConfig>? themeControls, IReadOnlyList<ControlConfig> windowControls) {
-        var merged = themeControls?.Select(CloneControl).ToList() ?? [];
+    private static IReadOnlyList<ControlConfig> MergeControlList(IReadOnlyList<ControlConfig>? frameControls, IReadOnlyList<ControlConfig> windowControls) {
+        var merged = frameControls?.Select(CloneControl).ToList() ?? [];
         var indexById = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         for (int i = 0; i < merged.Count; i++) {
@@ -132,8 +132,8 @@ internal static class WindowDefinitionMerger {
         return merged;
     }
 
-    private static ControlConfig MergeControl(ControlConfig themeControl, ControlConfig windowControl) {
-        var merged = CloneControl(themeControl);
+    private static ControlConfig MergeControl(ControlConfig frameControl, ControlConfig windowControl) {
+        var merged = CloneControl(frameControl);
 
         if (windowControl.IsPropertySet(nameof(ControlConfig.Type)))
             merged.Type = windowControl.Type;

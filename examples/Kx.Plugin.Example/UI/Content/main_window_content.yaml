@@ -1,4 +1,4 @@
-theme: Example.Dark
+frameDefinition: Example.Dark
 frame:
   default:
     title: Merged Main Window
@@ -12,6 +12,6 @@ controls:
         color: "#FFD166"
       - type: Label
         id: example_merge_hint
-        text: Added by WindowConfig merge
+        text: Added by WindowContentDefinition merge
         color: "#8BD3FF"
         visibleBinding: example.mergeHintVisible

@@ -21,8 +21,8 @@ public sealed class RuntimeUiComposition {
         CommandRegistry = new UiCommandRegistry();
         StateStore = new UiStateStore();
         ControlRegistry = new ControlRegistry();
-        ThemeRegistry = new ThemeRegistry();
-        WindowRegistry = new WindowRegistry();
+        WindowFrameRegistry = new WindowFrameRegistry();
+        WindowContentRegistry = new WindowContentRegistry();
 
         BuiltInMarkupActionRegistrar.Register(ActionRegistry);
         BuiltInControlRegistrar.Register(ControlRegistry);
@@ -49,12 +49,12 @@ public sealed class RuntimeUiComposition {
     public ControlRegistry ControlRegistry { get; }
 
     /// <summary>
-    /// Gets the theme registry shared by the runtime.
+    /// Gets the window frame registry shared by the runtime.
     /// </summary>
-    public ThemeRegistry ThemeRegistry { get; }
+    public WindowFrameRegistry WindowFrameRegistry { get; }
 
     /// <summary>
-    /// Gets the window definition registry shared by the runtime.
+    /// Gets the window content registry shared by the runtime.
     /// </summary>
-    public WindowRegistry WindowRegistry { get; }
+    public WindowContentRegistry WindowContentRegistry { get; }
 }

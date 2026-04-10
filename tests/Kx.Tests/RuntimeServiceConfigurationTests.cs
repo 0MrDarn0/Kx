@@ -54,13 +54,13 @@ public sealed class RuntimeServiceConfigurationTests {
         var services = new MsDiContainer();
         var windowHost = new TestWindowHost();
         var pluginManager = new PluginManager(services);
-        var customWindowRegistry = new WindowRegistry();
+        var customWindowRegistry = new WindowContentRegistry();
 
         RuntimeServiceConfiguration.RegisterDefaults(services, windowHost, pluginManager);
-        services.Register<IWindowRegistry>(customWindowRegistry);
+        services.Register<IWindowContentRegistry>(customWindowRegistry);
         services.Build();
 
-        Assert.Same(customWindowRegistry, services.Get<IWindowRegistry>());
+        Assert.Same(customWindowRegistry, services.Get<IWindowContentRegistry>());
     }
 
     [Fact]

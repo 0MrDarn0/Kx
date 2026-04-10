@@ -13,13 +13,17 @@
     <Content Include="Plugin.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Markup\**\*.yaml">
+    <Content Include="UI\**\*.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>$(AssemblyName)\Plugins\$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      <TargetPath>$(AssemblyName)\Plugins\$(AssemblyName)\UI\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Markup\Windows\" />
   </ItemGroup>
 </Project>
