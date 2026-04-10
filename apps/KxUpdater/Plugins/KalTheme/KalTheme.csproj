@@ -17,7 +17,7 @@
     </Content>
     <Content Include="Assets\\**\\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>$(AssemblyName)\Plugins\KalTheme\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      <TargetPath>$(AssemblyName)\Plugins\$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
     </Content>
   </ItemGroup>
 
