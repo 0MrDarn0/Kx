@@ -14,8 +14,8 @@ The repository now contains five main areas:
 ### Framework and app projects
 - `src/Kx` - framework runtime, window system, rendering, configuration loading, plugin infrastructure
 - `src/Kx.Sdk` - contracts for plugins, UI, logging, DI, window hosting, and markup
-- `apps/KxUpdater` - concrete updater application built on the framework, including its own `Assets` content
-- `apps/KxUpdateBuilder` - update package builder tool
+- `apps/KxUpdater` - concrete updater application built on the framework, including its own `Assets` content and the file-based updater client
+- `apps/KxUpdateBuilder` - desktop manifest builder for publishing file-based updates into an `Upload` folder
 - `apps/KxUpdater/Plugins/KalTheme` - updater-specific visual plugin scaffold for the KalOnline style and updater-specific UI work
 - `tests/Kx.Tests` - framework and runtime tests
 - `tests/KxUpdater.Tests` - updater application tests
@@ -52,12 +52,16 @@ This keeps `RuntimeServiceConfiguration` focused on registering already composed
 - `docs/architecture.md` - project boundaries, runtime startup flow, and composition model
 - `docs/grid-splitter.md` - runtime-resizable grid dividers, YAML usage, and layout recommendations
 - `docs/plugins.md` - plugin model, registries, markup assets, and example plugin walkthrough
+- `docs/update-builder.md` - file-based updater publishing flow, `KxUpdateBuilder` usage, manifest structure, and IIS notes
 - `docs/windows-and-markup.md` - window lifecycle, YAML/registry lookup, control layers, icon precedence, and fallback UI behavior
 
 ## Quick start
 
 ### Run the concrete updater app
 Open the solution in Visual Studio 2026 or build from the repository root and run `apps/KxUpdater`.
+
+### Run the update builder
+Build and run `apps/KxUpdateBuilder`. It mirrors files from an `Update` folder into an `Upload` folder and writes a file-based `update.json` manifest for `KxUpdater`.
 
 ### Run the sample app
 Build and run `examples/Kx.Example.App`. It is intended as the smallest reference host for the framework and the example plugin.
@@ -69,10 +73,35 @@ Build and run `examples/Kx.Example.App`. It is intended as the smallest referenc
 
 ### Main entry points
 - updater app startup: `apps/KxUpdater/Program.cs`
+- update builder startup: `apps/KxUpdateBuilder/Program.cs`
 - sample app startup: `examples/Kx.Example.App/Program.cs`
 - runtime bootstrap: `src/Kx/App/Runtime.cs`
 - base window behavior: `src/Kx/App/Window.cs`
 - example plugin: `examples/Kx.Plugin.Example/Example.cs`
+
+## File-based update flow
+
+`KxUpdater` now uses a file-based manifest flow instead of requiring a monolithic `update.zip` package.
+
+Current publication model:
+- `update.json` describes all current files plus `deletedFiles`
+- `news.yaml` provides updater news entries
+- each published file is downloaded directly from its relative path under the update base URL
+
+Current client behavior:
+- load `update.json`
+- compare local file hashes against manifest entries
+- download only changed or missing files
+- remove files listed in `deletedFiles`
+- stage a replacement updater executable for self-update when needed
+
+Current builder behavior:
+- read source files from `Update`
+- mirror them into `Upload`
+- remove legacy `update.zip` and `version.txt` artifacts from `Upload`
+- write `update.json`
+
+For a practical walkthrough, see `docs/update-builder.md`.
 
 ## Asset and configuration boundaries
 

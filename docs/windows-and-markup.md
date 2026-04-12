@@ -7,7 +7,7 @@ All application windows derive from `Kx.App.Window`.
 The base class handles:
 - creating `WindowContext`
 - loading the window definition
-- loading an optional theme
+- resolving an optional frame definition
 - building configured controls
 - creating the renderer
 - creating interaction logic
@@ -16,23 +16,23 @@ The base class handles:
 ## Window definition lookup
 
 A window resolves its configuration in this order:
-1. ask `IWindowRegistry` for a named window definition
-2. fall back to loading YAML from `WindowConfigPath`
+1. ask `IWindowContentRegistry` for a named window content definition
+2. fall back to loading YAML from `WindowContentDefinitionPath`
 
 The default window definition name is the CLR type name.
 
 The default path still resolves inside the runtime output `Assets/Configs` layout, but the owning app is now responsible for shipping the actual `frame.yaml` file.
 
-## Themes
+## Frame definitions
 
-A window can reference a theme by name.
+A window content definition can reference a frame definition by name.
 
-If the window config specifies a theme and that theme exists in `IThemeRegistry`, the theme is merged into the final frame and control configuration.
+If the content definition specifies a frame definition and that definition exists in `IWindowFrameRegistry`, the frame and frame-owned controls are merged into the final window composition.
 
 ## Configured controls
 
 Configured controls are created through:
-- `WindowDefinitionMerger.MergeControls(...)`
+- `WindowCompositionMerger.MergeControls(...)`
 - `ControlFactory.Create(...)`
 - `IControlRegistry`
 
@@ -115,8 +115,8 @@ It builds:
 - `UiCommandRegistry`
 - `UiStateStore`
 - `ControlRegistry`
-- `ThemeRegistry`
-- `WindowRegistry`
+- `WindowFrameRegistry`
+- `WindowContentRegistry`
 
 It also registers built-in:
 - markup actions

@@ -8,7 +8,7 @@ The repository contains both a framework and concrete consumers of that framewor
 - `src/Kx` - framework implementation
 - `src/Kx.Sdk` - framework contracts and extension points
 - `apps/KxUpdater` - concrete updater application built on the framework
-- `apps/KxUpdateBuilder` - update package builder
+- `apps/KxUpdateBuilder` - desktop manifest builder for the file-based updater flow
 - `apps/KxUpdater/Plugins/KalTheme` - app-specific updater plugin scaffold
 - `plugins` - reusable plugins shared across multiple apps
 - `examples/Kx.Plugin.Example` - reference plugin
@@ -47,7 +47,17 @@ Examples:
 - updater-specific configuration types
 - updater-owned asset files under `Assets`
 - the concrete updater main window
+- file-by-file manifest comparison and download behavior
 - application startup entry point
+
+### `KxUpdateBuilder`
+Contains the companion publishing tool for the updater host.
+
+Examples:
+- desktop UI for selecting `Update` and `Upload` folders
+- generating `update.json`
+- mirroring files into the publish folder
+- tracking deleted files between manifests
 
 ### `plugins`
 Contains reusable plugins that are intentionally not tied to a single application.
@@ -158,6 +168,24 @@ Current examples:
 - reusable plugins can live under `plugins`
 - sample app asset files now live in `examples/Kx.Example.App/Assets`
 - `Kx` no longer ships updater-specific `app.yaml`, `frame.yaml`, or language YAML files
+
+## Updater publication model
+
+The updater stack now uses a file-based publication model.
+
+Published update content consists of:
+- `update.json`
+- `news.yaml`
+- the current file tree under the update base URL
+
+`update.json` currently carries:
+- `files` with relative paths and SHA256 hashes
+- `deletedFiles` for client-side cleanup
+- optional `version` metadata for display-only status text
+
+`KxUpdater` compares the manifest against the local installation and downloads only the files that differ.
+
+`KxUpdateBuilder` produces that publish layout by mirroring the current `Update` folder into `Upload` and writing the manifest there.
 
 ## Why this structure exists
 
