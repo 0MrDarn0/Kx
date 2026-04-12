@@ -213,6 +213,32 @@ public sealed class ControlFactoryBindingTests {
         Assert.Equal(SKColor.Parse("#E8D9B4"), button.ForegroundColor);
     }
 
+    [Fact]
+    public void WhenGridSplitterPropertiesAreConfiguredThenTheyAreApplied() {
+        var context = new TestVisualContext();
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "GridSplitter",
+            Id = "splitter",
+            Color = "#7C6E4B",
+            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                ["orientation"] = "Horizontal",
+                ["minSize"] = "36",
+                ["targetRow"] = "1",
+                ["activeColor"] = "#E8D9B4"
+            }
+        });
+
+        var splitter = Assert.IsType<GridSplitter>(control);
+        Assert.Equal(Kx.UI.Layout.Orientation.Horizontal, splitter.Orientation);
+        Assert.Equal(36f, splitter.MinSegmentSize);
+        Assert.Equal(1, splitter.TargetRow);
+        Assert.Equal(SKColor.Parse("#7C6E4B"), splitter.TrackColor);
+        Assert.Equal(SKColor.Parse("#E8D9B4"), splitter.ActiveTrackColor);
+    }
+
     private static ControlRegistry CreateControlRegistry() {
         var registry = new ControlRegistry();
         registry.Register("Label", (context, config) => new Kx.UI.Elements.Label(context, config.Id, config.Text ?? string.Empty, config.Font?.Size ?? 14f));
@@ -220,6 +246,8 @@ public sealed class ControlFactoryBindingTests {
         registry.Register("ListBox", (context, config) => new Kx.UI.Elements.ListBox(context, config.Id));
         registry.Register("TextBox", (context, config) => new Kx.UI.Elements.TextBox(context, config.Id, config.Text ?? string.Empty));
         registry.Register("ProgressBar", (context, config) => new Kx.UI.Elements.ProgressBar(context, config.Id));
+        registry.Register("Grid", (context, config) => new Grid(context, config.Id));
+        registry.Register("GridSplitter", (context, config) => new GridSplitter(context, config.Id));
         registry.Register("StackPanel", (context, config) => new StackPanel(context, config.Id));
         return registry;
     }

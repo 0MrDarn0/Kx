@@ -92,6 +92,10 @@ public static class ControlFactory {
             case StackPanel stackPanel:
                 ApplyStackPanelProperties(stackPanel, config);
                 break;
+
+            case GridSplitter gridSplitter:
+                ApplyGridSplitterProperties(gridSplitter, config);
+                break;
         }
 
         ApplyBindings(control, config);
@@ -300,6 +304,34 @@ public static class ControlFactory {
             float.TryParse(spacing, out var parsedSpacing)) {
             stackPanel.Spacing = parsedSpacing;
         }
+    }
+
+    private static void ApplyGridSplitterProperties(GridSplitter gridSplitter, ControlConfig config) {
+        if (!string.IsNullOrWhiteSpace(config.Color))
+            gridSplitter.TrackColor = SKColor.Parse(config.Color);
+
+        if (config.Properties.TryGetValue("orientation", out var orientation) &&
+            Enum.TryParse<Kx.UI.Layout.Orientation>(orientation, ignoreCase: true, out var parsedOrientation)) {
+            gridSplitter.Orientation = parsedOrientation;
+        }
+
+        if (TryGetFloatProperty(config, "minSize", out var minSize))
+            gridSplitter.MinSegmentSize = minSize;
+
+        if (TryGetIntProperty(config, "targetColumn", out var targetColumn))
+            gridSplitter.TargetColumn = targetColumn;
+
+        if (TryGetIntProperty(config, "targetRow", out var targetRow))
+            gridSplitter.TargetRow = targetRow;
+
+        if (TryGetColorProperty(config, "hoverColor", out var hoverColor))
+            gridSplitter.HoverTrackColor = hoverColor;
+
+        if (TryGetColorProperty(config, "activeColor", out var activeColor))
+            gridSplitter.ActiveTrackColor = activeColor;
+
+        if (TryGetColorProperty(config, "gripColor", out var gripColor))
+            gridSplitter.GripColor = gripColor;
     }
 
     private static SKTypeface CreateTypeface(FontConfig font) {

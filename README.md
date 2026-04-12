@@ -50,6 +50,7 @@ This keeps `RuntimeServiceConfiguration` focused on registering already composed
 ## Documentation
 
 - `docs/architecture.md` - project boundaries, runtime startup flow, and composition model
+- `docs/grid-splitter.md` - runtime-resizable grid dividers, YAML usage, and layout recommendations
 - `docs/plugins.md` - plugin model, registries, markup assets, and example plugin walkthrough
 - `docs/windows-and-markup.md` - window lifecycle, YAML/registry lookup, control layers, icon precedence, and fallback UI behavior
 

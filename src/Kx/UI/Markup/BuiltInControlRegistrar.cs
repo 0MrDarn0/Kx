@@ -17,6 +17,7 @@ internal static class BuiltInControlRegistrar {
         registry.Register("TextBox", (ctx, cfg) => new Kx.UI.Elements.TextBox(ctx, cfg.Id, cfg.Text ?? string.Empty));
         registry.Register("ProgressBar", (ctx, cfg) => new Kx.UI.Elements.ProgressBar(ctx, cfg.Id));
         registry.Register("Grid", (ctx, cfg) => new Grid(ctx, cfg.Id));
+        registry.Register("GridSplitter", (ctx, cfg) => new GridSplitter(ctx, cfg.Id));
         registry.Register("DockPanel", (ctx, cfg) => new DockPanel(ctx, cfg.Id));
         registry.Register("StackPanel", (ctx, cfg) => new StackPanel(ctx, cfg.Id));
     }

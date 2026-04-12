@@ -15,7 +15,7 @@ public class FrameConfig {
         }
     }
 
-    private string _topLeft = "KalOnline:Frame:top_left.png";
+    private string _topLeft = string.Empty;
     public string TopLeft {
         get => _topLeft;
         set {
@@ -24,7 +24,7 @@ public class FrameConfig {
         }
     }
 
-    private string _topCenter = "KalOnline:Frame:top_center.png";
+    private string _topCenter = string.Empty;
     public string TopCenter {
         get => _topCenter;
         set {
@@ -33,7 +33,7 @@ public class FrameConfig {
         }
     }
 
-    private string _topRight = "KalOnline:Frame:top_right.png";
+    private string _topRight = string.Empty;
     public string TopRight {
         get => _topRight;
         set {
@@ -42,7 +42,7 @@ public class FrameConfig {
         }
     }
 
-    private string _rightCenter = "KalOnline:Frame:right_center.png";
+    private string _rightCenter = string.Empty;
     public string RightCenter {
         get => _rightCenter;
         set {
@@ -51,7 +51,7 @@ public class FrameConfig {
         }
     }
 
-    private string _bottomRight = "KalOnline:Frame:bottom_right.png";
+    private string _bottomRight = string.Empty;
     public string BottomRight {
         get => _bottomRight;
         set {
@@ -60,7 +60,7 @@ public class FrameConfig {
         }
     }
 
-    private string _bottomCenter = "KalOnline:Frame:bottom_center.png";
+    private string _bottomCenter = string.Empty;
     public string BottomCenter {
         get => _bottomCenter;
         set {
@@ -69,7 +69,7 @@ public class FrameConfig {
         }
     }
 
-    private string _bottomLeft = "KalOnline:Frame:bottom_left.png";
+    private string _bottomLeft = string.Empty;
     public string BottomLeft {
         get => _bottomLeft;
         set {
@@ -78,7 +78,7 @@ public class FrameConfig {
         }
     }
 
-    private string _leftCenter = "KalOnline:Frame:left_center.png";
+    private string _leftCenter = string.Empty;
     public string LeftCenter {
         get => _leftCenter;
         set {
@@ -87,7 +87,7 @@ public class FrameConfig {
         }
     }
 
-    private string _fillBitmap = "KalOnline:Frame:fill_bitmap.bmp";
+    private string _fillBitmap = string.Empty;
     public string FillBitmap {
         get => _fillBitmap;
         set {

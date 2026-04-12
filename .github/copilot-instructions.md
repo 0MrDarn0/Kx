@@ -87,6 +87,7 @@
 - Keep public SDK surface minimal and stable; prefer `src/Kx.Sdk` as the plugin contract.
 - When adding new NuGet references, prefer stable releases compatible with .NET 10.
 - When touching designer files, follow the designer rules strictly and avoid language features unsupported by the designer.
+- Implement reusable UI features like grid resizing directly in the `src/Kx` framework rather than app-specific in `apps/KxUpdater`.
 
 ## Contact points in repo (use these to explore code quickly)
 - Entry points: `apps/KxUpdater/` and `examples/Kx.Example.App/`

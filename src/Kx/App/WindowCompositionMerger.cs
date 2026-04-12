@@ -133,6 +133,9 @@ internal static class WindowCompositionMerger {
     }
 
     private static ControlConfig MergeControl(ControlConfig frameControl, ControlConfig windowControl) {
+        ArgumentNullException.ThrowIfNull(frameControl);
+        ArgumentNullException.ThrowIfNull(windowControl);
+
         var merged = CloneControl(frameControl);
 
         if (windowControl.IsPropertySet(nameof(ControlConfig.Type)))
@@ -186,14 +189,14 @@ internal static class WindowCompositionMerger {
         if (windowControl.IsPropertySet(nameof(ControlConfig.GridColumnSpan)))
             merged.GridColumnSpan = windowControl.GridColumnSpan;
         if (windowControl.IsPropertySet(nameof(ControlConfig.Rows)))
-            merged.Rows = windowControl.Rows.Select(CloneGridRow).ToList();
+            merged.Rows = windowControl.Rows?.Select(CloneGridRow).ToList() ?? [];
         if (windowControl.IsPropertySet(nameof(ControlConfig.Columns)))
-            merged.Columns = windowControl.Columns.Select(CloneGridColumn).ToList();
+            merged.Columns = windowControl.Columns?.Select(CloneGridColumn).ToList() ?? [];
         if (windowControl.IsPropertySet(nameof(ControlConfig.Children)))
-            merged.Children = MergeControlList(merged.Children, windowControl.Children).ToList();
+            merged.Children = MergeControlList(merged.Children, windowControl.Children ?? []).ToList();
 
         if (windowControl.IsPropertySet(nameof(ControlConfig.Properties))) {
-            foreach (var property in windowControl.Properties)
+            foreach (var property in windowControl.Properties ?? [])
                 merged.Properties[property.Key] = property.Value;
         }
 
@@ -248,6 +251,8 @@ internal static class WindowCompositionMerger {
     }
 
     private static ControlConfig CloneControl(ControlConfig source) {
+        ArgumentNullException.ThrowIfNull(source);
+
         var clone = new ControlConfig {
             Type = source.Type,
             Id = source.Id,
@@ -274,12 +279,12 @@ internal static class WindowCompositionMerger {
             GridColumn = source.GridColumn,
             GridRowSpan = source.GridRowSpan,
             GridColumnSpan = source.GridColumnSpan,
-            Rows = source.Rows.Select(CloneGridRow).ToList(),
-            Columns = source.Columns.Select(CloneGridColumn).ToList(),
-            Children = source.Children.Select(CloneControl).ToList()
+            Rows = source.Rows?.Select(CloneGridRow).ToList() ?? [],
+            Columns = source.Columns?.Select(CloneGridColumn).ToList() ?? [],
+            Children = source.Children?.Select(CloneControl).ToList() ?? []
         };
 
-        foreach (var property in source.Properties)
+        foreach (var property in source.Properties ?? [])
             clone.Properties[property.Key] = property.Value;
 
         return clone;

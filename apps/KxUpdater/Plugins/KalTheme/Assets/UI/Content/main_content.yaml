@@ -73,6 +73,17 @@ controls:
                   value: 1
                   unit: Star
             children:
+              - type: GridSplitter
+                id: updater_changelog_splitter
+                gridRow: 1
+                gridColumn: 0
+                color: "#5F5238"
+                properties:
+                  orientation: "Horizontal"
+                  hoverColor: "#766647"
+                  activeColor: "#9A8456"
+                  gripColor: "#C9BA95"
+                  minSize: "120"
               - type: TextBox
                 id: updater_changelog
                 textBinding: updater.changelog
@@ -93,6 +104,16 @@ controls:
                   multiline: "true"
                   readOnly: "true"
                   scrollBarColor: "#7C6E4B"
+          - type: GridSplitter
+            id: updater_body_splitter
+            gridRow: 0
+            gridColumn: 1
+            color: "#5F5238"
+            properties:
+              hoverColor: "#766647"
+              activeColor: "#9A8456"
+              gripColor: "#C9BA95"
+              minSize: "180"
           - type: Grid
             id: updater_news_column
             gridRow: 0
