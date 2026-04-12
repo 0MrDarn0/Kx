@@ -15,7 +15,6 @@ namespace Kx.Core.Pipeline.Steps;
 public class LoadMetadataStep(IUpdateSource source, string baseUrl) : IUpdateStep {
     private readonly IUpdateSource _source = source;
     private readonly string _metadataUrl = baseUrl.EndsWith('/') ? baseUrl + "update.json" : baseUrl + "/update.json";
-    private readonly string _changelogUrl = baseUrl.EndsWith('/') ? baseUrl + "changelog.txt" : baseUrl + "/changelog.txt";
 
     public string Name => "LoadMetadata";
 
@@ -26,9 +25,5 @@ public class LoadMetadataStep(IUpdateSource source, string baseUrl) : IUpdateSte
         // Metadaten laden
         var json = await _source.GetMetadataJsonAsync(_metadataUrl);
         ctx.Metadata = JsonSerializer.Deserialize<UpdateMetadata>(json)!;
-
-        // Changelog laden
-        var changelog = await _source.GetChangelogAsync(_changelogUrl);
-        eventManager.NotifyAll(new ChangelogEvent(changelog));
     }
 }

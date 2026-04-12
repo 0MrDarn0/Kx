@@ -10,24 +10,28 @@ using Kx.Core.Update;
 namespace Kx.Core.Pipeline.Steps;
 
 [PipelineStep(15)]
-public class LoadChangelogStep(IUpdateSource source, string baseUrl) : IUpdateStep {
+public class LoadNewsStep(IUpdateSource source, string baseUrl) : IUpdateStep {
+    private const string NewsFileName = "news.yaml";
+
     private readonly IUpdateSource _source = source;
     private readonly string _baseUrl = baseUrl.EndsWith('/') ? baseUrl : baseUrl + "/";
 
-    public string Name => "LoadChangelog";
+    public string Name => "LoadNews";
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         try {
-            string changelogUrl = _baseUrl + "changelog.txt";
-            string changelog = await _source.GetChangelogAsync(changelogUrl, ct);
-
-            // Event feuern → landet in UIState
-            eventManager.NotifyAll(new ChangelogEvent(changelog));
+            string news = await LoadNewsContentAsync(ct);
+            eventManager.NotifyAll(new ChangelogEvent(news));
         }
         catch (Exception ex) {
             eventManager.NotifyAll(new StatusEvent(
                 LanguageService.Translate(KxLanguageKeys.Status.ChangelogFailed, ex.Message)
             ));
         }
+    }
+
+    private Task<string> LoadNewsContentAsync(CancellationToken ct) {
+        string newsUrl = _baseUrl + NewsFileName;
+        return _source.GetChangelogAsync(newsUrl, ct);
     }
 }

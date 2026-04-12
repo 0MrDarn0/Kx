@@ -102,6 +102,7 @@ public abstract class Window : IDisposable {
     }
 
     protected virtual async void OnShown() {
+        _ctx.RequestRender();
         _ctx.Events.NotifyAll(new WindowShownEvent());
         _logger?.Info($"{typeof(Window).FullName} OnShown()");
     }

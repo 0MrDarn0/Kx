@@ -3,9 +3,18 @@
 
 using Kx.Core.Localization;
 
+using YamlDotNet.Core;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
 namespace KxUpdater;
 
 internal sealed class NewsCoordinator : IDisposable {
+    private static readonly IDeserializer _newsDeserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
     private readonly Func<Action<int>, IDisposable> _subscribeToSelectedIndex;
     private readonly Action<string[]> _setNewsTitles;
     private readonly Action<int> _setSelectedIndex;
@@ -59,6 +68,68 @@ internal sealed class NewsCoordinator : IDisposable {
         if (string.IsNullOrWhiteSpace(changelogText))
             return [];
 
+        if (TryParseNewsDocument(changelogText, out var documentEntries))
+            return documentEntries;
+
+        return ParseLegacyNewsEntries(changelogText);
+    }
+
+    private static bool TryParseNewsDocument(string newsText, out IReadOnlyList<NewsEntry> entries) {
+        entries = [];
+
+        if (!LooksLikeNewsDocument(newsText))
+            return false;
+
+        NewsDocument? document;
+        try {
+            document = _newsDeserializer.Deserialize<NewsDocument>(newsText);
+        }
+        catch (YamlException) {
+            return false;
+        }
+
+        var parsedEntries = document?.Entries?
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.Content))
+            .Select(entry => new NewsEntry(
+                ResolveNewsTitle(entry.Title, entry.Content!),
+                NormalizeNewsContent(entry.Content!)))
+            .ToList();
+
+        if (parsedEntries is not { Count: > 0 })
+            return false;
+
+        entries = parsedEntries;
+        return true;
+    }
+
+    private static bool LooksLikeNewsDocument(string text) {
+        return text.AsSpan().TrimStart().StartsWith("entries:", StringComparison.Ordinal);
+    }
+
+    private static string ResolveNewsTitle(string? title, string content) {
+        if (!string.IsNullOrWhiteSpace(title))
+            return title.Trim();
+
+        string firstLine = NormalizeNewsContent(content)
+            .Split(Environment.NewLine, 2, StringSplitOptions.None)[0]
+            .Trim();
+
+        return string.IsNullOrWhiteSpace(firstLine)
+            ? LanguageService.Translate(UpdaterLanguageKeys.Info.NewsLatest)
+            : firstLine;
+    }
+
+    private static string NormalizeNewsContent(string content) {
+        return content
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\n", Environment.NewLine, StringComparison.Ordinal)
+            .Trim();
+    }
+
+    private static IReadOnlyList<NewsEntry> ParseLegacyNewsEntries(string changelogText) {
+        if (string.IsNullOrWhiteSpace(changelogText))
+            return [];
+
         string normalizedText = changelogText.Replace("\r\n", "\n", StringComparison.Ordinal);
         var lines = normalizedText.Split('\n');
         List<NewsEntry> entries = [];
@@ -100,6 +171,15 @@ internal sealed class NewsCoordinator : IDisposable {
             : title.Trim();
 
         entries.Add(new NewsEntry(resolvedTitle, content));
+    }
+
+    private sealed class NewsDocument {
+        public List<NewsDocumentEntry> Entries { get; set; } = [];
+    }
+
+    private sealed class NewsDocumentEntry {
+        public string? Title { get; set; }
+        public string? Content { get; set; }
     }
 
     private sealed record NewsEntry(string Title, string Content);
