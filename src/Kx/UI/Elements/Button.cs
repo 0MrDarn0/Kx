@@ -11,11 +11,109 @@ using SkiaSharp;
 namespace Kx.UI.Elements;
 
 public class Button : UIElement {
-    public string Text { get; set; }
-    public float FontSize { get; set; } = 14f;
-    public bool IsEnabled { get; set; } = true;
+    private string _text;
+    private float _fontSize = 14f;
+    private bool _isEnabled = true;
+    private SKColor _foregroundColor = new(0, 0, 0, 255);
+    private SKColor _backgroundColor = new(245, 245, 245, 255);
+    private SKColor _hoverBackgroundColor = new(220, 220, 220, 255);
+    private SKColor _pressedBackgroundColor = new(200, 200, 200, 255);
+    private SKColor _disabledBackgroundColor = new(240, 240, 240, 255);
+    private SKColor _disabledForegroundColor = new(160, 160, 160, 255);
+    private SKColor _borderColor = new(180, 180, 180, 255);
+
+    public string Text {
+        get => _text;
+        set {
+            _text = value ?? string.Empty;
+            Invalidate();
+        }
+    }
+
+    public float FontSize {
+        get => _fontSize;
+        set {
+            float normalizedValue = value > 0 ? value : 14f;
+            if (Math.Abs(normalizedValue - _fontSize) < 0.001f)
+                return;
+
+            _fontSize = normalizedValue;
+            _scaledFontSize = _fontSize * DpiScale;
+            _font?.Dispose();
+            _font = new SKFont(SKTypeface.Default, _scaledFontSize);
+            Invalidate();
+        }
+    }
+
+    public bool IsEnabled {
+        get => _isEnabled;
+        set {
+            if (_isEnabled == value)
+                return;
+
+            _isEnabled = value;
+            Invalidate();
+        }
+    }
+
     public override bool CanFocus => IsEnabled;
-    public SKColor ForegroundColor { get; set; } = new(0, 0, 0, 255);
+
+    public SKColor ForegroundColor {
+        get => _foregroundColor;
+        set {
+            _foregroundColor = value;
+            Invalidate();
+        }
+    }
+
+    public SKColor BackgroundColor {
+        get => _backgroundColor;
+        set {
+            _backgroundColor = value;
+            Invalidate();
+        }
+    }
+
+    public SKColor HoverBackgroundColor {
+        get => _hoverBackgroundColor;
+        set {
+            _hoverBackgroundColor = value;
+            Invalidate();
+        }
+    }
+
+    public SKColor PressedBackgroundColor {
+        get => _pressedBackgroundColor;
+        set {
+            _pressedBackgroundColor = value;
+            Invalidate();
+        }
+    }
+
+    public SKColor DisabledBackgroundColor {
+        get => _disabledBackgroundColor;
+        set {
+            _disabledBackgroundColor = value;
+            Invalidate();
+        }
+    }
+
+    public SKColor DisabledForegroundColor {
+        get => _disabledForegroundColor;
+        set {
+            _disabledForegroundColor = value;
+            Invalidate();
+        }
+    }
+
+    public SKColor BorderColor {
+        get => _borderColor;
+        set {
+            _borderColor = value;
+            _borderPaint.Color = value;
+            Invalidate();
+        }
+    }
 
     public event Action? Click;
 
@@ -33,9 +131,10 @@ public class Button : UIElement {
     private SKBitmap? _pressedImage;
 
     public Button(IVisualContext ctx, string id, string text) : base(ctx, id) {
-        Text = text;
+        _text = text;
         _scaledFontSize = FontSize * DpiScale;
         _font = new SKFont(SKTypeface.Default, _scaledFontSize);
+        _borderPaint.Color = _borderColor;
     }
 
     /// <summary>
@@ -103,25 +202,27 @@ public class Button : UIElement {
             canvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
             _textPaint.Color = IsEnabled
                 ? ForegroundColor
-                : new SKColor(160, 160, 160, 255);
+                : DisabledForegroundColor;
         }
         else {
             if (!IsEnabled) {
-                _bgPaint.Color = new SKColor(240, 240, 240, 255);
-                _textPaint.Color = new SKColor(160, 160, 160, 255);
+                _bgPaint.Color = DisabledBackgroundColor;
+                _textPaint.Color = DisabledForegroundColor;
             }
             else if (_isPressed) {
-                _bgPaint.Color = new SKColor(200, 200, 200, 255);
+                _bgPaint.Color = PressedBackgroundColor;
                 _textPaint.Color = ForegroundColor;
             }
             else if (_isHovered || IsFocused) {
-                _bgPaint.Color = new SKColor(220, 220, 220, 255);
+                _bgPaint.Color = HoverBackgroundColor;
                 _textPaint.Color = ForegroundColor;
             }
             else {
-                _bgPaint.Color = new SKColor(245, 245, 245, 255);
+                _bgPaint.Color = BackgroundColor;
                 _textPaint.Color = ForegroundColor;
             }
+
+            _borderPaint.Color = BorderColor;
 
             var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);
 

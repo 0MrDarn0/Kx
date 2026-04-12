@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\apps\KxUpdateBuilder\KxUpdateBuilder.csproj" />
     <ProjectReference Include="..\..\src\Kx.Sdk\Kx.Sdk.csproj" />
     <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
   </ItemGroup>

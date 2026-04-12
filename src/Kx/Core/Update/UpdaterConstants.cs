@@ -10,6 +10,7 @@ public static class UpdaterConstants {
     public const int BaseRetryDelayMs = 1000;
     public const string TempZipPrefix = "kxupdater_";
     public const string TempFileSuffixFormat = ".tmp_";
+    public const string PendingSelfUpdateSuffix = "_new";
     public const int PooledConnectionLifetimeMinutes = 5;
     public const int PooledConnectionIdleTimeoutMinutes = 2;
     public const int DefaultMaxConnectionsPerServer = int.MaxValue;

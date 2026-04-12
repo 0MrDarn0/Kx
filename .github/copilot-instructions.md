@@ -58,6 +58,9 @@
 - Plugins are delivered as DLL + `Plugin.yaml` + UI YAML under application-specific asset folders (e.g., `$(AssemblyName)` such as `KxUpdater`) to avoid collisions in deployment directories — check app csproj targets that copy plugin assets into their respective output folders.
 - Tests expect the public SDK and runtime projects; register new public APIs in `src/Kx.Sdk` if they are needed by plugin authors.
 
+## Update Flow
+- For `KxUpdater` and `KxUpdateBuilder`, prefer a file-based update flow: publish individual files with an `update.json` file list, allowing the updater to compare client files against the manifest and download only changed files, avoiding version-increment-driven ZIP packages.
+
 ## Common pitfalls and how to avoid them
 - Missing Windows SDK — many projects target `net10.0-windows*`. Build failures on Linux/macOS are expected; run CI and local builds on Windows.
 - Preview packages — some projects reference preview package versions. If `dotnet restore` fails because of package feed constraints, use the same SDK version used by the project or run a `dotnet nuget locals --clear all` and retry.

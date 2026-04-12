@@ -11,6 +11,13 @@ using Kx.Core.Update;
 namespace Kx.Core.Pipeline;
 
 public class UpdaterPipelineRunner {
+    private static readonly HashSet<string> _checkOnlyTerminalSteps = [
+        "DownloadAndApply",
+        "DownloadAndExtract",
+        "SaveVersion",
+        "SelfUpdate"
+    ];
+
     private readonly IEventManager _eventManager;
     private readonly List<IUpdateStep> _steps = [];
 
@@ -54,7 +61,7 @@ public class UpdaterPipelineRunner {
         _eventManager.Register<UpdateRequired>(OnUpdateRequired);
 
         try {
-            await RunStepsAsync(context, _steps.TakeWhile(step => step.Name is not "DownloadAndExtract" and not "SaveVersion" and not "SelfUpdate"), ct);
+            await RunStepsAsync(context, _steps.TakeWhile(step => !_checkOnlyTerminalSteps.Contains(step.Name)), ct);
         }
         catch (OperationCanceledException) {
         }

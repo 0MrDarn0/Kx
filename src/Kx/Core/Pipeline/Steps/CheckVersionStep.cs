@@ -16,38 +16,49 @@ public class CheckVersionStep(string rootDirectory) : IUpdateStep {
     public string Name => "CheckVersion";
 
     public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
-        // Lokale Version laden
         ctx.CurrentVersion = File.Exists(_localVersionFile)
             ? File.ReadAllText(_localVersionFile).Trim()
-            : "0.0.0";
+            : string.Empty;
 
-        bool needsUpdate = ctx.CurrentVersion != ctx.Metadata.Version;
-
-        // Falls Version gleich, prüfen wir die Dateien per Hash
-        if (!needsUpdate) {
-            foreach (var file in ctx.Metadata.Files) {
-                var localFile = new FileInfo(Path.Combine(ctx.RootDirectory, file.Path));
-                if (!localFile.VerifySha256(file.Sha256)) {
-                    needsUpdate = true;
-                    break;
-                }
-            }
-        }
+        bool needsUpdate = HasManifestDifferences(ctx);
 
         if (!needsUpdate) {
-            eventManager.NotifyAll(new StatusEvent(
-                LanguageService.Translate(KxLanguageKeys.Status.UpToDate, ctx.CurrentVersion)
-            ));
-            // Pipeline hier abbrechen
+            eventManager.NotifyAll(new StatusEvent(CreateUpToDateStatusText(ctx)));
             throw new OperationCanceledException("No update required");
         }
 
-        eventManager.NotifyAll(new StatusEvent(
-            LanguageService.Translate(KxLanguageKeys.Status.UpdateRequired, ctx.CurrentVersion, ctx.Metadata.Version)
-        ));
-
+        eventManager.NotifyAll(new StatusEvent(CreateUpdateRequiredStatusText(ctx)));
         eventManager.NotifyAll(new UpdateRequired());
 
         await Task.CompletedTask;
+    }
+
+    private static bool HasManifestDifferences(UpdateContext ctx) {
+        ArgumentNullException.ThrowIfNull(ctx);
+
+        foreach (var file in ctx.Metadata.Files ?? []) {
+            var localFile = new FileInfo(Path.Combine(ctx.RootDirectory, file.Path));
+            if (!localFile.VerifySha256(file.Sha256))
+                return true;
+        }
+
+        foreach (var deletedFile in ctx.Metadata.DeletedFiles ?? []) {
+            if (File.Exists(Path.Combine(ctx.RootDirectory, deletedFile)))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string CreateUpToDateStatusText(UpdateContext ctx) {
+        return string.IsNullOrWhiteSpace(ctx.Metadata.Version)
+            ? LanguageService.Translate(KxLanguageKeys.Status.UpToDateGeneric)
+            : LanguageService.Translate(KxLanguageKeys.Status.UpToDate, ctx.Metadata.Version);
+    }
+
+    private static string CreateUpdateRequiredStatusText(UpdateContext ctx) {
+        return string.IsNullOrWhiteSpace(ctx.CurrentVersion) || string.IsNullOrWhiteSpace(ctx.Metadata.Version)
+            ? LanguageService.Translate(KxLanguageKeys.Status.UpdateRequiredGeneric)
+            : LanguageService.Translate(KxLanguageKeys.Status.UpdateRequired, ctx.CurrentVersion, ctx.Metadata.Version);
     }
 }
