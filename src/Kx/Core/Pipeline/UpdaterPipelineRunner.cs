@@ -82,6 +82,9 @@ public class UpdaterPipelineRunner {
 
         try {
             await RunStepsAsync(context, _steps, ct);
+            _eventManager.NotifyAll(new StatusEvent(
+                LanguageService.Translate(KxLanguageKeys.Status.UpdateApplied)
+            ));
         }
         catch (OperationCanceledException) {
             // Cancelled: treat as no update / user cancelled

@@ -64,8 +64,6 @@ internal sealed class UpdatePackageBuilder {
         DeleteRemovedFiles(uploadFolder, deletedFiles);
 
         UpdateMetadata metadata = new() {
-            Version = string.Empty,
-            PackageUrl = string.Empty,
             Files = files.OrderBy(static file => file.Path, StringComparer.OrdinalIgnoreCase).ToList(),
             DeletedFiles = deletedFiles
         };

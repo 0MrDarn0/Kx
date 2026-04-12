@@ -14,8 +14,6 @@ public sealed class LoadNewsStepTests {
     public async Task WhenMetadataLoadsThenItDoesNotRequireNewsFile() {
         var source = new FakeUpdateSource {
             MetadataJson = JsonSerializer.Serialize(new UpdateMetadata {
-                Version = "1.2.3",
-                PackageUrl = "https://updates.example/update.zip",
                 Files = []
             })
         };
@@ -25,7 +23,7 @@ public sealed class LoadNewsStepTests {
 
         await step.ExecuteAsync(context, eventManager);
 
-        Assert.Equal("1.2.3", context.Metadata.Version);
+        Assert.Empty(context.Metadata.Files);
         Assert.Equal(0, source.ChangelogRequestCount);
     }
 

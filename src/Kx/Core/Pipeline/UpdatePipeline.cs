@@ -15,7 +15,6 @@ public interface IUpdateStep {
 public class UpdateContext(string rootDirectory) {
     public string RootDirectory { get; } = rootDirectory;
     public UpdateMetadata Metadata { get; set; } = new();
-    public string CurrentVersion { get; set; } = "0.0.0";
 }
 
 public class UpdatePipeline {

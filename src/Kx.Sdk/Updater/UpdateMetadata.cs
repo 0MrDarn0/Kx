@@ -13,8 +13,6 @@ public class UpdateFile
 
 public class UpdateMetadata
 {
-    public string Version { get; set; } = string.Empty;
-    public string PackageUrl { get; set; } = string.Empty;
     public List<UpdateFile> Files { get; set; } = [];
     public List<string> DeletedFiles { get; set; } = [];
 }

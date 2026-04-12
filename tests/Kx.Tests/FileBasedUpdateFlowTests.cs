@@ -14,14 +14,13 @@ namespace Kx.Tests;
 
 public sealed class FileBasedUpdateFlowTests {
     [Fact]
-    public async Task WhenManifestHasNoDifferencesThenCheckVersionUsesGenericUpToDateStatus() {
+    public async Task WhenManifestHasNoDifferencesThenCheckManifestUsesGenericUpToDateStatus() {
         string rootDirectory = CreateTempDirectory();
         string filePath = Path.Combine(rootDirectory, "data.txt");
         await File.WriteAllTextAsync(filePath, "same");
 
         var context = new UpdateContext(rootDirectory) {
             Metadata = new UpdateMetadata {
-                Version = string.Empty,
                 Files = [
                     new UpdateFile {
                         Path = "data.txt",
@@ -34,7 +33,7 @@ public sealed class FileBasedUpdateFlowTests {
         string? statusText = null;
         eventManager.Register<StatusEvent>(message => statusText = message.Text);
 
-        var step = new CheckVersionStep(rootDirectory);
+        var step = new CheckManifestStep();
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => step.ExecuteAsync(context, eventManager));
 
@@ -42,14 +41,13 @@ public sealed class FileBasedUpdateFlowTests {
     }
 
     [Fact]
-    public async Task WhenManifestContainsDeletedFilesThenCheckVersionRequestsAnUpdate() {
+    public async Task WhenManifestContainsDeletedFilesThenCheckManifestRequestsAnUpdate() {
         string rootDirectory = CreateTempDirectory();
         string deletedFilePath = Path.Combine(rootDirectory, "obsolete.txt");
         await File.WriteAllTextAsync(deletedFilePath, "remove me");
 
         var context = new UpdateContext(rootDirectory) {
             Metadata = new UpdateMetadata {
-                Version = string.Empty,
                 DeletedFiles = ["obsolete.txt"]
             }
         };
@@ -59,7 +57,7 @@ public sealed class FileBasedUpdateFlowTests {
         eventManager.Register<UpdateRequired>(_ => updateRequiredRaised = true);
         eventManager.Register<StatusEvent>(message => statusText = message.Text);
 
-        var step = new CheckVersionStep(rootDirectory);
+        var step = new CheckManifestStep();
         await step.ExecuteAsync(context, eventManager);
 
         Assert.True(updateRequiredRaised);
@@ -83,7 +81,6 @@ public sealed class FileBasedUpdateFlowTests {
 
         var context = new UpdateContext(rootDirectory) {
             Metadata = new UpdateMetadata {
-                Version = string.Empty,
                 Files = [
                     new UpdateFile {
                         Path = "same.txt",
@@ -112,7 +109,6 @@ public sealed class FileBasedUpdateFlowTests {
         string rootDirectory = CreateTempDirectory();
         var source = new FakeUpdateSource {
             MetadataJson = JsonSerializer.Serialize(new UpdateMetadata {
-                Version = string.Empty,
                 Files = [
                     new UpdateFile {
                         Path = "changed.txt",
@@ -131,6 +127,32 @@ public sealed class FileBasedUpdateFlowTests {
     }
 
     [Fact]
+    public async Task WhenUpdateRunCompletesThenAppliedStatusIsPublished() {
+        string rootDirectory = CreateTempDirectory();
+        byte[] fileContent = Encoding.UTF8.GetBytes("new content");
+        var source = new FakeUpdateSource {
+            MetadataJson = JsonSerializer.Serialize(new UpdateMetadata {
+                Files = [
+                    new UpdateFile {
+                        Path = "changed.txt",
+                        Sha256 = ComputeSha256(fileContent)
+                    }
+                ]
+            })
+        };
+        source.RegisterFile("https://updates.example/changed.txt", fileContent);
+
+        var eventManager = new EventManager();
+        string? lastStatus = null;
+        eventManager.Register<StatusEvent>(message => lastStatus = message.Text);
+
+        var runner = new UpdaterPipelineRunner(eventManager, source, "https://updates.example/", rootDirectory);
+        await runner.RunAsync(rootDirectory);
+
+        Assert.Equal("status.update_applied", lastStatus);
+    }
+
+    [Fact]
     public async Task WhenFileNameContainsPlusThenDownloadUrlUsesEscapedPathSegments() {
         string rootDirectory = CreateTempDirectory();
         byte[] fileContent = Encoding.UTF8.GetBytes("bitmap-data");
@@ -139,7 +161,6 @@ public sealed class FileBasedUpdateFlowTests {
 
         var context = new UpdateContext(rootDirectory) {
             Metadata = new UpdateMetadata {
-                Version = string.Empty,
                 Files = [
                     new UpdateFile {
                         Path = "data/Hypertext/B(+).bmp",
@@ -165,7 +186,6 @@ public sealed class FileBasedUpdateFlowTests {
 
         var context = new UpdateContext(rootDirectory) {
             Metadata = new UpdateMetadata {
-                Version = string.Empty,
                 Files = [
                     new UpdateFile {
                         Path = "data/Hypertext/B(+).bmp",
@@ -183,24 +203,6 @@ public sealed class FileBasedUpdateFlowTests {
             "https://updates.example/data/Hypertext/B(+).bmp"
         ], source.RequestedUrls);
         Assert.True(File.Exists(Path.Combine(rootDirectory, "data", "Hypertext", "B(+).bmp")));
-    }
-
-    [Fact]
-    public async Task WhenManifestHasNoVersionThenSaveVersionDeletesStaleVersionFile() {
-        string rootDirectory = CreateTempDirectory();
-        string versionFilePath = Path.Combine(rootDirectory, "version.txt");
-        await File.WriteAllTextAsync(versionFilePath, "1.0.0");
-
-        var context = new UpdateContext(rootDirectory) {
-            Metadata = new UpdateMetadata {
-                Version = string.Empty
-            }
-        };
-
-        var step = new SaveVersionStep(rootDirectory);
-        await step.ExecuteAsync(context, new EventManager());
-
-        Assert.False(File.Exists(versionFilePath));
     }
 
     private static string CreateTempDirectory() {

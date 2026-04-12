@@ -181,7 +181,6 @@ Published update content consists of:
 `update.json` currently carries:
 - `files` with relative paths and SHA256 hashes
 - `deletedFiles` for client-side cleanup
-- optional `version` metadata for display-only status text
 
 `KxUpdater` compares the manifest against the local installation and downloads only the files that differ.
 

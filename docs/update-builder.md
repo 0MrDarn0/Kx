@@ -68,8 +68,6 @@ Example:
 
 ```json
 {
-  "version": "",
-  "packageUrl": "",
   "files": [
     {
       "path": "data/Hypertext/B(+).bmp",
@@ -84,8 +82,6 @@ Example:
 
 ### Notes
 
-- `version` is currently optional and can remain empty.
-- `packageUrl` is kept for compatibility with the shared metadata type and is currently unused by the file-based flow.
 - `files` contains the relative download paths and SHA256 hashes.
 - `deletedFiles` tells the updater which local files should be removed.
 
