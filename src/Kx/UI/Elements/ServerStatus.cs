@@ -444,7 +444,7 @@ public sealed class ServerStatus : UIElement {
             return ServerStatusState.Online;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) {
-            return ServerStatusState.Timeout;
+            return ServerStatusState.Offline;
         }
         catch (SocketException) {
             return ServerStatusState.Offline;

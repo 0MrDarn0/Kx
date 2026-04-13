@@ -222,22 +222,6 @@ controls:
               value: 1
               unit: Star
         children:
-          - type: ProgressBar
-            id: updater_progress
-            visibleBinding: updater.progressVisible
-            gridRow: 0
-            gridColumn: 2
-            margin:
-              left: 0
-              top: 11
-              right: 0
-              bottom: 11
-            properties:
-              progressBinding: updater.progress
-              fillColor: "#DAA520"
-              borderColor: "#7C6E4B"
-              backgroundColor: "#101010"
-              borderThickness: "1"
           - type: Button
             id: updater_website_button
             textBinding: updater.buttons.website

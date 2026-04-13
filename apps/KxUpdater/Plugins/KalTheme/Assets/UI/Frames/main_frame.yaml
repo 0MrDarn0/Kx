@@ -9,8 +9,8 @@ frame:
   bottomLeft: "Plugins:KalTheme:Frame:bottom_left.png"
   leftCenter: "Plugins:KalTheme:Frame:left_center.png"
   fillBitmap: "Plugins:KalTheme:Frame:fill_bitmap.bmp"
-  fillColor: "#282828"
-  useFillColor: false
+  fillColor: "#181818"
+  useFillColor: true
   topWidthOffset: 7
   bottomWidthOffset: 15
   leftHeightOffset: 5
@@ -36,6 +36,25 @@ frame:
     closeButtonSize: 24
     closeButtonMargin: 6
 controls:
+  - type: DockPanel
+    id: frame_bottom_overlay
+    layer: Frame
+    children:
+      - type: ProgressBar
+        id: updater_progress
+        visibleBinding: updater.progressVisible
+        dock: Bottom
+        margin:
+          left: 18
+          top: -10
+          right: 18
+          bottom: 15
+        properties:
+          progressBinding: updater.progress
+          fillColor: "#DAA520"
+          borderColor: "#7C6E4B"
+          backgroundColor: "#101010"
+          borderThickness: "1"
   - type: Label
     id: title
     text: "KxUpdater"
@@ -76,8 +95,8 @@ controls:
       size: 16
       style: "Regular"
     bounds:
-      x: -150
-      y: 0
+      x: -80
+      y: 15
       width: 170
       height: 20
     properties:
