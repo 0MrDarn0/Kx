@@ -6,8 +6,7 @@ This document shows practical examples for the current plugin-driven UI framewor
 
 It focuses on:
 
-- themes
-- window definitions
+- themes/frame definitions and content definitions
 - merged overrides
 - nested controls
 - built-in actions
@@ -17,22 +16,26 @@ It focuses on:
 - typed payloads
 - target resolution
 
-The example plugin now ships real YAML assets under:
+For a generic runtime-wide reference (not plugin-only), also see:
 
-- `Kx.Plugin.Example/Markup/Themes`
-- `Kx.Plugin.Example/Markup/Windows`
+- `docs/markup-feature-guide.md`
 
-## 1. Theme registration
+The example plugin ships YAML assets under:
 
-A theme provides reusable defaults for:
+- `examples/Kx.Plugin.Example/Assets/UI/Frames`
+- `examples/Kx.Plugin.Example/Assets/UI/Content`
+
+## 1. Frame definition registration
+
+A frame definition provides reusable defaults for:
 
 - frame styling
-- default controls
+- optional reusable controls
 
 Example:
 
 ```csharp
-themeRegistry.Register("Example.Dark", new WindowTheme {
+frameRegistry.Register("Example.Dark", new WindowFrameDefinition {
     Frame = new FrameConfig {
         Style = FrameStyle.Default,
         Default = new DefaultFrameConfig {
@@ -65,22 +68,22 @@ themeRegistry.Register("Example.Dark", new WindowTheme {
 
 Real YAML example:
 
-`Kx.Plugin.Example/Markup/Themes/Example.Dark.yaml`
+- `examples/Kx.Plugin.Example/Assets/UI/Frames/example_dark_frame.yaml`
 
-## 2. Window definition registration
+## 2. Window content definition registration
 
-A window definition can:
+A content definition can:
 
-- reference a theme
+- reference a frame definition via `frameDefinition`
 - override parts of the frame
-- override controls by `Id`
+- override controls by `id`
 - add additional controls
 
 Example:
 
 ```csharp
-windowRegistry.Register("MainWindow", new WindowConfig {
-    Theme = "Example.Dark",
+contentRegistry.Register("MainWindow", new WindowContentDefinition {
+    FrameDefinition = "Example.Dark",
     Frame = new FrameConfig {
         Default = new DefaultFrameConfig {
             Title = "Merged Main Window",
@@ -100,7 +103,7 @@ windowRegistry.Register("MainWindow", new WindowConfig {
                 new ControlConfig {
                     Type = "Label",
                     Id = "example_merge_hint",
-                    Text = "Added by WindowConfig merge",
+                    Text = "Added by WindowContentDefinition merge",
                     Color = "#8BD3FF"
                 }
             ]
@@ -111,7 +114,7 @@ windowRegistry.Register("MainWindow", new WindowConfig {
 
 Real YAML example:
 
-`Kx.Plugin.Example/Markup/Windows/MainWindow.yaml`
+- `examples/Kx.Plugin.Example/Assets/UI/Content/main_window_content.yaml`
 
 ## 3. Merge behavior
 
@@ -119,23 +122,23 @@ Current merge rules are:
 
 ### Frame
 
-- theme frame is the base
-- window frame overrides theme fields
-- override detection now depends on explicit property assignment
-- a window can override a theme value back to the schema default value if that property was explicitly assigned
+- frame definition frame is the base
+- content frame overrides frame fields
+- override detection depends on explicit property assignment
+- a content definition can override a frame value back to schema defaults if explicitly assigned
 
 ### Controls
 
-- theme controls are the base list
-- window controls are matched by `Id`
+- frame controls are the base list
+- content controls are matched by `id`
 - matching controls are merged
-- unmatched window controls are appended
-- nested `Children` are merged recursively by `Id`
-- `Properties` are overridden key by key
+- unmatched content controls are appended
+- nested `children` are merged recursively by `id`
+- `properties` are overridden key-by-key
 
 ## 4. Nested control trees
 
-A `ControlConfig` can contain nested `Children`.
+A `ControlConfig` can contain nested `children`.
 
 Example:
 
@@ -206,34 +209,34 @@ Supported target expressions:
 - `parent`
 - `root`
 - `id:example_badge`
-- `example_badge` as legacy fallback
+- `example_badge` (legacy fallback)
 
 Examples:
 
 ```csharp
-OnClick = "hide:self"
-OnClick = "show:parent"
-OnClick = "toggleVisibility:id:example_badge"
-OnClick = "focus:id:example_toggle_button"
+OnClick = "hide:self";
+OnClick = "show:parent";
+OnClick = "toggleVisibility:id:example_badge";
+OnClick = "focus:id:example_toggle_button";
 ```
 
 ## 7. Legacy string action arguments
 
-Some actions still support the older string-based forms.
+Some actions still support string forms.
 
 Examples:
 
 ```csharp
-OnClick = "setText:id:example_title|Updated by markup"
-OnClick = "openWindow:Example.Alternate"
-OnClick = "publishEvent:SomethingHappened"
+OnClick = "setText:id:example_title|Updated by markup";
+OnClick = "openWindow:Example.Alternate";
+OnClick = "publishEvent:SomethingHappened";
 ```
 
 ## 8. State seeding
 
 Plugins can seed initial UI state through `IUiStateStore`.
 
-Preferred code-side usage is now via typed keys:
+Preferred code-side usage is via typed keys.
 
 Example:
 
@@ -261,16 +264,14 @@ stateStore.Set(buttonFontSizeState, 14f);
 
 ## 8a. Loader usage
 
-The example plugin now loads theme and window definitions from the deployed plugin folder through `MarkupYamlLoader`.
+The example plugin loads frame/content definitions from the deployed plugin folder through `MarkupYamlLoader`.
 
 Example:
 
 ```csharp
-themeRegistry.Register("Example.Dark", MarkupYamlLoader.Load<WindowTheme>(GetMarkupPath("Themes", "Example.Dark.yaml")));
-windowRegistry.Register("MainWindow", MarkupYamlLoader.Load<WindowConfig>(GetMarkupPath("Windows", "MainWindow.yaml")));
+frameRegistry.Register("Example.Dark", MarkupYamlLoader.Load<WindowFrameDefinition>(GetMarkupPath("Frames", "example_dark_frame.yaml")));
+contentRegistry.Register("MainWindow", MarkupYamlLoader.Load<WindowContentDefinition>(GetMarkupPath("Content", "main_window_content.yaml")));
 ```
-
-This keeps the runtime registry flow the same while moving the authored UI definitions into real YAML files.
 
 ## 9. Markup bindings
 
@@ -382,57 +383,55 @@ Current shared payloads:
 - `ColorUpdatePayload`
 - `EventPublishPayload`
 
-These can be used in JSON payloads for built-in actions, commands, and events.
-
 ## 11. JSON payload examples for built-in actions
 
 ### Show / hide
 
 ```csharp
-OnClick = "show:{\"targetId\":\"id:example_badge\",\"visible\":true}"
-OnClick = "hide:{\"targetId\":\"id:example_badge\",\"visible\":false}"
+OnClick = "show:{\"targetId\":\"id:example_badge\",\"visible\":true}";
+OnClick = "hide:{\"targetId\":\"id:example_badge\",\"visible\":false}";
 ```
 
 ### Enable / disable
 
 ```csharp
-OnClick = "enable:id:example_toggle_button"
-OnClick = "disable:{\"targetId\":\"id:example_toggle_button\",\"enabled\":false}"
+OnClick = "enable:id:example_toggle_button";
+OnClick = "disable:{\"targetId\":\"id:example_toggle_button\",\"enabled\":false}";
 ```
 
 ### Set text
 
 ```csharp
-OnClick = "setText:{\"targetId\":\"id:example_title\",\"text\":\"Updated by payload\"}"
+OnClick = "setText:{\"targetId\":\"id:example_title\",\"text\":\"Updated by payload\"}";
 ```
 
 ### Set color
 
 ```csharp
-OnClick = "setColor:{\"targetId\":\"id:example_title\",\"color\":\"#FFD166\"}"
+OnClick = "setColor:{\"targetId\":\"id:example_title\",\"color\":\"#FFD166\"}";
 ```
 
 ### Open window
 
 ```csharp
-OnClick = "openWindow:{\"windowName\":\"Example.Alternate\"}"
+OnClick = "openWindow:{\"windowName\":\"Example.Alternate\"}";
 ```
 
 ## 12. Custom action example
 
-A plugin can register its own action:
+Register action:
 
 ```csharp
 actionRegistry.Register("example.toggleVisibility", actionContext => ToggleVisibility(actionContext));
 ```
 
-And consume it from markup:
+Use from markup:
 
 ```csharp
-OnClick = "example.toggleVisibility:id:example_badge"
+OnClick = "example.toggleVisibility:id:example_badge";
 ```
 
-Example implementation:
+Implementation:
 
 ```csharp
 private static void ToggleVisibility(IMarkupActionContext actionContext) {
@@ -445,19 +444,19 @@ private static void ToggleVisibility(IMarkupActionContext actionContext) {
 
 ## 13. Custom command example
 
-A plugin can register a command:
+Register command:
 
 ```csharp
 commandRegistry.Register("example.renameBadge", commandContext => RenameBadge(stateStore, commandContext));
 ```
 
-And invoke it from markup:
+Invoke from markup:
 
 ```csharp
-OnClick = "runCommand:example.renameBadge|{\"targetId\":\"example_badge\",\"text\":\"Updated by command\"}"
+OnClick = "runCommand:example.renameBadge|{\"targetId\":\"example_badge\",\"text\":\"Updated by command\"}";
 ```
 
-Example implementation:
+Implementation:
 
 ```csharp
 private static void RenameBadge(IUiStateStore stateStore, IUiCommandContext commandContext) {
@@ -470,7 +469,7 @@ private static void RenameBadge(IUiStateStore stateStore, IUiCommandContext comm
 
 ## 14. Plugin-owned control state example
 
-Custom plugin controls can also subscribe to `IVisualContext.State` directly when they need behavior beyond the built-in binding set.
+Custom plugin controls can subscribe to `IVisualContext.State` directly.
 
 Example:
 
@@ -499,13 +498,13 @@ private sealed class ExampleBadge : UIElement {
 
 ## 15. Typed event payload example
 
-Markup can publish typed event payloads:
+Markup can publish typed payloads:
 
 ```csharp
-OnClick = "publishEvent:BadgeUpdated|{\"targetId\":\"example_badge\",\"text\":\"Updated by event\"}"
+OnClick = "publishEvent:BadgeUpdated|{\"targetId\":\"example_badge\",\"text\":\"Updated by event\"}";
 ```
 
-Consumer example:
+Consumer:
 
 ```csharp
 context.VisualContext.Events.Register<MarkupActionEvent>(e => {
@@ -515,43 +514,40 @@ context.VisualContext.Events.Register<MarkupActionEvent>(e => {
 });
 ```
 
-## 16. Alternate window example
+## 16. Alternate window/content example
 
-A second registered window definition can be opened via action:
+Register alternate content:
 
 ```csharp
-windowRegistry.Register("Example.Alternate", new WindowConfig {
-    Theme = "Example.Alternate"
+contentRegistry.Register("Example.Alternate", new WindowContentDefinition {
+    FrameDefinition = "Example.Alternate"
 });
 ```
 
-Markup:
+Markup open:
 
 ```csharp
-OnClick = "openWindow:Example.Alternate"
+OnClick = "openWindow:Example.Alternate";
 ```
 
 Back-navigation:
 
 ```csharp
-OnClick = "openWindow:MainWindow"
+OnClick = "openWindow:MainWindow";
 ```
 
 ## 17. Current practical recommendations
 
-### Prefer themes for defaults
-Put reusable base styling and reusable base controls into:
+### Prefer frame definitions for reusable defaults
 
-- `WindowTheme`
+Put reusable base styling and reusable base controls into frame definitions.
 
-### Prefer window definitions for scenario-specific overrides
-Put concrete per-window adjustments into:
+### Prefer content definitions for scenario-specific overrides
 
-- `WindowConfig`
-
-Explicit assignments in `WindowConfig` are now the merge signal, even when the assigned value matches the schema default.
+Put concrete per-window adjustments into content definitions.
 
 ### Prefer shared payload DTOs
+
 Prefer:
 
 - `TextUpdatePayload`
@@ -561,26 +557,23 @@ Prefer:
 - `ColorUpdatePayload`
 - `EventPublishPayload`
 
-instead of plugin-local mini payload records where possible.
+instead of plugin-local payload records where possible.
 
 ### Prefer typed state keys in code
-Prefer `UiStateKey<T>` for code-side state access and subscriptions, then pass `key.Path` into markup binding fields where needed.
+
+Prefer `UiStateKey<T>` for code-side state access and subscriptions, then pass `key.Path` into markup bindings.
 
 ### Prefer custom commands for behavior
-If the behavior is application- or plugin-specific, prefer:
 
-- `runCommand:...`
+If behavior is app- or plugin-specific, prefer `runCommand:...` over endlessly extending built-in actions.
 
-instead of endlessly growing the built-in action list.
+### Prefer shared state paths for synchronization
 
-### Prefer state paths for UI synchronization
-If multiple controls or commands need to reflect the same value, prefer shared state paths over direct per-control updates.
+If multiple controls/commands reflect the same value, prefer shared state paths over direct per-control updates.
 
 ## 18. Current limitations
 
-Still worth keeping in mind:
-
 - action argument syntax is still string-based at the outermost level
-- targeting is improved, but still intentionally simple
-- bindings currently cover only a small built-in property set
-- no full binding/viewmodel layer for markup-defined controls yet
+- target resolution is improved, but intentionally simple
+- bindings currently cover a constrained built-in property set
+- there is no full MVVM/viewmodel layer for markup-defined controls yet

@@ -1,3 +1,4 @@
+frameDefinition: MainWindowFrame
 controls:
   - type: Grid
     id: settings_layout
@@ -27,12 +28,13 @@ controls:
     children:
       - type: Label
         id: settings_subtitle
-        textBinding: settings.subtitle
+        text: "Settings"
         color: "#F5F5F5"
         font:
-          name: "Malgun Gothic"
-          size: 13
-          style: "Bold"
+          name: "cascadia_code"
+          size: 25
+          style: "Regular"
+          resource: "Plugins:KalTheme:Fonts:cascadia_code:CaskaydiaCoveNerdFontPropo-Regular.ttf"
         gridRow: 0
         gridColumn: 0
       - type: Grid
@@ -56,34 +58,18 @@ controls:
           - width:
               value: 1
               unit: Star
-          - width:
-              value: 8
-              unit: Pixel
-          - width:
-              value: 1
-              unit: Star
         rows:
           - height:
               value: 1
               unit: Star
         children:
           - type: Button
-            id: btn_save
-            textBinding: settings.btn_save
+            id: btn_back
+            text: Back
             color: "#F5F5F5"
-            normalImage: "Plugins:KalTheme:Buttons:btn_normal.png"
-            hoverImage: "Plugins:KalTheme:Buttons:btn_hover.png"
-            pressedImage: "Plugins:KalTheme:Buttons:btn_click.png"
-            onClick: settingsSave
+            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            onClick: openWindow:MainWindow
             gridRow: 0
             gridColumn: 0
-          - type: Button
-            id: btn_cancel
-            textBinding: settings.btn_cancel
-            color: "#F5F5F5"
-            normalImage: "Plugins:KalTheme:Buttons:btn_normal.png"
-            hoverImage: "Plugins:KalTheme:Buttons:btn_hover.png"
-            pressedImage: "Plugins:KalTheme:Buttons:btn_click.png"
-            onClick: settingsCancel
-            gridRow: 0
-            gridColumn: 2

@@ -62,7 +62,7 @@ controls:
     color: "#FFA500"
     font:
       name: "chiller"
-      size: 40
+      size: 55
       style: "Regular"
       resource: "Plugins:KalTheme:Fonts:chiller:chiller.ttf"
     bounds:

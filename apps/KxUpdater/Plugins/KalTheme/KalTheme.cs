@@ -10,8 +10,11 @@ namespace KxUpdater.Plugin;
 public sealed class KalTheme : IPlugin {
     private static readonly WindowDefinitionPair[] _windowDefinitionPairs = [
         new("MainWindow", "MainWindowFrame", "main"),
-        new("MessageBox", "MessageBoxFrame", "msgbox"),
-        new("Settings",   "SettingsFrame",   "settings")
+        new("MessageBox", "MessageBoxFrame", "msgbox")
+    ];
+
+    private static readonly WindowContentPair[] _windowContentPairs = [
+        new("Settings", "settings")
     ];
 
     public string Name => "Theme.KalOnline";
@@ -24,6 +27,9 @@ public sealed class KalTheme : IPlugin {
 
         foreach (var pair in _windowDefinitionPairs)
             TryRegisterWindowDefinition(frameRegistry, contentRegistry, pair, context.Logger);
+
+        foreach (var pair in _windowContentPairs)
+            TryRegisterWindowContent(contentRegistry, pair, context.Logger);
 
         context.Logger.Info($"{Name} plugin initialized");
     }
@@ -54,6 +60,20 @@ public sealed class KalTheme : IPlugin {
         }
     }
 
+    private static void TryRegisterWindowContent(
+        IWindowContentRegistry contentRegistry,
+        WindowContentPair pair,
+        Kx.Sdk.Logging.ILoggingService logger) {
+        ArgumentNullException.ThrowIfNull(contentRegistry);
+
+        try {
+            contentRegistry.Register(pair.WindowName, LoadContentDefinition($"{pair.ResourceKey}_content.yaml"));
+        }
+        catch (Exception ex) {
+            logger.Warning($"[{nameof(KalTheme)}] Could not register window '{pair.WindowName}': {ex.Message}");
+        }
+    }
+
     private static WindowFrameDefinition LoadFrameDefinition(string fileName) {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
@@ -78,4 +98,5 @@ public sealed class KalTheme : IPlugin {
     }
 
     private readonly record struct WindowDefinitionPair(string WindowName, string FrameDefinitionName, string ResourceKey);
+    private readonly record struct WindowContentPair(string WindowName, string ResourceKey);
 }

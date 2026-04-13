@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Net.Sockets;
 
@@ -17,6 +18,7 @@ public sealed class ServerStatus : UIElement {
     private const float DefaultIconFontSize = 12f;
     private const float DefaultIndicatorSpacing = 6f;
     private const int MinimumTimeoutMilliseconds = 250;
+    private static readonly ConcurrentDictionary<MonitorCacheKey, CachedMonitorState> _monitorStateCache = [];
 
     private readonly SKPaint _textPaint = new() { IsAntialias = true, Color = SKColors.White };
     private string _fontFamily = "Segoe UI";
@@ -419,8 +421,12 @@ public sealed class ServerStatus : UIElement {
             return;
         }
 
+        bool hasCachedState = TryGetCachedState(out var cachedState);
+        if (hasCachedState)
+            SetState(cachedState);
+
         _monitorCts = new CancellationTokenSource();
-        _monitorTask = MonitorAsync(_monitorCts.Token);
+        _monitorTask = MonitorAsync(_monitorCts.Token, skipImmediateProbe: hasCachedState);
     }
 
     private void StopMonitoring() {
@@ -430,20 +436,30 @@ public sealed class ServerStatus : UIElement {
         _monitorTask = null;
     }
 
-    private async Task MonitorAsync(CancellationToken cancellationToken) {
-        SetState(ServerStatusState.Checking);
+    private async Task MonitorAsync(CancellationToken cancellationToken, bool skipImmediateProbe) {
+        if (!skipImmediateProbe)
+            SetState(ServerStatusState.Checking);
 
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(Math.Max(1, _checkIntervalSeconds)));
 
         try {
-            do {
-                ServerStatusState state = await ProbeAsync(cancellationToken).ConfigureAwait(false);
-                SetState(state);
+            if (!skipImmediateProbe) {
+                await ProbeAndApplyStateAsync(cancellationToken).ConfigureAwait(false);
             }
-            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false));
+
+            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false)) {
+                SetState(ServerStatusState.Checking);
+                await ProbeAndApplyStateAsync(cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
         }
+    }
+
+    private async Task ProbeAndApplyStateAsync(CancellationToken cancellationToken) {
+        ServerStatusState state = await ProbeAsync(cancellationToken).ConfigureAwait(false);
+        _monitorStateCache[GetMonitorCacheKey()] = new CachedMonitorState(state, DateTimeOffset.UtcNow);
+        SetState(state);
     }
 
     private async Task<ServerStatusState> ProbeAsync(CancellationToken cancellationToken) {
@@ -558,6 +574,23 @@ public sealed class ServerStatus : UIElement {
         return SKTypeface.FromFamilyName(fontFamily, weight, SKFontStyleWidth.Normal, slant);
     }
 
+    private MonitorCacheKey GetMonitorCacheKey() {
+        return new MonitorCacheKey(_host.Trim(), _port);
+    }
+
+    private bool TryGetCachedState(out ServerStatusState state) {
+        state = default;
+
+        if (!_monitorStateCache.TryGetValue(GetMonitorCacheKey(), out var cachedState))
+            return false;
+
+        if (DateTimeOffset.UtcNow - cachedState.Timestamp > TimeSpan.FromSeconds(Math.Max(1, _checkIntervalSeconds)))
+            return false;
+
+        state = cachedState.State;
+        return true;
+    }
+
     private enum ServerStatusState {
         Disabled,
         Checking,
@@ -565,4 +598,7 @@ public sealed class ServerStatus : UIElement {
         Offline,
         Timeout
     }
+
+    private readonly record struct CachedMonitorState(ServerStatusState State, DateTimeOffset Timestamp);
+    private readonly record struct MonitorCacheKey(string Host, int Port);
 }
