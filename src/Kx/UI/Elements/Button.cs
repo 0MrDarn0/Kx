@@ -12,7 +12,10 @@ namespace Kx.UI.Elements;
 
 public class Button : UIElement {
     private string _text;
+    private string _fontFamily = "Segoe UI";
     private float _fontSize = 14f;
+    private bool _bold;
+    private bool _italic;
     private bool _isEnabled = true;
     private SKColor _foregroundColor = new(0, 0, 0, 255);
     private SKColor _backgroundColor = new(245, 245, 245, 255);
@@ -30,6 +33,15 @@ public class Button : UIElement {
         }
     }
 
+    public string FontFamily {
+        get => _fontFamily;
+        set {
+            _fontFamily = string.IsNullOrWhiteSpace(value) ? "Segoe UI" : value;
+            UpdateFont();
+            Invalidate();
+        }
+    }
+
     public float FontSize {
         get => _fontSize;
         set {
@@ -38,9 +50,25 @@ public class Button : UIElement {
                 return;
 
             _fontSize = normalizedValue;
-            _scaledFontSize = _fontSize * DpiScale;
-            _font?.Dispose();
-            _font = new SKFont(SKTypeface.Default, _scaledFontSize);
+            UpdateFont();
+            Invalidate();
+        }
+    }
+
+    public bool Bold {
+        get => _bold;
+        set {
+            _bold = value;
+            UpdateFont();
+            Invalidate();
+        }
+    }
+
+    public bool Italic {
+        get => _italic;
+        set {
+            _italic = value;
+            UpdateFont();
             Invalidate();
         }
     }
@@ -125,6 +153,8 @@ public class Button : UIElement {
     private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = new SKColor(180, 180, 180, 255), StrokeWidth = 1, Style = SKPaintStyle.Stroke };
 
     private SKFont? _font;
+    private SKTypeface? _typeface;
+    private SKTypeface? _customTypeface;
     private float _scaledFontSize;
     private SKBitmap? _normalImage;
     private SKBitmap? _hoverImage;
@@ -132,9 +162,18 @@ public class Button : UIElement {
 
     public Button(IVisualContext ctx, string id, string text) : base(ctx, id) {
         _text = text;
-        _scaledFontSize = FontSize * DpiScale;
-        _font = new SKFont(SKTypeface.Default, _scaledFontSize);
         _borderPaint.Color = _borderColor;
+        UpdateFont();
+    }
+
+    /// <summary>
+    /// Sets an explicit typeface that overrides family-name lookup for this button.
+    /// </summary>
+    public void SetFontTypeface(SKTypeface? typeface) {
+        _customTypeface?.Dispose();
+        _customTypeface = typeface;
+        UpdateFont();
+        Invalidate();
     }
 
     /// <summary>
@@ -154,17 +193,13 @@ public class Button : UIElement {
     // Visual exposes OnDpiChanged(float) as virtual — override to react to DPI changes
     public override void OnDpiChanged(float scale) {
         base.OnDpiChanged(scale);
-        _scaledFontSize = FontSize * scale;
-        _font?.Dispose();
-        _font = new SKFont(SKTypeface.Default, _scaledFontSize);
+        UpdateFont();
         _borderPaint.StrokeWidth = Math.Max(1f, scale);
         Invalidate();
     }
 
     public override void Measure(float dpi) {
-        _scaledFontSize = FontSize * dpi;
-        _font?.Dispose();
-        _font = new SKFont(SKTypeface.Default, _scaledFontSize);
+        UpdateFont();
 
         var text = Text ?? string.Empty;
         _font.MeasureText(text, out SKRect textBounds);
@@ -332,5 +367,25 @@ public class Button : UIElement {
         }
 
         base.Dispose(disposing);
+    }
+
+    private void UpdateFont() {
+        _scaledFontSize = FontSize * DpiScale;
+
+        _font?.Dispose();
+
+        if (_customTypeface is null) {
+            _typeface?.Dispose();
+
+            var weight = _bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+            var slant = _italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+            _typeface = SKTypeface.FromFamilyName(_fontFamily, weight, SKFontStyleWidth.Normal, slant);
+        }
+        else {
+            _typeface?.Dispose();
+            _typeface = null;
+        }
+
+        _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, _scaledFontSize);
     }
 }

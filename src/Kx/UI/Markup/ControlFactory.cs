@@ -168,7 +168,7 @@ public static class ControlFactory {
         if (config.Font is null)
             return;
 
-        var typeface = CreateTypeface(config.Font);
+        var typeface = CreateTypeface(visualContext: label.Context, config.Font);
         label.Font.Value = new SKFont(typeface, config.Font.Size);
     }
 
@@ -179,8 +179,15 @@ public static class ControlFactory {
         if (!string.IsNullOrWhiteSpace(config.Color))
             button.ForegroundColor = SKColor.Parse(config.Color);
 
-        if (config.Font is not null)
+        if (config.Font is not null) {
+            button.FontFamily = config.Font.Name;
             button.FontSize = config.Font.Size;
+            button.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
+            button.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(config.Font.Resource))
+                button.SetFontTypeface(CreateTypeface(context, config.Font));
+        }
 
         button.SetStateImages(
             ResolveButtonImage(context, config.NormalImage),
@@ -204,6 +211,9 @@ public static class ControlFactory {
             textBox.FontSize = config.Font.Size;
             textBox.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
             textBox.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(config.Font.Resource))
+                textBox.SetFontTypeface(CreateTypeface(textBox.Context, config.Font));
         }
 
         if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
@@ -243,6 +253,9 @@ public static class ControlFactory {
             listBox.FontSize = config.Font.Size;
             listBox.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
             listBox.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(config.Font.Resource))
+                listBox.SetFontTypeface(CreateTypeface(listBox.Context, config.Font));
         }
 
         if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
@@ -285,6 +298,9 @@ public static class ControlFactory {
             serverStatus.FontSize = config.Font.Size;
             serverStatus.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
             serverStatus.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(config.Font.Resource))
+                serverStatus.SetFontTypeface(CreateTypeface(serverStatus.Context, config.Font));
         }
 
         if (TryGetBoolProperty(config, "showIndicator", out var showIndicator))
@@ -425,7 +441,13 @@ public static class ControlFactory {
             gridSplitter.GripColor = gripColor;
     }
 
-    private static SKTypeface CreateTypeface(FontConfig font) {
+    private static SKTypeface CreateTypeface(IVisualContext visualContext, FontConfig font) {
+        if (!string.IsNullOrWhiteSpace(font.Resource) && visualContext is WindowContext windowContext) {
+            SKTypeface? resourceTypeface = windowContext.Resources.TryGetSkiaTypeface(font.Resource);
+            if (resourceTypeface is not null)
+                return resourceTypeface;
+        }
+
         var weight = font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase)
             ? SKFontStyleWeight.Bold
             : SKFontStyleWeight.Normal;

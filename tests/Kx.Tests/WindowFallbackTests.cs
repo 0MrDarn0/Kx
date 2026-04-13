@@ -6,6 +6,8 @@ using Kx.Sdk.UI.Themes;
 using Kx.Sdk.WindowHost;
 using Kx.Tests.TestInfrastructure;
 
+using System.Reflection;
+
 namespace Kx.Tests;
 
 public sealed class WindowFallbackTests {
@@ -21,6 +23,8 @@ public sealed class WindowFallbackTests {
             composition.ControlRegistry,
             composition.WindowFrameRegistry,
             composition.WindowContentRegistry);
+
+        InitializeWindow(window);
 
         Assert.True(window.FallbackBuilt);
     }
@@ -47,9 +51,19 @@ public sealed class WindowFallbackTests {
             composition.WindowFrameRegistry,
             composition.WindowContentRegistry);
 
+        InitializeWindow(window);
+
         Assert.False(window.FallbackBuilt);
         Assert.True(window.ExposedHasConfiguredControls);
         Assert.False(window.ExposedHasConfiguredContentControls);
+    }
+
+    private static void InitializeWindow(Window window) {
+        ArgumentNullException.ThrowIfNull(window);
+
+        MethodInfo? initializeWindowMethod = typeof(Window).GetMethod("InitializeWindow", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(initializeWindowMethod);
+        initializeWindowMethod.Invoke(window, null);
     }
 
     private sealed class FallbackWindow : Window {

@@ -61,9 +61,10 @@ controls:
     layer: Frame
     color: "#FFA500"
     font:
-      name: "Chiller"
+      name: "chiller"
       size: 40
-      style: "Italic"
+      style: "Regular"
+      resource: "Plugins:KalTheme:Fonts:chiller:chiller.ttf"
     bounds:
       x: 35
       y: 0

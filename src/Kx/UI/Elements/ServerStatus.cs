@@ -23,6 +23,7 @@ public sealed class ServerStatus : UIElement {
     private float _fontSize = DefaultFontSize;
     private bool _bold;
     private bool _italic;
+    private SKTypeface? _customTypeface;
     private string _iconFontFamily = "Segoe UI Symbol";
     private float _iconFontSize = DefaultIconFontSize;
     private SKTypeface? _typeface;
@@ -158,6 +159,16 @@ public sealed class ServerStatus : UIElement {
             UpdateFonts();
             Invalidate();
         }
+    }
+
+    /// <summary>
+    /// Sets an explicit typeface that overrides family-name lookup for the server status text.
+    /// </summary>
+    public void SetFontTypeface(SKTypeface? typeface) {
+        _customTypeface?.Dispose();
+        _customTypeface = typeface;
+        UpdateFonts();
+        Invalidate();
     }
 
     public string IconFontFamily {
@@ -386,6 +397,7 @@ public sealed class ServerStatus : UIElement {
     protected override void Dispose(bool disposing) {
         if (disposing) {
             StopMonitoring();
+            _customTypeface?.Dispose();
             _typeface?.Dispose();
             _font?.Dispose();
             _iconTypeface?.Dispose();
@@ -468,13 +480,20 @@ public sealed class ServerStatus : UIElement {
     }
 
     private void UpdateFonts() {
-        _typeface?.Dispose();
         _font?.Dispose();
         _iconTypeface?.Dispose();
         _iconFont?.Dispose();
 
-        _typeface = CreateTypeface(_fontFamily, _bold, _italic);
-        _font = new SKFont(_typeface, _fontSize);
+        if (_customTypeface is null) {
+            _typeface?.Dispose();
+            _typeface = CreateTypeface(_fontFamily, _bold, _italic);
+        }
+        else {
+            _typeface?.Dispose();
+            _typeface = null;
+        }
+
+        _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, _fontSize);
         _iconTypeface = SKTypeface.FromFamilyName(_iconFontFamily);
         _iconFont = new SKFont(_iconTypeface, _iconFontSize);
     }

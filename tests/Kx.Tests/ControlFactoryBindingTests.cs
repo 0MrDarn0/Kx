@@ -277,6 +277,29 @@ public sealed class ControlFactoryBindingTests {
     }
 
     [Fact]
+    public void WhenButtonFontIsConfiguredThenAllFontPropertiesAreApplied() {
+        var context = new TestVisualContext();
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "Button",
+            Id = "start",
+            Font = new FontConfig {
+                Name = "Segoe UI",
+                Size = 15,
+                Style = "Bold Italic"
+            }
+        });
+
+        var button = Assert.IsType<Kx.UI.Elements.Button>(control);
+        Assert.Equal("Segoe UI", button.FontFamily);
+        Assert.Equal(15f, button.FontSize);
+        Assert.True(button.Bold);
+        Assert.True(button.Italic);
+    }
+
+    [Fact]
     public void WhenGridSplitterPropertiesAreConfiguredThenTheyAreApplied() {
         var context = new TestVisualContext();
         var registry = CreateControlRegistry();

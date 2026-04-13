@@ -14,6 +14,10 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
     private readonly object _strongCacheLock = new();
     private readonly LinkedList<string> _strongLru = new();
     private readonly Dictionary<string, Bitmap> _strongCache = [];
+    private readonly ConcurrentDictionary<string, WeakReference<SKData>> _typefaceCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _strongTypefaceCacheLock = new();
+    private readonly LinkedList<string> _strongTypefaceLru = new();
+    private readonly Dictionary<string, SKData> _strongTypefaceCache = [];
     private readonly int _strongCacheCapacity = Math.Max(0, strongCacheCapacity);
 
     private string ResolvePath(string id) {
@@ -135,6 +139,24 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
         return null;
     }
 
+    public SKTypeface? TryGetSkiaTypeface(string id) {
+        if (TryGetCachedTypefaceData(id, out SKData? cachedTypefaceData))
+            return CreateTypeface(cachedTypefaceData);
+
+        string path = ResolvePath(id);
+        if (!File.Exists(path))
+            return null;
+
+        try {
+            SKData typefaceData = SKData.Create(path);
+            CacheTypefaceData(id, typefaceData);
+            return CreateTypeface(typefaceData);
+        }
+        catch {
+            return null;
+        }
+    }
+
     public bool TryGetIntrinsicSize(string id, out Size? size) {
         if (TryGetBitmap(id, out var bmp)) {
             size = bmp?.Size;
@@ -160,5 +182,75 @@ public class FileResourceProvider(string baseDirectory, int strongCacheCapacity 
             _strongCache.Clear();
             _strongLru.Clear();
         }
+
+        HashSet<SKData> disposedTypefaceData = new(ReferenceEqualityComparer.Instance);
+        foreach (var kv in _typefaceCache.ToArray()) {
+            if (kv.Value.TryGetTarget(out SKData? typefaceData) && disposedTypefaceData.Add(typefaceData)) {
+                try { typefaceData.Dispose(); }
+                catch { }
+            }
+        }
+        _typefaceCache.Clear();
+
+        lock (_strongTypefaceCacheLock) {
+            foreach (var kv in _strongTypefaceCache) {
+                if (!disposedTypefaceData.Add(kv.Value))
+                    continue;
+
+                kv.Value.Dispose();
+            }
+
+            _strongTypefaceCache.Clear();
+            _strongTypefaceLru.Clear();
+        }
+    }
+
+    private bool TryGetCachedTypefaceData(string id, out SKData? typefaceData) {
+        if (_strongCacheCapacity > 0) {
+            lock (_strongTypefaceCacheLock) {
+                if (_strongTypefaceCache.TryGetValue(id, out SKData? strongTypefaceData)) {
+                    _strongTypefaceLru.Remove(id);
+                    _strongTypefaceLru.AddFirst(id);
+                    typefaceData = strongTypefaceData;
+                    return true;
+                }
+            }
+        }
+
+        if (_typefaceCache.TryGetValue(id, out WeakReference<SKData>? weakTypefaceData)) {
+            if (weakTypefaceData.TryGetTarget(out SKData? cachedTypefaceData)) {
+                typefaceData = cachedTypefaceData;
+                return true;
+            }
+
+            _typefaceCache.TryRemove(id, out _);
+        }
+
+        typefaceData = null;
+        return false;
+    }
+
+    private void CacheTypefaceData(string id, SKData typefaceData) {
+        _typefaceCache[id] = new WeakReference<SKData>(typefaceData);
+
+        if (_strongCacheCapacity <= 0)
+            return;
+
+        lock (_strongTypefaceCacheLock) {
+            if (_strongTypefaceCache.Count >= _strongCacheCapacity) {
+                string last = _strongTypefaceLru.Last!.Value;
+                _strongTypefaceLru.RemoveLast();
+                _strongTypefaceCache.Remove(last);
+            }
+
+            _strongTypefaceCache[id] = typefaceData;
+            _strongTypefaceLru.AddFirst(id);
+        }
+    }
+
+    private static SKTypeface? CreateTypeface(SKData? typefaceData) {
+        return typefaceData is null
+            ? null
+            : SKTypeface.FromData(typefaceData);
     }
 }

@@ -7,4 +7,5 @@ public class FontConfig {
     public string Name { get; set; } = "Arial";
     public int Size { get; set; } = 14;
     public string Style { get; set; } = "Regular";
+    public string? Resource { get; set; }
 }

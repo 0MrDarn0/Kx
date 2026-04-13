@@ -33,6 +33,7 @@ public sealed class ListBox : UIElement {
     private bool _bold;
     private bool _italic;
     private SKTypeface? _typeface;
+    private SKTypeface? _customTypeface;
     private SKFont? _font;
     private int _selectedIndex = -1;
     private int _hoveredIndex = -1;
@@ -84,6 +85,16 @@ public sealed class ListBox : UIElement {
             UpdateFont();
             Invalidate();
         }
+    }
+
+    /// <summary>
+    /// Sets an explicit typeface that overrides family-name lookup for this list box.
+    /// </summary>
+    public void SetFontTypeface(SKTypeface? typeface) {
+        _customTypeface?.Dispose();
+        _customTypeface = typeface;
+        UpdateFont();
+        Invalidate();
     }
 
     public SKColor ForegroundColor {
@@ -338,6 +349,7 @@ public sealed class ListBox : UIElement {
     protected override void Dispose(bool disposing) {
         if (disposing) {
             _font?.Dispose();
+            _customTypeface?.Dispose();
             _typeface?.Dispose();
             _textPaint.Dispose();
             _backgroundPaint.Dispose();
@@ -426,14 +438,21 @@ public sealed class ListBox : UIElement {
     }
 
     private void UpdateFont() {
-        var weight = _bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
-        var slant = _italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
-
         _font?.Dispose();
-        _typeface?.Dispose();
 
-        _typeface = SKTypeface.FromFamilyName(_fontFamily, weight, SKFontStyleWidth.Normal, slant);
-        _font = new SKFont(_typeface ?? SKTypeface.Default, _fontSize * DpiScale);
+        if (_customTypeface is null) {
+            var weight = _bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+            var slant = _italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+
+            _typeface?.Dispose();
+            _typeface = SKTypeface.FromFamilyName(_fontFamily, weight, SKFontStyleWidth.Normal, slant);
+        }
+        else {
+            _typeface?.Dispose();
+            _typeface = null;
+        }
+
+        _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, _fontSize * DpiScale);
         _selectedItemBorderPaint.StrokeWidth = Math.Max(1f, DpiScale);
         _separatorPaint.StrokeWidth = Math.Max(1f, DpiScale * 0.75f);
         _borderPaint.StrokeWidth = Math.Max(1f, _borderPaint.StrokeWidth);

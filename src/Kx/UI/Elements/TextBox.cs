@@ -26,6 +26,7 @@ public sealed class TextBox : UIElement {
     private bool _bold;
     private bool _italic;
     private SKTypeface? _typeface;
+    private SKTypeface? _customTypeface;
     private SKFont? _font;
     private int _scrollOffset;
     private bool _isDraggingScrollMarker;
@@ -153,6 +154,16 @@ public sealed class TextBox : UIElement {
             UpdateFont();
             Invalidate();
         }
+    }
+
+    /// <summary>
+    /// Sets an explicit typeface that overrides family-name lookup for this text box.
+    /// </summary>
+    public void SetFontTypeface(SKTypeface? typeface) {
+        _customTypeface?.Dispose();
+        _customTypeface = typeface;
+        UpdateFont();
+        Invalidate();
     }
 
     public SKColor ForegroundColor {
@@ -777,6 +788,7 @@ public sealed class TextBox : UIElement {
     protected override void Dispose(bool disposing) {
         if (disposing) {
             _font?.Dispose();
+            _customTypeface?.Dispose();
             _typeface?.Dispose();
             _textPaint.Dispose();
             _backgroundPaint.Dispose();
@@ -911,12 +923,20 @@ public sealed class TextBox : UIElement {
 
     private void UpdateFont() {
         _font?.Dispose();
-        _typeface?.Dispose();
 
-        SKFontStyleWeight weight = Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
-        SKFontStyleSlant slant = Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+        if (_customTypeface is null) {
+            _typeface?.Dispose();
 
-        _typeface = SKTypeface.FromFamilyName(FontFamily, weight, SKFontStyleWidth.Normal, slant);
-        _font = new SKFont(_typeface, FontSize * DpiScale);
+            SKFontStyleWeight weight = Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+            SKFontStyleSlant slant = Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+
+            _typeface = SKTypeface.FromFamilyName(FontFamily, weight, SKFontStyleWidth.Normal, slant);
+        }
+        else {
+            _typeface?.Dispose();
+            _typeface = null;
+        }
+
+        _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, FontSize * DpiScale);
     }
 }

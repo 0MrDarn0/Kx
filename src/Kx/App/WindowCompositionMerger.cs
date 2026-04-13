@@ -312,7 +312,8 @@ internal static class WindowCompositionMerger {
         return new FontConfig {
             Name = source.Name,
             Size = source.Size,
-            Style = source.Style
+            Style = source.Style,
+            Resource = source.Resource
         };
     }
 

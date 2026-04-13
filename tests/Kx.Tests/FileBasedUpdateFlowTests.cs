@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -7,7 +10,6 @@ using Kx.Core.Extensions;
 using Kx.Core.Pipeline;
 using Kx.Core.Pipeline.Steps;
 using Kx.Core.Update;
-using Kx.Sdk.Events;
 using Kx.Sdk.Updater;
 
 namespace Kx.Tests;
@@ -37,7 +39,7 @@ public sealed class FileBasedUpdateFlowTests {
 
         await Assert.ThrowsAsync<OperationCanceledException>(() => step.ExecuteAsync(context, eventManager));
 
-        Assert.Equal("status.up_to_date_generic", statusText);
+        Assert.Equal("Up to date.", statusText);
     }
 
     [Fact]
@@ -61,7 +63,7 @@ public sealed class FileBasedUpdateFlowTests {
         await step.ExecuteAsync(context, eventManager);
 
         Assert.True(updateRequiredRaised);
-        Assert.Equal("status.update_required_generic", statusText);
+        Assert.Equal("Update required.", statusText);
     }
 
     [Fact]
@@ -149,7 +151,7 @@ public sealed class FileBasedUpdateFlowTests {
         var runner = new UpdaterPipelineRunner(eventManager, source, "https://updates.example/", rootDirectory);
         await runner.RunAsync(rootDirectory);
 
-        Assert.Equal("status.update_applied", lastStatus);
+        Assert.Equal("Update applied successfully.", lastStatus);
     }
 
     [Fact]

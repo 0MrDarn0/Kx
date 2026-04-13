@@ -17,6 +17,9 @@ public interface IResourceProvider : IDisposable {
     /// Versucht synchron ein SKBitmap zurückzugeben; null wenn nicht vorhanden.
     public SKBitmap? TryGetSkiaBitmap(string id);
 
+    /// Versucht synchron ein SKTypeface zurückzugeben; null wenn nicht vorhanden.
+    public SKTypeface? TryGetSkiaTypeface(string id);
+
     /// Optional: gibt die intrinsische Pixelgröße zurück (wenn bekannt).
     public bool TryGetIntrinsicSize(string id, out Size? size);
 }

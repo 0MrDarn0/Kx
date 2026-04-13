@@ -13,6 +13,8 @@ using Kx.Utility;
 
 using KxUpdater;
 
+using System.Reflection;
+
 namespace KxUpdater.Tests;
 
 public sealed class MainWindowCommandTests {
@@ -104,7 +106,7 @@ public sealed class MainWindowCommandTests {
         commandRegistry = uiComposition.CommandRegistry;
         stateStore = uiComposition.StateStore;
 
-        return new MainWindow(
+        MainWindow window = new(
             host,
             new TestTrayService(),
             logger,
@@ -114,6 +116,17 @@ public sealed class MainWindowCommandTests {
             uiComposition.ControlRegistry,
             uiComposition.WindowFrameRegistry,
             uiComposition.WindowContentRegistry);
+
+        InitializeWindow(window);
+        return window;
+    }
+
+    private static void InitializeWindow(MainWindow window) {
+        ArgumentNullException.ThrowIfNull(window);
+
+        MethodInfo? initializeWindowMethod = typeof(Window).GetMethod("InitializeWindow", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(initializeWindowMethod);
+        initializeWindowMethod.Invoke(window, null);
     }
 
     private static void EnsureUpdaterAssetsForTests() {
