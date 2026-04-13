@@ -7,9 +7,22 @@ using System.Text.Json;
 using Kx.Core.Extensions;
 using Kx.Sdk.Updater;
 
+using YamlDotNet.Core;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+
 namespace KxUpdateBuilder;
 
 internal sealed class UpdatePackageBuilder {
+    private static readonly IDeserializer _newsDeserializer = new DeserializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .IgnoreUnmatchedProperties()
+        .Build();
+
+    private static readonly ISerializer _newsSerializer = new SerializerBuilder()
+        .WithNamingConvention(CamelCaseNamingConvention.Instance)
+        .Build();
+
     public UpdatePackageBuildDefaults CreateDefaults(string workingDirectory) {
         ArgumentException.ThrowIfNullOrWhiteSpace(workingDirectory);
 
@@ -81,12 +94,173 @@ internal sealed class UpdatePackageBuilder {
             request.OverwriteExisting);
     }
 
+    public UpdateNewsEditResult AddNewsEntry(UpdateNewsAddRequest request) {
+        ArgumentNullException.ThrowIfNull(request);
+
+        string uploadFolder = NormalizeRequiredPath(request.UploadFolder, nameof(request.UploadFolder));
+        string title = NormalizeRequiredText(request.Title, nameof(request.Title));
+        string content = NormalizeRequiredText(request.Content, nameof(request.Content));
+
+        Directory.CreateDirectory(uploadFolder);
+
+        string newsFilePath = Path.Combine(uploadFolder, "news.yaml");
+        NewsDocument document = ReadNewsDocument(newsFilePath);
+        document.Entries.Insert(0, new NewsDocumentEntry {
+            Title = title,
+            Content = content
+        });
+
+        WriteNewsDocument(newsFilePath, document);
+
+        return new UpdateNewsEditResult(newsFilePath, document.Entries.Count, 1);
+    }
+
+    public UpdateNewsEditResult RemoveNewsEntries(UpdateNewsRemoveRequest request) {
+        ArgumentNullException.ThrowIfNull(request);
+
+        string uploadFolder = NormalizeRequiredPath(request.UploadFolder, nameof(request.UploadFolder));
+        string title = NormalizeRequiredText(request.Title, nameof(request.Title));
+
+        Directory.CreateDirectory(uploadFolder);
+
+        string newsFilePath = Path.Combine(uploadFolder, "news.yaml");
+        NewsDocument document = ReadNewsDocument(newsFilePath);
+
+        int removedCount = document.Entries.RemoveAll(entry =>
+            string.Equals(entry.Title?.Trim(), title, StringComparison.OrdinalIgnoreCase));
+
+        if (removedCount > 0)
+            WriteNewsDocument(newsFilePath, document);
+
+        return new UpdateNewsEditResult(newsFilePath, document.Entries.Count, removedCount);
+    }
+
+    public UpdateNewsListResult LoadNewsEntries(UpdateNewsLoadRequest request) {
+        ArgumentNullException.ThrowIfNull(request);
+
+        string uploadFolder = NormalizeRequiredPath(request.UploadFolder, nameof(request.UploadFolder));
+        Directory.CreateDirectory(uploadFolder);
+
+        string newsFilePath = Path.Combine(uploadFolder, "news.yaml");
+        NewsDocument document = ReadNewsDocument(newsFilePath);
+
+        List<UpdateNewsEntry> entries = document.Entries
+            .Select(entry => new UpdateNewsEntry(
+                (entry.Title ?? string.Empty).Trim(),
+                (entry.Content ?? string.Empty).Trim()))
+            .ToList();
+
+        return new UpdateNewsListResult(newsFilePath, entries);
+    }
+
+    public UpdateNewsEditResult UpdateNewsEntry(UpdateNewsUpdateRequest request) {
+        ArgumentNullException.ThrowIfNull(request);
+
+        string uploadFolder = NormalizeRequiredPath(request.UploadFolder, nameof(request.UploadFolder));
+        string title = NormalizeRequiredText(request.Title, nameof(request.Title));
+        string content = NormalizeRequiredText(request.Content, nameof(request.Content));
+
+        Directory.CreateDirectory(uploadFolder);
+
+        string newsFilePath = Path.Combine(uploadFolder, "news.yaml");
+        NewsDocument document = ReadNewsDocument(newsFilePath);
+
+        if (request.Index < 0 || request.Index >= document.Entries.Count)
+            throw new InvalidOperationException("The selected news entry no longer exists.");
+
+        document.Entries[request.Index] = new NewsDocumentEntry {
+            Title = title,
+            Content = content
+        };
+
+        WriteNewsDocument(newsFilePath, document);
+
+        return new UpdateNewsEditResult(newsFilePath, document.Entries.Count, 1);
+    }
+
+    public UpdateNewsEditResult RemoveNewsEntry(UpdateNewsRemoveAtRequest request) {
+        ArgumentNullException.ThrowIfNull(request);
+
+        string uploadFolder = NormalizeRequiredPath(request.UploadFolder, nameof(request.UploadFolder));
+
+        Directory.CreateDirectory(uploadFolder);
+
+        string newsFilePath = Path.Combine(uploadFolder, "news.yaml");
+        NewsDocument document = ReadNewsDocument(newsFilePath);
+
+        if (request.Index < 0 || request.Index >= document.Entries.Count)
+            throw new InvalidOperationException("The selected news entry no longer exists.");
+
+        document.Entries.RemoveAt(request.Index);
+        WriteNewsDocument(newsFilePath, document);
+
+        return new UpdateNewsEditResult(newsFilePath, document.Entries.Count, 1);
+    }
+
     private static UpdateMetadata ReadPreviousMetadata(string outputJson) {
         if (!File.Exists(outputJson))
             return new UpdateMetadata();
 
         string json = File.ReadAllText(outputJson);
         return JsonSerializer.Deserialize<UpdateMetadata>(json) ?? new UpdateMetadata();
+    }
+
+    private static NewsDocument ReadNewsDocument(string newsFilePath) {
+        if (!File.Exists(newsFilePath))
+            return new NewsDocument();
+
+        string yaml = File.ReadAllText(newsFilePath);
+        if (string.IsNullOrWhiteSpace(yaml))
+            return new NewsDocument();
+
+        try {
+            var document = _newsDeserializer.Deserialize<NewsDocument>(yaml) ?? new NewsDocument();
+            document.Entries ??= [];
+            return document;
+        }
+        catch (YamlException ex) {
+            throw new InvalidOperationException($"Could not parse '{newsFilePath}'.", ex);
+        }
+    }
+
+    private static void WriteNewsDocument(string newsFilePath, NewsDocument document) {
+        ArgumentNullException.ThrowIfNull(document);
+        document.Entries ??= [];
+
+        using var writer = new StringWriter();
+        writer.WriteLine("entries:");
+
+        foreach (NewsDocumentEntry entry in document.Entries) {
+            string title = EscapeSingleQuotedYaml((entry.Title ?? string.Empty).Trim());
+            string content = NormalizeYamlLiteralContent(entry.Content ?? string.Empty);
+
+            writer.Write("  - title: '");
+            writer.Write(title);
+            writer.WriteLine("'");
+            writer.WriteLine("    content: |");
+
+            foreach (string line in content.Split('\n')) {
+                writer.Write("      ");
+                writer.WriteLine(line);
+            }
+
+            writer.WriteLine();
+        }
+
+        File.WriteAllText(newsFilePath, writer.ToString());
+    }
+
+    private static string EscapeSingleQuotedYaml(string value) {
+        return value.Replace("'", "''", StringComparison.Ordinal);
+    }
+
+    private static string NormalizeYamlLiteralContent(string value) {
+        string normalized = value
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .TrimEnd('\n');
+
+        return normalized.Length == 0 ? " " : normalized;
     }
 
     private static void DeleteLegacyPackageArtifacts(string uploadFolder) {
@@ -108,9 +282,25 @@ internal sealed class UpdatePackageBuilder {
         return Path.GetFullPath(value.Trim());
     }
 
+    private static string NormalizeRequiredText(string value, string paramName) {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException($"{paramName} must not be empty.");
+
+        return value.Trim();
+    }
+
     private static void DeleteIfExists(string filePath) {
         if (File.Exists(filePath))
             File.Delete(filePath);
+    }
+
+    private sealed class NewsDocument {
+        public List<NewsDocumentEntry> Entries { get; set; } = [];
+    }
+
+    private sealed class NewsDocumentEntry {
+        public string? Title { get; set; }
+        public string? Content { get; set; }
     }
 }
 
@@ -128,3 +318,38 @@ internal sealed record UpdatePackageBuildResult(
     int FileCount,
     int DeletedFileCount,
     bool OverwroteExistingFiles);
+
+internal sealed record UpdateNewsAddRequest(
+    string UploadFolder,
+    string Title,
+    string Content);
+
+internal sealed record UpdateNewsRemoveRequest(
+    string UploadFolder,
+    string Title);
+
+internal sealed record UpdateNewsEditResult(
+    string NewsFilePath,
+    int EntryCount,
+    int ChangedCount);
+
+internal sealed record UpdateNewsLoadRequest(
+    string UploadFolder);
+
+internal sealed record UpdateNewsUpdateRequest(
+    string UploadFolder,
+    int Index,
+    string Title,
+    string Content);
+
+internal sealed record UpdateNewsRemoveAtRequest(
+    string UploadFolder,
+    int Index);
+
+internal sealed record UpdateNewsListResult(
+    string NewsFilePath,
+    IReadOnlyList<UpdateNewsEntry> Entries);
+
+internal sealed record UpdateNewsEntry(
+    string Title,
+    string Content);

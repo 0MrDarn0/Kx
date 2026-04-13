@@ -41,13 +41,13 @@ controls:
         gridColumn: 0
         columns:
           - width:
-              value: 1.28
+              value: 1.42
               unit: Star
           - width:
               value: 12
               unit: Pixel
           - width:
-              value: 1
+              value: 0.44
               unit: Star
         rows:
           - height:
@@ -60,13 +60,13 @@ controls:
             gridColumn: 0
             rows:
               - height:
-                  value: 0.43
+                  value: 0.52
                   unit: Star
               - height:
                   value: 10
                   unit: Pixel
               - height:
-                  value: 0.57
+                  value: 0.20
                   unit: Star
             columns:
               - width:
@@ -78,6 +78,11 @@ controls:
                 gridRow: 1
                 gridColumn: 0
                 color: "#5F5238"
+                margin:
+                  left: 8
+                  top: 0
+                  right: 0
+                  bottom: 0
                 properties:
                   orientation: "Horizontal"
                   hoverColor: "#766647"
@@ -90,10 +95,15 @@ controls:
                 color: "#F5F5F5"
                 font:
                   name: "Segoe UI"
-                  size: 10
+                  size: 12
                   style: "Regular"
                 gridRow: 2
                 gridColumn: 0
+                margin:
+                  left: 8
+                  top: 0
+                  right: 0
+                  bottom: 0
                 properties:
                   backgroundColor: "#101010"
                   borderColor: "#7C6E4B"
@@ -131,10 +141,15 @@ controls:
                 id: updater_news_list
                 gridRow: 0
                 gridColumn: 0
+                margin:
+                  left: 0
+                  top: 0
+                  right: 8
+                  bottom: 0
                 color: "#F5F5F5"
                 font:
                   name: "Segoe UI"
-                  size: 10
+                  size: 12
                   style: "Regular"
                 properties:
                   itemsBinding: updater.news.items

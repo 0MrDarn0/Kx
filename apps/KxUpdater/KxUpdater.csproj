@@ -1,42 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
-    <TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
-    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
-    <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
-	<LangVersion>latest</LangVersion>
-    <LanguageKeySourceFile>$(MSBuildProjectDirectory)\Assets\Languages\lang_en.yaml</LanguageKeySourceFile>
-    <LanguageKeyGeneratedFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\Generated\UpdaterLanguageKeys.g.cs</LanguageKeyGeneratedFile>
-    <LanguageKeysNamespace>KxUpdater</LanguageKeysNamespace>
-    <LanguageKeysClassName>UpdaterLanguageKeys</LanguageKeysClassName>
-    <LanguageKeysVisibility>internal</LanguageKeysVisibility>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>latest</LangVersion>
+		<ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
+		<LanguageKeySourceFile>$(MSBuildProjectDirectory)\Assets\Languages\lang_en.yaml</LanguageKeySourceFile>
+		<LanguageKeyGeneratedFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\Generated\UpdaterLanguageKeys.g.cs</LanguageKeyGeneratedFile>
+		<LanguageKeysNamespace>KxUpdater</LanguageKeysNamespace>
+		<LanguageKeysClassName>UpdaterLanguageKeys</LanguageKeysClassName>
+		<LanguageKeysVisibility>internal</LanguageKeysVisibility>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Kx\Kx.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Kx\Kx.csproj" />
+	</ItemGroup>
 
 
-  <ItemGroup>
-    <Compile Remove="Plugins\**" />
-    <EmbeddedResource Remove="Plugins\**" />
-    <None Remove="Plugins\**" />
-    <Content Remove="Plugins\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="Plugins\**" />
+		<EmbeddedResource Remove="Plugins\**" />
+		<None Remove="Plugins\**" />
+		<Content Remove="Plugins\**" />
+	</ItemGroup>
 
-	
-  <ItemGroup>
-    <Content Include="Assets\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <TargetPath>$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
-    </Content>
-  </ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Assets\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+			<TargetPath>$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+		</Content>
+	</ItemGroup>
 
 	<ItemGroup>
 		<!-- IDE visibility for plugin source files -->
@@ -47,6 +48,6 @@
 		<PluginProject Include="Plugins\KalTheme\KalTheme.csproj" />
 	</ItemGroup>
 
-  <Import Project="..\..\build\PluginCopy.targets" />
-  <Import Project="..\..\build\LanguageKeyGeneration.targets" />
+	<Import Project="..\..\build\PluginCopy.targets" />
+	<Import Project="..\..\build\LanguageKeyGeneration.targets" />
 </Project>

@@ -8,6 +8,7 @@
 		<Nullable>enable</Nullable>
 		<UseWindowsForms>true</UseWindowsForms>
 		<LangVersion>latest</LangVersion>
+		<ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Kx\Kx.csproj" />
@@ -19,5 +20,8 @@
 			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
 			<TargetPath>$(AssemblyName)\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
 		</Content>
+	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Assets\Icons\" />
 	</ItemGroup>
 </Project>
