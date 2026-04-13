@@ -7,6 +7,7 @@ public class AppConfig {
     public UpdaterConfig Updater { get; set; } = new();
     public LauncherConfig Launcher { get; set; } = new();
     public UiConfig Ui { get; set; } = new();
+    public ServerStatusConfig ServerStatus { get; set; } = new();
 }
 
 public class UiConfig {
@@ -33,4 +34,13 @@ public class ProcessLaunchConfig {
 
 public class WebsiteLaunchConfig {
     public string Url { get; set; } = string.Empty;
+}
+
+public class ServerStatusConfig {
+    public bool Enabled { get; set; }
+    public string DisplayName { get; set; } = string.Empty;
+    public string Host { get; set; } = string.Empty;
+    public int Port { get; set; }
+    public int CheckIntervalSeconds { get; set; } = 15;
+    public int ConnectTimeoutMilliseconds { get; set; } = 1500;
 }

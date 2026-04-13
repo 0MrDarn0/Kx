@@ -38,6 +38,10 @@ info:
   latest_version: "Letzte Version: {0}"
   changelog_loading: "Lade Changelog..."
   news_latest: "Neueste Meldung"
+  server_status_checking: "{0}: prüfe..."
+  server_status_online: "{0}: online"
+  server_status_offline: "{0}: offline"
+  server_status_timeout: "{0}: Zeitüberschreitung"
   overlay_hotkeys: "Debug-Overlays: Strg+Umschalt+D wechselt Presets, Strg+Umschalt+0 schaltet Overlays aus, Strg+Umschalt+1 zeigt Layout, Strg+Umschalt+2 zeigt Hierarchie, Strg+Umschalt+3 zeigt Inspect-Modus."
 
 error:

@@ -67,3 +67,32 @@ controls:
       y: 16
       width: 17
       height: 17
+  - type: ServerStatus
+    id: updater_server_status
+    layer: Frame
+    visibleBinding: updater.serverStatus.enabled
+    font:
+      name: "Segoe UI"
+      size: 16
+      style: "Regular"
+    bounds:
+      x: -150
+      y: 0
+      width: 170
+      height: 20
+    properties:
+      monitoringEnabledBinding: updater.serverStatus.enabled
+      displayNameBinding: updater.serverStatus.displayName
+      hostBinding: updater.serverStatus.host
+      portBinding: updater.serverStatus.port
+      checkIntervalBinding: updater.serverStatus.checkIntervalSeconds
+      connectTimeoutBinding: updater.serverStatus.connectTimeoutMilliseconds
+      checkingTextBinding: updater.serverStatus.checkingText
+      onlineTextBinding: updater.serverStatus.onlineText
+      offlineTextBinding: updater.serverStatus.offlineText
+      timeoutTextBinding: updater.serverStatus.timeoutText
+      indicatorSpacing: "5"
+      checkingColor: "#DAA520"
+      onlineColor: "#8BC34A"
+      offlineColor: "#E57373"
+      timeoutColor: "#FFB74D"

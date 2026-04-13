@@ -81,6 +81,10 @@ public static class ControlFactory {
                 ApplyListBoxProperties(listBox, config);
                 break;
 
+            case Kx.UI.Elements.ServerStatus serverStatus:
+                ApplyServerStatusProperties(serverStatus, config);
+                break;
+
             case Kx.UI.Elements.TextBox textBox:
                 ApplyTextBoxProperties(textBox, config);
                 break;
@@ -133,6 +137,10 @@ public static class ControlFactory {
             case Kx.UI.Elements.ListBox listBox:
                 BindItems(listBox, GetProperty(config, "itemsBinding"));
                 BindSelectedIndex(listBox, GetProperty(config, "selectedIndexBinding"));
+                break;
+
+            case Kx.UI.Elements.ServerStatus serverStatus:
+                BindServerStatusProperties(serverStatus, config);
                 break;
 
             case Kx.UI.Elements.TextBox textBox:
@@ -269,6 +277,89 @@ public static class ControlFactory {
 
         if (TryGetFloatProperty(config, "glowRadius", out var glowRadius))
             listBox.GlowRadius = glowRadius;
+    }
+
+    private static void ApplyServerStatusProperties(Kx.UI.Elements.ServerStatus serverStatus, ControlConfig config) {
+        if (config.Font is not null) {
+            serverStatus.FontFamily = config.Font.Name;
+            serverStatus.FontSize = config.Font.Size;
+            serverStatus.Bold = config.Font.Style.Contains("Bold", StringComparison.OrdinalIgnoreCase);
+            serverStatus.Italic = config.Font.Style.Contains("Italic", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (TryGetBoolProperty(config, "showIndicator", out var showIndicator))
+            serverStatus.ShowIndicator = showIndicator;
+
+        if (TryGetBoolProperty(config, "monitoringEnabled", out var monitoringEnabled))
+            serverStatus.MonitoringEnabled = monitoringEnabled;
+
+        if (TryGetBoolProperty(config, "showText", out var showText))
+            serverStatus.ShowText = showText;
+
+        if (TryGetFloatProperty(config, "indicatorSpacing", out var indicatorSpacing))
+            serverStatus.IndicatorSpacing = indicatorSpacing;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "displayName")))
+            serverStatus.DisplayName = GetProperty(config, "displayName")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "host")))
+            serverStatus.Host = GetProperty(config, "host")!;
+
+        if (TryGetIntProperty(config, "port", out var port))
+            serverStatus.Port = port;
+
+        if (TryGetIntProperty(config, "checkIntervalSeconds", out var checkIntervalSeconds))
+            serverStatus.CheckIntervalSeconds = checkIntervalSeconds;
+
+        if (TryGetIntProperty(config, "connectTimeoutMilliseconds", out var connectTimeoutMilliseconds))
+            serverStatus.ConnectTimeoutMilliseconds = connectTimeoutMilliseconds;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "checkingText")))
+            serverStatus.CheckingText = GetProperty(config, "checkingText")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "onlineText")))
+            serverStatus.OnlineText = GetProperty(config, "onlineText")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "offlineText")))
+            serverStatus.OfflineText = GetProperty(config, "offlineText")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "timeoutText")))
+            serverStatus.TimeoutText = GetProperty(config, "timeoutText")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "checkingIndicator")))
+            serverStatus.CheckingIndicator = GetProperty(config, "checkingIndicator")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "onlineIndicator")))
+            serverStatus.OnlineIndicator = GetProperty(config, "onlineIndicator")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "offlineIndicator")))
+            serverStatus.OfflineIndicator = GetProperty(config, "offlineIndicator")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "timeoutIndicator")))
+            serverStatus.TimeoutIndicator = GetProperty(config, "timeoutIndicator")!;
+
+        if (!string.IsNullOrWhiteSpace(GetProperty(config, "iconFontFamily")))
+            serverStatus.IconFontFamily = GetProperty(config, "iconFontFamily")!;
+
+        if (TryGetFloatProperty(config, "iconFontSize", out var iconFontSize))
+            serverStatus.IconFontSize = iconFontSize;
+
+        if (TryGetColorProperty(config, "checkingColor", out var checkingColor))
+            serverStatus.CheckingColor = checkingColor;
+
+        if (TryGetColorProperty(config, "onlineColor", out var onlineColor))
+            serverStatus.OnlineColor = onlineColor;
+
+        if (TryGetColorProperty(config, "offlineColor", out var offlineColor))
+            serverStatus.OfflineColor = offlineColor;
+
+        if (TryGetColorProperty(config, "timeoutColor", out var timeoutColor))
+            serverStatus.TimeoutColor = timeoutColor;
+
+        serverStatus.CheckingImage = GetProperty(config, "checkingImage");
+        serverStatus.OnlineImage = GetProperty(config, "onlineImage");
+        serverStatus.OfflineImage = GetProperty(config, "offlineImage");
+        serverStatus.TimeoutImage = GetProperty(config, "timeoutImage");
     }
 
     private static void ApplyProgressBarProperties(Kx.UI.Elements.ProgressBar progressBar, ControlConfig config) {
@@ -434,6 +525,19 @@ public static class ControlFactory {
         });
     }
 
+    private static void BindServerStatusProperties(Kx.UI.Elements.ServerStatus serverStatus, ControlConfig config) {
+        BindServerStatusBool(serverStatus, GetProperty(config, "monitoringEnabledBinding"), value => serverStatus.MonitoringEnabled = value);
+        BindServerStatusText(serverStatus, GetProperty(config, "displayNameBinding"), value => serverStatus.DisplayName = value);
+        BindServerStatusText(serverStatus, GetProperty(config, "hostBinding"), value => serverStatus.Host = value);
+        BindServerStatusInt(serverStatus, GetProperty(config, "portBinding"), value => serverStatus.Port = value);
+        BindServerStatusInt(serverStatus, GetProperty(config, "checkIntervalBinding"), value => serverStatus.CheckIntervalSeconds = value);
+        BindServerStatusInt(serverStatus, GetProperty(config, "connectTimeoutBinding"), value => serverStatus.ConnectTimeoutMilliseconds = value);
+        BindServerStatusText(serverStatus, GetProperty(config, "checkingTextBinding"), value => serverStatus.CheckingText = value);
+        BindServerStatusText(serverStatus, GetProperty(config, "onlineTextBinding"), value => serverStatus.OnlineText = value);
+        BindServerStatusText(serverStatus, GetProperty(config, "offlineTextBinding"), value => serverStatus.OfflineText = value);
+        BindServerStatusText(serverStatus, GetProperty(config, "timeoutTextBinding"), value => serverStatus.TimeoutText = value);
+    }
+
     private static void BindProgress(Kx.UI.Elements.ProgressBar progressBar, string? path) {
         if (string.IsNullOrWhiteSpace(path))
             return;
@@ -516,6 +620,36 @@ public static class ControlFactory {
         BindState(label, path, value => {
             if (UiStateValueConverter.TryGetColor(value, out var color))
                 label.Color.Value = color;
+        });
+    }
+
+    private static void BindServerStatusText(Kx.UI.Elements.ServerStatus serverStatus, string? path, Action<string> apply) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(serverStatus, path, value => {
+            if (UiStateValueConverter.TryGetText(value, out var text))
+                apply(text);
+        });
+    }
+
+    private static void BindServerStatusInt(Kx.UI.Elements.ServerStatus serverStatus, string? path, Action<int> apply) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(serverStatus, path, value => {
+            if (UiStateValueConverter.TryGetInt(value, out var numericValue))
+                apply(numericValue);
+        });
+    }
+
+    private static void BindServerStatusBool(Kx.UI.Elements.ServerStatus serverStatus, string? path, Action<bool> apply) {
+        if (string.IsNullOrWhiteSpace(path))
+            return;
+
+        BindState(serverStatus, path, value => {
+            if (UiStateValueConverter.TryGetBool(value, out var boolValue))
+                apply(boolValue);
         });
     }
 

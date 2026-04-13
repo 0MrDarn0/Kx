@@ -172,6 +172,69 @@ public sealed class ControlFactoryBindingTests {
     }
 
     [Fact]
+    public void WhenServerStatusBindingsChangeThenConfiguredPropertiesUpdate() {
+        var context = new TestVisualContext();
+        context.State.Set("updater.server.enabled", false);
+        context.State.Set("updater.server.displayName", "Login Server");
+        context.State.Set("updater.server.host", "127.0.0.1");
+        context.State.Set("updater.server.checkInterval", 20);
+        context.State.Set("updater.server.checkingText", "{0}: probing");
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "ServerStatus",
+            Id = "server_status",
+            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                ["monitoringEnabledBinding"] = "updater.server.enabled",
+                ["displayNameBinding"] = "updater.server.displayName",
+                ["hostBinding"] = "updater.server.host",
+                ["checkIntervalBinding"] = "updater.server.checkInterval",
+                ["checkingTextBinding"] = "updater.server.checkingText"
+            }
+        });
+
+        var serverStatus = Assert.IsType<Kx.UI.Elements.ServerStatus>(control);
+        Assert.False(serverStatus.MonitoringEnabled);
+        Assert.Equal("Login Server", serverStatus.DisplayName);
+        Assert.Equal("127.0.0.1", serverStatus.Host);
+        Assert.Equal(20, serverStatus.CheckIntervalSeconds);
+        Assert.Equal("{0}: probing", serverStatus.CheckingText);
+    }
+
+    [Fact]
+    public void WhenServerStatusVisualPropertiesAreConfiguredThenTheyAreApplied() {
+        var context = new TestVisualContext();
+        var registry = CreateControlRegistry();
+        var actions = new MarkupActionRegistry();
+
+        var control = ControlFactory.Create(registry, actions, context, new ControlConfig {
+            Type = "ServerStatus",
+            Id = "server_status",
+            Font = new FontConfig {
+                Name = "Segoe UI",
+                Size = 12,
+                Style = "Bold"
+            },
+            Properties = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+                ["monitoringEnabled"] = "false",
+                ["showIndicator"] = "false",
+                ["indicatorSpacing"] = "4",
+                ["onlineColor"] = "#00FF00",
+                ["timeoutIndicator"] = "!"
+            }
+        });
+
+        var serverStatus = Assert.IsType<Kx.UI.Elements.ServerStatus>(control);
+        Assert.False(serverStatus.MonitoringEnabled);
+        Assert.False(serverStatus.ShowIndicator);
+        Assert.Equal(4f, serverStatus.IndicatorSpacing);
+        Assert.Equal(SKColor.Parse("#00FF00"), serverStatus.OnlineColor);
+        Assert.Equal("!", serverStatus.TimeoutIndicator);
+        Assert.True(serverStatus.Bold);
+    }
+
+    [Fact]
     public void WhenVisualOffsetPropertiesAreConfiguredThenControlLayoutIsShifted() {
         var context = new TestVisualContext();
         var registry = CreateControlRegistry();
@@ -244,6 +307,7 @@ public sealed class ControlFactoryBindingTests {
         registry.Register("Label", (context, config) => new Kx.UI.Elements.Label(context, config.Id, config.Text ?? string.Empty, config.Font?.Size ?? 14f));
         registry.Register("Button", (context, config) => new Kx.UI.Elements.Button(context, config.Id, config.Text ?? string.Empty));
         registry.Register("ListBox", (context, config) => new Kx.UI.Elements.ListBox(context, config.Id));
+        registry.Register("ServerStatus", (context, config) => new Kx.UI.Elements.ServerStatus(context, config.Id));
         registry.Register("TextBox", (context, config) => new Kx.UI.Elements.TextBox(context, config.Id, config.Text ?? string.Empty));
         registry.Register("ProgressBar", (context, config) => new Kx.UI.Elements.ProgressBar(context, config.Id));
         registry.Register("Grid", (context, config) => new Grid(context, config.Id));

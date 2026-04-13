@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Core.DI;
 using Kx.Sdk.Events;
 using Kx.Sdk.WindowHost;
-using Kx.Core.DI;
 
 namespace Kx.App;
 
@@ -50,6 +50,7 @@ public sealed class RuntimeWindowCoordinator {
         }
 
         var window = (Window)_services.Create(windowType);
+        window.InitializeWindow();
         _windowHost.ShowWindow();
         return window;
     }

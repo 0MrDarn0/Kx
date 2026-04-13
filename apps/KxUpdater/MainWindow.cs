@@ -32,6 +32,16 @@ public sealed class MainWindow : Window {
     private static readonly UiStateKey<string> _changelogState = new("updater.changelog");
     private static readonly UiStateKey<string[]> _newsTitlesState = new("updater.news.items");
     private static readonly UiStateKey<int> _newsSelectedIndexState = new("updater.news.selectedIndex");
+    private static readonly UiStateKey<bool> _serverStatusEnabledState = new("updater.serverStatus.enabled");
+    private static readonly UiStateKey<string> _serverStatusDisplayNameState = new("updater.serverStatus.displayName");
+    private static readonly UiStateKey<string> _serverStatusHostState = new("updater.serverStatus.host");
+    private static readonly UiStateKey<int> _serverStatusPortState = new("updater.serverStatus.port");
+    private static readonly UiStateKey<int> _serverStatusCheckIntervalState = new("updater.serverStatus.checkIntervalSeconds");
+    private static readonly UiStateKey<int> _serverStatusConnectTimeoutState = new("updater.serverStatus.connectTimeoutMilliseconds");
+    private static readonly UiStateKey<string> _serverStatusCheckingTextState = new("updater.serverStatus.checkingText");
+    private static readonly UiStateKey<string> _serverStatusOnlineTextState = new("updater.serverStatus.onlineText");
+    private static readonly UiStateKey<string> _serverStatusOfflineTextState = new("updater.serverStatus.offlineText");
+    private static readonly UiStateKey<string> _serverStatusTimeoutTextState = new("updater.serverStatus.timeoutText");
     private static readonly UiStateKey<float> _progressState = new("updater.progress");
     private static readonly UiStateKey<bool> _progressVisibleState = new("updater.progressVisible");
     private static readonly UiStateKey<string> _startButtonTextState = new("updater.buttons.start");
@@ -51,6 +61,7 @@ public sealed class MainWindow : Window {
     public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IWindowFrameRegistry windowFrameRegistry, IWindowContentRegistry windowContentRegistry)
         : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, windowFrameRegistry, windowContentRegistry) {
         _appConfig = ConfigLoader.Load<AppConfig>(Paths.GetConfig("app.yaml"));
+        _appConfig.ServerStatus ??= new ServerStatusConfig();
         _launcher = new UpdaterLauncher(log, SetStatusText, _ctx.CloseWindow);
         _updaterWorkflow = new UpdaterWorkflow(
             _appConfig,
@@ -82,6 +93,7 @@ public sealed class MainWindow : Window {
         base.OnShown();
 
         _updaterWorkflow.RegisterEvents();
+
         if (_initialUpdateCheckStarted)
             return;
 
@@ -95,11 +107,23 @@ public sealed class MainWindow : Window {
     }
 
     private void InitializeUpdaterState() {
+        ServerStatusConfig serverStatus = _appConfig.ServerStatus ?? new ServerStatusConfig();
+
         StateStore.Set(_subtitleState, LanguageService.Translate(UpdaterLanguageKeys.App.Subtitle));
         StateStore.Set(_statusState, LanguageService.Translate(UpdaterLanguageKeys.Status.Waiting));
         StateStore.Set(_changelogState, LanguageService.Translate(UpdaterLanguageKeys.Info.ChangelogLoading));
         StateStore.Set(_newsTitlesState, []);
         StateStore.Set(_newsSelectedIndexState, -1);
+        StateStore.Set(_serverStatusEnabledState, serverStatus.Enabled);
+        StateStore.Set(_serverStatusDisplayNameState, serverStatus.DisplayName);
+        StateStore.Set(_serverStatusHostState, serverStatus.Host);
+        StateStore.Set(_serverStatusPortState, serverStatus.Port);
+        StateStore.Set(_serverStatusCheckIntervalState, serverStatus.CheckIntervalSeconds);
+        StateStore.Set(_serverStatusConnectTimeoutState, serverStatus.ConnectTimeoutMilliseconds);
+        StateStore.Set(_serverStatusCheckingTextState, LanguageService.Translate(UpdaterLanguageKeys.Info.ServerStatusChecking));
+        StateStore.Set(_serverStatusOnlineTextState, LanguageService.Translate(UpdaterLanguageKeys.Info.ServerStatusOnline));
+        StateStore.Set(_serverStatusOfflineTextState, LanguageService.Translate(UpdaterLanguageKeys.Info.ServerStatusOffline));
+        StateStore.Set(_serverStatusTimeoutTextState, LanguageService.Translate(UpdaterLanguageKeys.Info.ServerStatusTimeout));
         StateStore.Set(_progressState, 0f);
         StateStore.Set(_progressVisibleState, false);
         StateStore.Set(_startButtonTextState, LanguageService.Translate(UpdaterLanguageKeys.Button.Start));

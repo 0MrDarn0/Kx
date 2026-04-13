@@ -30,6 +30,7 @@ public abstract class Window : IDisposable {
     protected bool HasConfiguredContentControls { get; private set; }
     protected IUiStateStore StateStore => ((Kx.Sdk.UI.IVisualContext)_ctx).State;
 
+    private bool _isInitialized;
     private readonly IMarkupActionRegistry? _actionRegistry;
     private readonly IUiCommandRegistry? _commandRegistry;
     private readonly IUiStateStore? _stateStore;
@@ -68,12 +69,19 @@ public abstract class Window : IDisposable {
         InitializeInteraction();
         InitializeConfiguredControls();
         RegisterWindowEvents();
-        OnInitialize();
     }
 
     protected virtual string WindowContentDefinitionName => GetType().Name;
     protected virtual string WindowContentDefinitionPath => Paths.GetConfig("frame.yaml");
     protected virtual string? WindowIconResource => null;
+
+    internal void InitializeWindow() {
+        if (_isInitialized)
+            return;
+
+        _isInitialized = true;
+        OnInitialize();
+    }
 
     protected virtual void InitializeFrame() {
         _resolvedWindowContentDefinition = ResolveWindowContentDefinition();

@@ -17,5 +17,12 @@ launcher:
     url: http://www.idb-lab.de/
 ui:
   language: en
+serverStatus:
+  enabled: true
+  displayName: "Main Server"
+  host: "127.0.0.1"
+  port: 30001
+  checkIntervalSeconds: 15
+  connectTimeoutMilliseconds: 1500
 window:
   icon: Icons:app.ico

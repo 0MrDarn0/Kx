@@ -113,3 +113,8 @@
 - Start with unit tests: `dotnet test tests/Kx.Tests`.
 - Follow `.editorconfig` rules.
 - Keep the SDK/runtime separation intact.
+
+## Copilot Instructions
+
+### General Guidelines
+- When asked for a specific feature, stay focused on that exact task and do not switch to unrelated UI/layout tweaks.
