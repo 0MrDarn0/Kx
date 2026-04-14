@@ -1,8 +1,10 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using KUpdater.Abstractions.Events;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
 
 namespace KUpdater.Core.Pipeline.Steps;
 
@@ -12,11 +14,11 @@ public class SaveVersionStep(string rootDirectory) : IUpdateStep {
 
     public string Name => "SaveVersion";
 
-    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager) {
+    public async Task ExecuteAsync(UpdateContext ctx, IEventManager eventManager, CancellationToken ct = default) {
         File.WriteAllText(_localVersionFile, ctx.Metadata.Version);
 
         eventManager.NotifyAll(new StatusEvent(
-            Localization.Translate("status.update_applied")
+            LanguageService.Translate("status.update_applied")
         ));
 
         await Task.CompletedTask;

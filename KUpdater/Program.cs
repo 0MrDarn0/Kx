@@ -1,50 +1,28 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Diagnostics;
-using KUpdater.Interop;
+using KUpdater.Utility;
+using KUpdater.WindowHost.WinForms;
 
 namespace KUpdater;
 
 internal static class Program {
-    // Unique name for the mutex — use a GUID or app‑specific ID
-    private static readonly string AppMutexName = "Global\\{C0A76B5A-12AB-45C5-B9D9-D693FAA6E7B9}";
-    private static Mutex? Mutex;
-
     [STAThread]
     static void Main() {
 
-        Mutex = new Mutex(initiallyOwned: true, name: AppMutexName, createdNew: out bool createdNew);
-        if (!createdNew) {
-            BringExistingInstanceToFront();
+        const string appMutexName = "Global\\{C0A76B5A-12AB-45C5-B9D9-D693FAA6E7B9}";
+        using var instance = AppInstance.Acquire(appMutexName);
+        if (instance == null) {
+            AppInstance.BringExistingInstanceToFront(Process.GetCurrentProcess().ProcessName);
             return;
         }
 
-        ApplicationConfiguration.Initialize();
-        Application.Run(new MainForm());
-        GC.KeepAlive(Mutex);
-    }
+        var windowHost = new WinFormsWindowHost();
+        var runtime = new KRuntime(windowHost);
 
-    private static void BringExistingInstanceToFront() {
-        try {
-            Process current = Process.GetCurrentProcess();
-            foreach (var process in Process.GetProcessesByName(current.ProcessName)) {
-                if (process.Id != current.Id) {
-                    IntPtr hWnd = process.MainWindowHandle;
-                    if (hWnd != IntPtr.Zero) {
-                        // If minimized, restore first
-                        if (NativeMethods.IsIconic(hWnd)) {
-                            NativeMethods.ShowWindow(hWnd, NativeMethods.SW_RESTORE);
-                        }
+        windowHost.HandleCreated += (_, _) => runtime.Start();
 
-                        // Then bring to front
-                        NativeMethods.SetForegroundWindow(hWnd);
-                    }
-                    break;
-                }
-            }
-        }
-        catch {
-            // Ignore errors silently
-        }
+        Application.Run(windowHost);
     }
 }

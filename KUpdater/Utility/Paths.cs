@@ -1,36 +1,27 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 namespace KUpdater.Utility;
 
 public static class Paths {
-    // Basisverzeichnis der Anwendung (neben kUpdater.exe)
-    public static readonly string Base = AppContext.BaseDirectory;
+    static Paths() {
+        Directory.CreateDirectory(LogFolder);
+    }
 
-    // Hauptordner
-    public static readonly string AppFolder   = Path.Combine(Base, "kUpdater");
-    public static readonly string LuaFolder   = Path.Combine(AppFolder, "Lua");
-    public static readonly string ResFolder   = Path.Combine(AppFolder, "Resources");
+    public static readonly string BaseDirectory = AppContext.BaseDirectory;
+    public static string Combine(string path1, string path2) => Path.Combine(path1, path2);
 
-    // Unterordner von Lua
-    public static readonly string LuaThemes   = Path.Combine(LuaFolder, "themes");
-    public static readonly string LuaLang     = Path.Combine(LuaFolder, "languages");
+    public static readonly string BaseFolder  = Combine(BaseDirectory, "kUpdater");
+    public static readonly string CfgFolder   = Combine(BaseFolder, "Configs");
+    public static readonly string LangFolder  = Combine(BaseFolder, "Languages");
+    public static readonly string ResFolder   = Combine(BaseFolder, "Resources");
+    public static readonly string PluginFolder  = Combine(BaseFolder, "Plugins");
+    public static readonly string LogFolder   = Combine(BaseFolder, "Logs");
 
-    // Hilfsmethoden für Dateien
-    public static string LuaScript(string fileName)
-        => Path.Combine(LuaFolder, fileName);
-
-    public static string LuaTheme(string fileName)
-        => Path.Combine(LuaThemes, fileName);
-
-    public static string LuaLanguage(string langCode)
-        => Path.Combine(LuaLang, $"lang_{langCode}.lua");
-
-    public static string LuaDefaultLanguage
-        => Path.Combine(LuaLang, "lang_en.lua");
-
-    public static string Resource(string fileName)
-        => Path.Combine(ResFolder, fileName);
-
-    public static string BaseFolder(string fileName)
-        => Path.Combine(Base, fileName);
+    public static string GetConfig(string fileName) => Combine(CfgFolder, fileName);
+    public static string GetResource(string fileName) => Combine(ResFolder, fileName);
+    public static string GetLang(string langCode) => Combine(LangFolder, $"lang_{langCode}.yaml");
+    public static string GetPlugin(string fileName) => Combine(PluginFolder, fileName);
+    public static string GetLogFile(string fileName) => Combine(LogFolder, fileName);
+    public static string GetDailyLogFile() => Combine(LogFolder, $"log_{DateTime.Now:yyyy-MM-dd}.txt");
 }

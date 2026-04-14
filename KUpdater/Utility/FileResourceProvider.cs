@@ -1,37 +1,39 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Collections.Concurrent;
 using System.Drawing.Imaging;
-using KUpdater.Extensions;
+using KUpdater.Core.Extensions;
 using SkiaSharp;
 
 namespace KUpdater.Utility;
 
-public class FileResourceProvider : IResourceProvider {
-    private readonly string _baseDirectory;
+public class FileResourceProvider(string baseDirectory, int strongCacheCapacity = 16) : IResourceProvider {
+    private readonly string _baseDirectory = Path.GetFullPath(baseDirectory);
     private readonly ConcurrentDictionary<string, WeakReference<Bitmap>> _bitmapCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _strongCacheLock = new();
     private readonly LinkedList<string> _strongLru = new();
     private readonly Dictionary<string, Bitmap> _strongCache = [];
-    private readonly int _strongCacheCapacity;
-
-    public FileResourceProvider(string baseDirectory, int strongCacheCapacity = 16) {
-        _baseDirectory = Path.GetFullPath(baseDirectory);
-        _strongCacheCapacity = Math.Max(0, strongCacheCapacity);
-    }
+    private readonly int _strongCacheCapacity = Math.Max(0, strongCacheCapacity);
 
     private string ResolvePath(string id) {
         // Ids können absolut, relativ oder namespaced sein.
         if (Path.IsPathRooted(id))
             return id;
-        // einfache namespace-konvention: "theme:foo.png" -> baseDir/theme/foo.png
+
+        // einfache namespace-konvention: "theme:foo.png" oder "theme:sub:foo.png"
         if (id.Contains(':')) {
             var parts = id.Split([':'], 2);
             var ns = parts[0];
-            var tail = parts[1].Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+            // Ersetze zusätzlich ':' im Tail durch DirectorySeparatorChar, plus normale Slashes
+            var tail = parts[1]
+            .Replace(':', Path.DirectorySeparatorChar)
+            .Replace('/', Path.DirectorySeparatorChar)
+            .Replace('\\', Path.DirectorySeparatorChar);
             return Path.Combine(_baseDirectory, ns, tail);
         }
-        return Path.Combine(_baseDirectory, id.Replace('/', Path.DirectorySeparatorChar));
+
+        return Path.Combine(_baseDirectory, id.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar));
     }
 
     public Stream? OpenStream(string id) {

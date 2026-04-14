@@ -1,28 +1,34 @@
+###########################################################
 # EditorConfig für KUpdater
 # Konsistenter Code-Style über alle Projekte hinweg
-
+###########################################################
 root = true
 
+
+###########################################################
 # Allgemeine Einstellungen
+###########################################################
 [*]
 charset = utf-8
 end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+
+###########################################################
 # C# spezifisch
+###########################################################
 [*.cs]
 indent_style = space
 indent_size = 4
 
 # Datei-Header für alle C#-Dateien (einzeilig, VS unterstützt nur eine Zeile)
-file_header_template = Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+file_header_template = Copyright (c) 2026 Christian Schnuck\nLicensed under the GPL-3.0 (see LICENSE.txt)
+
 
 ###########################################################
-# Namenskonventionen
-###########################################################
-
 # Private Felder: _camelCase
+###########################################################
 dotnet_naming_rule.private_fields_with_underscore.severity = warning
 dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields
 dotnet_naming_rule.private_fields_with_underscore.style = prefix_underscore
@@ -33,7 +39,10 @@ dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.prefix_underscore.capitalization = camel_case
 dotnet_naming_style.prefix_underscore.required_prefix = _
 
+
+###########################################################
 # Properties: PascalCase
+###########################################################
 dotnet_naming_rule.properties_should_be_pascal_case.severity = warning
 dotnet_naming_rule.properties_should_be_pascal_case.symbols = properties
 dotnet_naming_rule.properties_should_be_pascal_case.style = pascal_case
@@ -43,7 +52,10 @@ dotnet_naming_symbols.properties.applicable_accessibilities = public, internal, 
 
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
+
+###########################################################
 # Konstanten: PascalCase
+###########################################################
 dotnet_naming_rule.constants_should_be_pascal_case.severity = warning
 dotnet_naming_rule.constants_should_be_pascal_case.symbols = constants
 dotnet_naming_rule.constants_should_be_pascal_case.style = pascal_case
@@ -54,18 +66,72 @@ dotnet_naming_symbols.constants.required_modifiers = const
 dotnet_naming_style.pascal_case.capitalization = pascal_case
 
 
-# Statische Felder: PascalCase (wie Properties)
+###########################################################
+# Private Felder (nicht statisch): _camelCase
+###########################################################
+dotnet_naming_rule.private_fields_with_underscore.severity = warning
+dotnet_naming_rule.private_fields_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_with_underscore.style = prefix_underscore
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers = 
+
+dotnet_naming_style.prefix_underscore.capitalization = camel_case
+dotnet_naming_style.prefix_underscore.required_prefix = _
+
+
+###########################################################
+# Private **statische** Felder: _camelCase
+###########################################################
+dotnet_naming_rule.private_static_fields_with_underscore.severity = warning
+dotnet_naming_rule.private_static_fields_with_underscore.symbols = private_static_fields
+dotnet_naming_rule.private_static_fields_with_underscore.style = prefix_underscore
+
+dotnet_naming_symbols.private_static_fields.applicable_kinds = field
+dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_static_fields.required_modifiers = static
+
+
+###########################################################
+# Öffentliche / interne statische Felder: PascalCase
+###########################################################
 dotnet_naming_rule.static_fields_should_be_pascal_case.severity = warning
 dotnet_naming_rule.static_fields_should_be_pascal_case.symbols = static_fields
 dotnet_naming_rule.static_fields_should_be_pascal_case.style = pascal_case
 
 dotnet_naming_symbols.static_fields.applicable_kinds = field
 dotnet_naming_symbols.static_fields.required_modifiers = static
+dotnet_naming_symbols.static_fields.applicable_accessibilities = public, internal, protected
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
 
 dotnet_analyzer_diagnostic.Microsoft.Interop.Analyzers.ShapeBreakingDiagnosticSuppressor.severity = none
 
-# Lua-Dateien (nur falls du sie im Repo hast)
+
+###########################################################
+# Lua-Dateien
+###########################################################
 [*.lua]
 indent_style = space
 indent_size = 2
 charset = utf-8
+
+
+###########################################################
+# yaml-Dateien
+###########################################################
+[*.yml]
+indent_style = space
+indent_size = 2
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.yaml]
+indent_style = space
+indent_size = 2
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true

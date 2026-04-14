@@ -1,0 +1,7 @@
+name: KPlugin
+version: 1.0.0
+apiVersion: 1.0.0
+entryType: KUpdater.Plugin.KPlugin
+description: "KPlugin plugin"
+author: "Christian Schnuck"
+dependencies: []

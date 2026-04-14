@@ -1,9 +1,12 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Reflection;
+using KUpdater.Abstractions.Events;
 using KUpdater.Core.Attributes;
 using KUpdater.Core.Event;
-using KUpdater.Scripting.Runtime;
+using KUpdater.Core.Localization;
+using KUpdater.Core.Update;
 
 namespace KUpdater.Core.Pipeline;
 
@@ -35,7 +38,7 @@ public class UpdaterPipelineRunner {
                     return (object)baseUrl;
                 if (p.ParameterType == typeof(string) && p.Name!.Contains("root", StringComparison.OrdinalIgnoreCase))
                     return (object)rootDir;
-                throw new InvalidOperationException($"Unbekanntes ctor-Argument {p.Name} in {stepInfo.Type.Name}");
+                throw new InvalidOperationException($"Unknown ctor argument {p.Name} in {stepInfo.Type.Name}");
             }).ToArray();
 
             var step = (IUpdateStep)Activator.CreateInstance(stepInfo.Type, args)!;
@@ -43,18 +46,18 @@ public class UpdaterPipelineRunner {
         }
     }
 
-    public async Task RunAsync(string rootDir) {
+    public async Task RunAsync(string rootDir, CancellationToken ct = default) {
         var ctx = new UpdateContext(rootDir);
 
         try {
-            await _pipeline.RunAsync(ctx, _eventManager);
+            await _pipeline.RunAsync(ctx, _eventManager, ct);
         }
         catch (OperationCanceledException) {
-            // Kein Update nötig → still ok
+            // Cancelled: treat as no update / user cancelled
         }
         catch (Exception ex) {
             _eventManager.NotifyAll(new StatusEvent(
-                Localization.Translate("status.update_failed", ex.Message)
+                LanguageService.Translate("status.update_failed", ex.Message)
             ));
         }
     }

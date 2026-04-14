@@ -1,4 +1,5 @@
-// Copyright (c) 2025 Christian Schnuck - Licensed under the GPL-3.0 (see LICENSE.txt)
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -32,7 +33,7 @@ class UpdateBuilder {
         }
 
         // Ask for PackageUrl
-        string packageUrl = "";
+        string packageUrl;
         while (true) {
             Console.WriteLine("Please enter the PackageUrl (must be a valid http/https URL):");
             packageUrl = Console.ReadLine()?.Trim() ?? "";
