@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      SOLUTION: KUpdater.sln
+      SOLUTION: Kx.sln
       CONFIGURATION: Release
       DOTNET_VERSION: "10.0.x"
       ARTIFACTS_PATH: artifacts
