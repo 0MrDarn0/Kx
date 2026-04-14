@@ -61,3 +61,7 @@ secrets.json
 # Benutzer-spezifische Publish-Profile ausschließen
 *.pubxml.user
 *.pubxml
+
+
+# testing
+.codetesting/

@@ -1,5 +1,5 @@
 ###########################################################
-# EditorConfig für KUpdater
+# EditorConfig für KxUpdater
 # Konsistenter Code-Style über alle Projekte hinweg
 ###########################################################
 root = true
@@ -24,6 +24,15 @@ indent_size = 4
 
 # Datei-Header für alle C#-Dateien (einzeilig, VS unterstützt nur eine Zeile)
 file_header_template = Copyright (c) 2026 Christian Schnuck\nLicensed under the GPL-3.0 (see LICENSE.txt)
+
+
+# Usings: System first, separate Gruppen
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# Platzierung der using‑Direktiven (optional)
+csharp_using_directive_placement = outside_namespace
+
 
 
 ###########################################################
@@ -110,9 +119,14 @@ dotnet_naming_style.pascal_case.capitalization = pascal_case
 dotnet_analyzer_diagnostic.Microsoft.Interop.Analyzers.ShapeBreakingDiagnosticSuppressor.severity = none
 
 
+# IDE0130: Der Namespace entspricht stimmt nicht der Ordnerstruktur.
+dotnet_diagnostic.IDE0130.severity = silent
+
+
 ###########################################################
 # Lua-Dateien
 ###########################################################
+
 [*.lua]
 indent_style = space
 indent_size = 2

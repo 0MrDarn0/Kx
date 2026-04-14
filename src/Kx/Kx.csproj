@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformVersion>10.0.19041.0</TargetPlatformVersion>
+		<SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<LangVersion>latest</LangVersion>
+		<LanguageKeySourceFile>$(MSBuildProjectDirectory)\Assets\Languages\lang_en.yaml</LanguageKeySourceFile>
+		<LanguageKeyGeneratedFile>$(MSBuildProjectDirectory)\obj\$(Configuration)\Generated\KxLanguageKeys.g.cs</LanguageKeyGeneratedFile>
+		<LanguageKeysNamespace>Kx.Core.Localization</LanguageKeysNamespace>
+		<LanguageKeysClassName>KxLanguageKeys</LanguageKeysClassName>
+		<LanguageKeysVisibility>public</LanguageKeysVisibility>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="UI\VisualTree\**" />
+	  <Compile Remove="UI\Window\**" />
+	  <EmbeddedResource Remove="UI\VisualTree\**" />
+	  <EmbeddedResource Remove="UI\Window\**" />
+	  <None Remove="UI\VisualTree\**" />
+	  <None Remove="UI\Window\**" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.1.26104.118" />
+		<PackageReference Include="SkiaSharp" Version="3.119.2" />
+		<PackageReference Include="SkiaSharp.Views.WindowsForms" Version="3.119.2" />
+		<PackageReference Include="YamlDotNet" Version="16.3.0" />
+
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Assets\Languages\*.yaml" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <ProjectReference Include="..\Kx.Sdk\Kx.Sdk.csproj" />
+	</ItemGroup>
+
+	<Import Project="..\..\build\LanguageKeyGeneration.targets" />
+</Project>

@@ -1,0 +1,21 @@
+frame:
+  style: Default
+  default:
+    title: "KxUpdater"
+    backgroundColor: "#1E1F22"
+    titleBarColor: "#25262B"
+    borderColor: "#3A3D46"
+    separatorColor: "#3A3D46"
+    titleColor: "#F5F5F5"
+    closeButtonColor: "#2D2F36"
+    closeButtonForegroundColor: "#F5F5F5"
+    borderThickness: 1
+    cornerRadius: 10
+    titleBarHeight: 36
+    titlePadding: 14
+    titleFontSize: 14
+    contentPadding: 10
+    closeButtonSize: 24
+    closeButtonMargin: 6
+
+controls: []

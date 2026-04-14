@@ -1,0 +1,91 @@
+frame:
+  style: Default
+  default:
+    title: Example Plugin Window
+    backgroundColor: "#1B1D22"
+    titleBarColor: "#262A33"
+    borderColor: "#4C7FFF"
+    separatorColor: "#394052"
+    titleColor: "#FFD166"
+controls:
+  - type: StackPanel
+    id: example_panel
+    layer: Content
+    padding:
+      left: 12
+      top: 12
+      right: 12
+      bottom: 12
+    bounds:
+      x: 24
+      y: 24
+      width: 220
+      height: 360
+    properties:
+      orientation: Vertical
+      spacing: "8"
+    orientationBinding: example.panelOrientation
+    spacingBinding: example.panelSpacing
+    children:
+      - type: Label
+        id: example_title
+        text: Plugin Window
+        textBinding: example.title|trim|upper|prefix:[BOUND] 
+        color: "#F5F5F5"
+        colorBinding: example.titleColor
+        fontSizeBinding: example.titleFontSize
+        font:
+          name: Segoe UI
+          size: 16
+          style: Bold
+      - type: ExampleBadge
+        id: example_badge
+        text: Plugin Content
+        properties:
+          textState: example.badgeText
+      - type: Button
+        id: example_toggle_button
+        text: Toggle Badge
+        fontSizeBinding: example.buttonFontSize
+        onClick: example.toggleVisibility:id:example_badge
+      - type: Button
+        id: example_hide_button
+        text: Hide Badge
+        onClick: hide:id:example_badge
+      - type: Button
+        id: example_show_button
+        text: Show Badge
+        onClick: show:id:example_badge
+      - type: Button
+        id: example_set_text_button
+        text: Rename Title
+        onClick: setText:id:example_title|Updated by markup
+      - type: Button
+        id: example_set_color_button
+        text: Highlight Title
+        onClick: setColor:{"targetId":"id:example_title","color":"#FFD166"}
+      - type: Button
+        id: example_disable_toggle_button
+        text: Disable Toggle
+        onClick: disable:{"targetId":"id:example_toggle_button","enabled":false}
+      - type: Button
+        id: example_enable_toggle_button
+        text: Enable Toggle
+        onClick: enable:id:example_toggle_button
+      - type: Button
+        id: example_focus_toggle_button
+        text: Focus Toggle
+        onClick: focus:id:example_toggle_button
+      - type: Button
+        id: example_command_button
+        text: Rename via Command
+        onClick: runCommand:example.renameBadge|{"targetId":"example_badge","text":"Updated by command"}
+      - type: Button
+        id: example_open_window_button
+        text: Open Alternate
+        onClick: openWindow:Example.Alternate
+      - type: Label
+        id: example_hidden_hint
+        text: Shown when merge hint is hidden
+        color: "#D9D9D9"
+        visibleBinding: example.mergeHintVisible|not

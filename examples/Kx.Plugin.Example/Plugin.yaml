@@ -1,0 +1,7 @@
+name: Example
+version: 1.0.0
+apiVersion: 1.0.0
+entryType: Kx.Plugin.Example
+description: "Example plugin"
+author: "Christian Schnuck"
+dependencies: []

@@ -1,0 +1,283 @@
+controls:
+  - type: Grid
+    id: updater_layout
+    layer: Content
+    padding:
+      left: 24
+      top: 14
+      right: 24
+      bottom: 18
+    rows:
+      - height:
+          value: 28
+          unit: Pixel
+      - height:
+          value: 1
+          unit: Star
+      - height:
+          value: 10
+          unit: Pixel
+      - height:
+          value: 30
+          unit: Pixel
+    columns:
+      - width:
+          value: 1
+          unit: Star
+    children:
+      - type: Label
+        id: updater_subtitle
+        textBinding: updater.subtitle
+        color: "#F5F5F5"
+        font:
+          name: "Malgun Gothic"
+          size: 13
+          style: "Bold"
+        gridRow: 0
+        gridColumn: 0
+      - type: Grid
+        id: updater_body
+        gridRow: 1
+        gridColumn: 0
+        columns:
+          - width:
+              value: 1.42
+              unit: Star
+          - width:
+              value: 12
+              unit: Pixel
+          - width:
+              value: 0.44
+              unit: Star
+        rows:
+          - height:
+              value: 1
+              unit: Star
+        children:
+          - type: Grid
+            id: updater_left_column
+            gridRow: 0
+            gridColumn: 0
+            rows:
+              - height:
+                  value: 0.52
+                  unit: Star
+              - height:
+                  value: 10
+                  unit: Pixel
+              - height:
+                  value: 0.20
+                  unit: Star
+            columns:
+              - width:
+                  value: 1
+                  unit: Star
+            children:
+              - type: GridSplitter
+                id: updater_changelog_splitter
+                gridRow: 1
+                gridColumn: 0
+                color: "#5F5238"
+                margin:
+                  left: 8
+                  top: 0
+                  right: 0
+                  bottom: 0
+                properties:
+                  orientation: "Horizontal"
+                  hoverColor: "#766647"
+                  activeColor: "#9A8456"
+                  gripColor: "#C9BA95"
+                  minSize: "120"
+              - type: TextBox
+                id: updater_changelog
+                textBinding: updater.changelog
+                color: "#F5F5F5"
+                font:
+                  name: "Segoe UI"
+                  size: 12
+                  style: "Regular"
+                gridRow: 2
+                gridColumn: 0
+                margin:
+                  left: 8
+                  top: 0
+                  right: 0
+                  bottom: 0
+                properties:
+                  backgroundColor: "#101010"
+                  borderColor: "#7C6E4B"
+                  borderThickness: "3"
+                  glowEnabled: "true"
+                  glowColor: "#FFFFFF"
+                  glowRadius: "6"
+                  multiline: "true"
+                  readOnly: "true"
+                  scrollBarColor: "#7C6E4B"
+          - type: GridSplitter
+            id: updater_body_splitter
+            gridRow: 0
+            gridColumn: 1
+            color: "#5F5238"
+            properties:
+              hoverColor: "#766647"
+              activeColor: "#9A8456"
+              gripColor: "#C9BA95"
+              minSize: "180"
+          - type: Grid
+            id: updater_news_column
+            gridRow: 0
+            gridColumn: 2
+            rows:
+              - height:
+                  value: 1
+                  unit: Star
+            columns:
+              - width:
+                  value: 1
+                  unit: Star
+            children:
+              - type: ListBox
+                id: updater_news_list
+                gridRow: 0
+                gridColumn: 0
+                margin:
+                  left: 0
+                  top: 0
+                  right: 8
+                  bottom: 0
+                color: "#F5F5F5"
+                font:
+                  name: "Segoe UI"
+                  size: 12
+                  style: "Regular"
+                properties:
+                  itemsBinding: updater.news.items
+                  selectedIndexBinding: updater.news.selectedIndex
+                  backgroundColor: "#101010"
+                  borderColor: "#7C6E4B"
+                  borderThickness: "3"
+                  scrollBarColor: "#7C6E4B"
+                  glowEnabled: "true"
+                  glowColor: "#FFFFFF"
+                  glowRadius: "6"
+                  selectedItemColor: "#6F613F"
+                  selectedItemBorderColor: "#E8D9B4"
+                  hoveredItemColor: "#2F2A1D"
+                  separatorColor: "#5C5238"
+      - type: Label
+        id: updater_status
+        textBinding: updater.status
+        color: "#F5F5F5"
+        margin:
+          left: 6
+          top: 12
+          right: 0
+          bottom: 0
+        font:
+          name: "Segoe UI"
+          size: 12
+          style: "Italic"
+        gridRow: 3
+        gridColumn: 0
+      - type: Grid
+        id: updater_footer
+        gridRow: 3
+        gridColumn: 0
+        margin:
+          left: 2
+          top: -4
+          right: 8
+          bottom: 10
+        columns:
+          - width:
+              value: 180
+              unit: Pixel
+          - width:
+              value: 10
+              unit: Pixel
+          - width:
+              value: 1
+              unit: Star
+          - width:
+              value: 18
+              unit: Pixel
+          - width:
+              value: 97
+              unit: Pixel
+          - width:
+              value: 8
+              unit: Pixel
+          - width:
+              value: 97
+              unit: Pixel
+          - width:
+              value: 8
+              unit: Pixel
+          - width:
+              value: 97
+              unit: Pixel
+        rows:
+          - height:
+              value: 1
+              unit: Star
+        children:
+          - type: Button
+            id: updater_website_button
+            textBinding: updater.buttons.website
+            color: "#E8D9B4"
+            onClick: runCommand:kxUpdater.openWebsite
+            gridRow: 0
+            gridColumn: 4
+            margin:
+              left: -4
+              top: 0
+              right: 4
+              bottom: 0
+            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            font:
+              name: "Segoe UI"
+              size: 11
+              style: "Regular"
+          - type: Button
+            id: updater_settings_button
+            textBinding: updater.buttons.settings
+            enabledBinding: updater.buttons.settingsEnabled
+            color: "#E8D9B4"
+            onClick: openWindow:Settings
+            gridRow: 0
+            gridColumn: 6
+            margin:
+              left: -4
+              top: 0
+              right: 4
+              bottom: 0
+            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            font:
+              name: "Segoe UI"
+              size: 11
+              style: "Regular"
+          - type: Button
+            id: updater_start_button
+            textBinding: updater.buttons.start
+            enabledBinding: updater.buttons.primaryEnabled
+            color: "#E8D9B4"
+            onClick: runCommand:kxUpdater.primaryAction
+            gridRow: 0
+            gridColumn: 8
+            margin:
+              left: -4
+              top: 0
+              right: 4
+              bottom: 0
+            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            font:
+              name: "Segoe UI"
+              size: 11
+              style: "Regular"

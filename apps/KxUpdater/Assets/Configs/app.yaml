@@ -1,0 +1,28 @@
+updater:
+  url: https://update.idb-lab.de/
+launcher:
+  start:
+    fileName: "engine.exe"
+    arguments: "/load /config debug"
+    workingDirectory: ""
+    resolveFromAppDirectory: true
+    closeUpdaterOnSuccess: true
+  settings:
+    fileName: "engine.exe"
+    arguments: "/setup"
+    workingDirectory: ""
+    resolveFromAppDirectory: true
+    closeUpdaterOnSuccess: false
+  website:
+    url: http://www.idb-lab.de/
+ui:
+  language: en
+serverStatus:
+  enabled: true
+  displayName: "Main Server"
+  host: "127.0.0.1"
+  port: 30001
+  checkIntervalSeconds: 15
+  connectTimeoutMilliseconds: 1500
+window:
+  icon: Icons:app.ico

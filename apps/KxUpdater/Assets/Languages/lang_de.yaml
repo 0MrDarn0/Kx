@@ -1,0 +1,54 @@
+app:
+  title: "KxUpdater"
+  subtitle: "칼온라인"
+
+button:
+  start: "Starten"
+  update: "Update"
+  exit: "X"
+  settings: "Einstellungen"
+  website: "Webseite"
+
+status:
+  waiting: "Prüfe Version..."
+  client_not_configured: "Spielstart ist noch nicht konfiguriert."
+  client_file_missing: "Spielclient-Datei wurde nicht gefunden: {0}"
+  client_launch_started: "Starte Spielclient..."
+  client_launch_failed: "Spielclient konnte nicht gestartet werden: {0}"
+  settings_not_configured: "Settings-Befehl ist noch nicht konfiguriert."
+  settings_file_missing: "Settings-Datei wurde nicht gefunden: {0}"
+  settings_launch_started: "Öffne Client-Einstellungen..."
+  settings_launch_failed: "Einstellungen konnten nicht geöffnet werden: {0}"
+  website_not_configured: "Webseiten-Link ist noch nicht konfiguriert."
+  website_opening: "Öffne Webseite..."
+  website_open_failed: "Webseite konnte nicht geöffnet werden: {0}"
+  up_to_date: "(v{0})."
+  update_required: "Update erforderlich: {0} → {1}"
+  applying_update: "Wende Update an..."
+  update_applied: "Update erfolgreich angewendet."
+  update_failed: "Update fehlgeschlagen: {0}"
+  downloading_pkg: "Lade Updatepaket..."
+  extracting_files: "Entpacke Dateien..."
+  update_complete: "Update abgeschlossen!"
+  selfupdate_started: "Selbst-Update gestartet"
+  selfupdate_failed: "Selbst-Update fehlgeschlagen!"
+
+info:
+  current_version: "Derzeitige Version: {0}"
+  latest_version: "Letzte Version: {0}"
+  changelog_loading: "Lade Changelog..."
+  news_latest: "Neueste Meldung"
+  server_status_checking: "{0}: prüfe..."
+  server_status_online: "{0}: online"
+  server_status_offline: "{0}: offline"
+  server_status_timeout: "{0}: Zeitüberschreitung"
+  overlay_hotkeys: "Debug-Overlays: Strg+Umschalt+D wechselt Presets, Strg+Umschalt+0 schaltet Overlays aus, Strg+Umschalt+1 zeigt Layout, Strg+Umschalt+2 zeigt Hierarchie, Strg+Umschalt+3 zeigt Inspect-Modus."
+
+error:
+  network: "Netzwerkfehler. Bitte überprüfe deine Verbindung."
+  file_missing: "Benötigte Datei wurde nicht gefunden."
+  unauthorized: "Du bist nicht berechtigt, diese Aktion auszuführen."
+  hash_mismatch: "Hash stimmt nicht überein für {0}"
+  invalid_url: "Ungültige URL."
+  process_no_handle: "Prozess lieferte kein Handle zurück."
+

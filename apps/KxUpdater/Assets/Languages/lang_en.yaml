@@ -1,0 +1,54 @@
+app:
+  title: "KxUpdater"
+  subtitle: "칼온라인"
+
+button:
+  start: "Start"
+  update: "Update"
+  exit: "X"
+  settings: "Settings"
+  website: "Website"
+
+status:
+  waiting: "Checking version..."
+  client_not_configured: "Game start is not configured yet."
+  client_file_missing: "Game client file not found: {0}"
+  client_launch_started: "Starting game client..."
+  client_launch_failed: "Could not start game client: {0}"
+  settings_not_configured: "Settings command is not configured yet."
+  settings_file_missing: "Settings executable not found: {0}"
+  settings_launch_started: "Opening client settings..."
+  settings_launch_failed: "Could not open settings: {0}"
+  website_not_configured: "Website link is not configured yet."
+  website_opening: "Opening website..."
+  website_open_failed: "Could not open website: {0}"
+  up_to_date: "(v{0})."
+  update_required: "Update required: {0} → {1}"
+  applying_update: "Applying update..."
+  update_applied: "Update successfully applied."
+  update_failed: "Update failed: {0}"
+  downloading_pkg: "Downloading update package..."
+  extracting_files: "Extracting files..."
+  update_complete: "Update complete!"
+  selfupdate_started: "Self-Update started"
+  selfupdate_failed: "Self-Update failed!"
+
+info:
+  current_version: "Current Version: {0}"
+  latest_version: "Latest Version: {0}"
+  changelog_loading: "Loading changelog..."
+  news_latest: "Latest News"
+  server_status_checking: "{0}: checking..."
+  server_status_online: "{0}: online"
+  server_status_offline: "{0}: offline"
+  server_status_timeout: "{0}: timeout"
+  overlay_hotkeys: "Debug overlays: Ctrl+Shift+D cycles presets, Ctrl+Shift+0 turns overlays off, Ctrl+Shift+1 shows layout, Ctrl+Shift+2 shows hierarchy, Ctrl+Shift+3 shows inspect mode."
+
+error:
+  network: "Network error. Please check your connection."
+  file_missing: "Required file not found."
+  unauthorized: "You are not authorized to perform this action."
+  hash_mismatch: "Hash mismatch for {0}"
+  invalid_url: "Invalid URL."
+  process_no_handle: "Process returned no handle."
+

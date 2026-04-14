@@ -1,0 +1,104 @@
+<!--
+  PluginCopy.targets — generic plugin build + deploy for Kx app projects.
+
+  Usage in an app .csproj:
+
+    <ItemGroup>
+      <PluginProject Include="Plugins\KalTheme\KalTheme.csproj" />
+    </ItemGroup>
+    <Import Project="..\..\build\PluginCopy.targets" />
+
+  Convention (derived automatically from the .csproj filename):
+    Plugin DLL    →  <AppOut>\Plugins\<PluginName>\<PluginName>.dll
+    Plugin assets →  <AppOut>\<PluginName>\**\*
+    Plugin.yaml   →  <AppOut>\Plugins\<PluginName>\Plugin.yaml
+-->
+<Project>
+
+  <!-- Build all declared plugins before the app output is assembled. -->
+  <Target Name="BuildPlugins" Condition="'@(PluginProject)' != ''">
+    <MSBuild Projects="@(PluginProject)"
+             Targets="Restore;Build"
+             Properties="Configuration=$(Configuration);Platform=$(Platform)"
+             RemoveProperties="TargetFramework;TargetPlatformIdentifier;TargetPlatformVersion;TargetPlatformMinVersion;SupportedOSPlatformVersion;RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot;UseWindowsForms"
+             BuildInParallel="false" />
+  </Target>
+
+  <!-- After Build: copy each plugin to the build output directory. -->
+  <Target Name="CopyPluginsToBuildOutput"
+          AfterTargets="Build"
+          DependsOnTargets="BuildPlugins"
+          Condition="'@(PluginProject)' != ''">
+    <!--
+      Batching: %(PluginProject.FullPath) causes this MSBuild call to run
+      once per PluginProject item, forwarding per-plugin properties to the
+      shared _DeployPlugin helper target.
+    -->
+    <MSBuild Projects="$(MSBuildThisFileFullPath)"
+             Targets="_DeployPlugin"
+             Properties="PluginProjectFile=%(PluginProject.FullPath);PluginName=%(PluginProject.Filename);DeployTargetDir=$([System.IO.Path]::GetFullPath('$(TargetDir)'));AppAssemblyName=$(AssemblyName);Configuration=$(Configuration);TargetFramework=$(TargetFramework);Platform=$(Platform);CleanSharedDeps=false"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot" />
+  </Target>
+
+  <!-- After Publish: copy each plugin to the publish output directory. -->
+  <Target Name="CopyPluginsToPublishOutput"
+          AfterTargets="Publish"
+          DependsOnTargets="BuildPlugins"
+          Condition="'@(PluginProject)' != ''">
+    <MSBuild Projects="$(MSBuildThisFileFullPath)"
+             Targets="_DeployPlugin"
+             Properties="PluginProjectFile=%(PluginProject.FullPath);PluginName=%(PluginProject.Filename);DeployTargetDir=$([System.IO.Path]::GetFullPath('$(PublishDir)'));AppAssemblyName=$(AssemblyName);Configuration=$(Configuration);TargetFramework=$(TargetFramework);Platform=$(Platform);CleanSharedDeps=true"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishDir;PublishSingleFile;PublishReadyToRun;PublishTrimmed;PublishAot" />
+  </Target>
+
+  <!--
+    Internal helper — deploys one plugin.
+    Never call directly; invoked via batching in the targets above.
+  -->
+  <Target Name="_DeployPlugin">
+    <PropertyGroup>
+      <_PluginDir>$([System.IO.Path]::GetDirectoryName('$(PluginProjectFile)'))\</_PluginDir>
+      <_PlatformSeg Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU' and '$(Platform)' != 'Any CPU'">$(Platform)\</_PlatformSeg>
+      <_RuntimeSeg Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)\</_RuntimeSeg>
+      <_PluginOutDir>$(_PluginDir)bin\$(_PlatformSeg)$(Configuration)\$(TargetFramework)\$(_RuntimeSeg)</_PluginOutDir>
+      <_PluginTargetDir>$(DeployTargetDir)$(AppAssemblyName)\Plugins\$(PluginName)\</_PluginTargetDir>
+      <_AssetTargetDir>$(DeployTargetDir)$(AppAssemblyName)\</_AssetTargetDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_PluginCoreFiles Include="$(_PluginOutDir)$(PluginName).dll" />
+      <_PluginCoreFiles Include="$(_PluginOutDir)$(PluginName).pdb" Condition="Exists('$(_PluginOutDir)$(PluginName).pdb')" />
+      <_PluginCoreFiles Include="$(_PluginOutDir)Plugin.yaml" />
+      <_PluginAssets   Include="$(_PluginOutDir)$(PluginName)\**\*" />
+    </ItemGroup>
+
+    <MakeDir Directories="$(_PluginTargetDir)" />
+
+    <Copy SourceFiles="@(_PluginCoreFiles)"
+          DestinationFiles="@(_PluginCoreFiles->'$(_PluginTargetDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <Copy SourceFiles="@(_PluginAssets)"
+          DestinationFiles="@(_PluginAssets->'$(_AssetTargetDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+
+    <!-- On publish: remove shared assemblies duplicated into the plugin folder. -->
+    <ItemGroup Condition="'$(CleanSharedDeps)' == 'true'">
+      <_SharedDeps Include="$(_PluginTargetDir)$(PluginName).deps.json" />
+      <_SharedDeps Include="$(_PluginTargetDir)Kx.Sdk.dll" />
+      <_SharedDeps Include="$(_PluginTargetDir)Kx.Sdk.pdb" />
+      <_SharedDeps Include="$(_PluginTargetDir)Kx.Sdk.xml" />
+    </ItemGroup>
+    <Delete Files="@(_SharedDeps)" Condition="'$(CleanSharedDeps)' == 'true'" />
+  </Target>
+  <!-- Remove .pdb symbols from single-file publish output. -->
+  <Target Name="RemoveSingleFilePublishSymbols"
+          AfterTargets="Publish"
+          Condition="'$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <_PublishedSymbols Include="$(PublishDir)*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_PublishedSymbols)" />
+  </Target>
+
+</Project>
