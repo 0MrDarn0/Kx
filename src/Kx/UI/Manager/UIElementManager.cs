@@ -21,10 +21,10 @@ public class UIElementManager : IUIElementManager {
     public IEnumerable<IVisual> Elements => _elements;
     public IEnumerable<IVisual> Roots => _roots;
     public IVisual? HoveredElement => _hoveredElement;
-
-    public float DpiScale { get; private set; } = 1f;
     public IVisual? FocusedElement { get; private set; }
     public IVisual? ModalElement { get; private set; }
+    public float DpiScale { get; private set; } = 1f;
+
 
     public void Add(IVisual el) {
         if (el == null)
