@@ -5,6 +5,7 @@ namespace Kx.App;
 
 internal static class GlobalExceptionHandler {
     private static bool _registered;
+    private static Func<Task>? _shutdownHandler;
 
     public static void Register() {
         if (_registered)
@@ -16,16 +17,29 @@ internal static class GlobalExceptionHandler {
         _registered = true;
     }
 
+    public static void Unregister() {
+        if (!_registered)
+            return;
+        Application.ThreadException -= OnThreadException;
+        AppDomain.CurrentDomain.UnhandledException -= OnUnhandledException;
+        _registered = false;
+    }
+
+    public static void RegisterShutdownHandler(Func<Task> shutdownHandler) {
+        ArgumentNullException.ThrowIfNull(shutdownHandler);
+        _shutdownHandler = shutdownHandler;
+    }
+
     private static void OnThreadException(object? sender, ThreadExceptionEventArgs e) {
-        HandleException("UI Thread Exception", e.Exception);
+        HandleExceptionAsync("UI Thread Exception", e.Exception).GetAwaiter().GetResult();
     }
 
     private static void OnUnhandledException(object? sender, UnhandledExceptionEventArgs e) {
         if (e.ExceptionObject is Exception exception)
-            HandleException("Unhandled Exception", exception);
+            HandleExceptionAsync("Unhandled Exception", exception).GetAwaiter().GetResult();
     }
 
-    private static void HandleException(string source, Exception exception) {
+    private static async Task HandleExceptionAsync(string source, Exception exception) {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(exception);
 
@@ -42,6 +56,17 @@ internal static class GlobalExceptionHandler {
             Console.Error.WriteLine(message);
         }
 
-        Environment.Exit(1);
+        if (_shutdownHandler is not null) {
+            try {
+                await _shutdownHandler().ConfigureAwait(false);
+            }
+            catch {
+                // Ensure fallback if shutdown handler fails
+                Environment.Exit(1);
+            }
+        }
+        else {
+            Environment.Exit(1);
+        }
     }
 }

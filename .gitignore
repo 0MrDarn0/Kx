@@ -65,3 +65,5 @@ secrets.json
 
 # testing
 .codetesting/
+
+TestResults/

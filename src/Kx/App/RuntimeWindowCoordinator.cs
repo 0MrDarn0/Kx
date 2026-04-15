@@ -3,6 +3,7 @@
 
 using Kx.Core.DI;
 using Kx.Sdk.Events;
+using Kx.Sdk.Logging;
 using Kx.Sdk.WindowHost;
 
 namespace Kx.App;
@@ -59,6 +60,18 @@ public sealed class RuntimeWindowCoordinator {
         if (_shutdownAsync is null)
             return;
 
-        await _shutdownAsync().ConfigureAwait(false);
+        try {
+            await _shutdownAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            // Logge Fehler, verhindere Absturz
+            try {
+                var logger = _services.Get<ILoggingService>();
+                logger?.Error("Error during host closed shutdown callback.", ex);
+            }
+            catch {
+                // swallow logging errors
+            }
+        }
     }
 }
