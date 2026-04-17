@@ -5,7 +5,7 @@ using Kx.Sdk.WindowHost;
 
 namespace Kx.Sdk.UI.Binding;
 
-public sealed class Property<T>(IUiDispatcher ui, T initialValue = default!, Action? onChanged = null) {
+public sealed class Property<T>(IUiDispatcher ui, T initialValue = default!, Action? onChanged = null) : IProperty<T> {
     private readonly IUiDispatcher _ui = ui ?? throw new ArgumentNullException(nameof(ui));
     private readonly Action? _onChanged = onChanged;
     private T _value = initialValue!;
