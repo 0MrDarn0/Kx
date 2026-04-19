@@ -1,3 +1,8 @@
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
+using System.Reflection;
+
 using Kx.App;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Actions;
@@ -5,8 +10,6 @@ using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.Themes;
 using Kx.Sdk.WindowHost;
 using Kx.Tests.TestInfrastructure;
-
-using System.Reflection;
 
 namespace Kx.Tests;
 
@@ -112,9 +115,6 @@ public sealed class WindowFallbackTests {
         }
 
         public void RequestRender() {
-        }
-
-        public void Resize(int width, int height) {
         }
 
         public void TogglePerfOverlay() {
