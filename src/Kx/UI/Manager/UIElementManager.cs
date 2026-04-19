@@ -27,6 +27,7 @@ public class UIElementManager : IUIElementManager, IDisposable {
 
     private IVisual? _hoveredElement;
     private IVisual? _capturedElement;
+    private bool _disposed;
 
     private readonly Comparison<IVisual> _sortComparison = (a, b) => {
         int layer = a.Layer.CompareTo(b.Layer);
@@ -511,22 +512,41 @@ public class UIElementManager : IUIElementManager, IDisposable {
     // ---------------------------------------------------------------------
 
     /// <summary>
-    /// Disposes all managed visuals and releases internal resources.
+    /// Disposes manager and releases internal resources.
     /// </summary>
     public void Dispose() {
-        _lock.EnterWriteLock();
-        try {
-            foreach (var el in _elements)
-                el.Dispose();
-
-            _elements.Clear();
-            _roots.Clear();
-        }
-        finally {
-            _lock.ExitWriteLock();
-            _lock.Dispose();
-        }
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
+
+    /// <summary>
+    /// Protected dispose implementation for derived types.
+    /// </summary>
+    /// <param name="disposing">True when called from Dispose(), false from finalizer.</param>
+    protected virtual void Dispose(bool disposing) {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        if (disposing) {
+            _lock.EnterWriteLock();
+            try {
+                foreach (var el in _elements)
+                    el.Dispose();
+
+                _elements.Clear();
+                _roots.Clear();
+            }
+            finally {
+                _lock.ExitWriteLock();
+                _lock.Dispose();
+            }
+        }
+
+        // No unmanaged resources here; if added later, free them when disposing==false
+    }
+
 
     // ---------------------------------------------------------------------
     // Helpers

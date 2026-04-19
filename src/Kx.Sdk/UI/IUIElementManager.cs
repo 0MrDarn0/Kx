@@ -7,7 +7,11 @@ using Kx.Sdk.UI.VisualTree;
 
 namespace Kx.Sdk.UI;
 
-public interface IUIElementManager {
+
+/// <summary>
+/// Manager interface for UI elements. Exposes input and lifecycle operations.
+/// </summary>
+public interface IUIElementManager : IDisposable {
     IVisual? HoveredElement { get; }
     bool MouseMove(Point location);
     bool MouseDown(Point location);
@@ -18,5 +22,4 @@ public interface IUIElementManager {
     void SetFocus(IVisual element);
     void ClearFocus();
     bool TryGet(string id, out IVisual? visual);
-    void Dispose();
 }
