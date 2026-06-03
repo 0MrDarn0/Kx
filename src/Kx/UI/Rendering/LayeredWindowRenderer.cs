@@ -59,7 +59,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     private const int FrameHistory = 60;
 
     private bool _showDebugRasterOverlay;
-    private bool _showPerfOverlay = true;
+    private bool _showPerfOverlay = false;
     private bool _showContentRectDebug;
 
     public long LastRenderDurationMs { get; private set; }
@@ -463,8 +463,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                             _oldMemDcObj = prev;
                         else if (prev == IntPtr.Zero)
                             Debug.WriteLine("SelectObject returned null when selecting new DIB into persistent DC.");
-                    }
-                    else {
+                    } else {
                         Debug.WriteLine("TrySelectHbitmap failed when selecting new DIB into persistent DC.");
                     }
                 }
@@ -962,8 +961,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                     if (localMemDcHandle is not null) {
                         try { localMemDcHandle.Dispose(); }
                         catch { }
-                    }
-                    else {
+                    } else {
                         try { NativeMethods.DeleteDC(rawMemDc); }
                         catch { }
                     }
@@ -1072,8 +1070,7 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                     Color = f.FillColor
                 };
                 canvas.DrawRect(rect, paint);
-            }
-            else {
+            } else {
                 canvas.DrawBitmap(f.FillBitmap, rect);
             }
         }

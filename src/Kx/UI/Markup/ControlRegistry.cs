@@ -9,6 +9,7 @@ namespace Kx.UI.Markup;
 
 public sealed class ControlRegistry : IControlRegistry {
     private readonly Dictionary<string, ControlBuilder> _factories = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, IReadOnlyList<ControlPropertyDescriptor>> _properties = new(StringComparer.OrdinalIgnoreCase);
 
     public void Register(string type, ControlBuilder factory) {
         ArgumentException.ThrowIfNullOrWhiteSpace(type);
@@ -30,5 +31,20 @@ public sealed class ControlRegistry : IControlRegistry {
 
         control = factory(context, config);
         return control is not null;
+    }
+
+    public void RegisterProperties(string type, IEnumerable<ControlPropertyDescriptor> properties) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(type);
+        ArgumentNullException.ThrowIfNull(properties);
+
+        _properties[type] = properties.ToArray();
+    }
+
+    public IReadOnlyList<ControlPropertyDescriptor> GetProperties(string type) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(type);
+
+        return _properties.TryGetValue(type, out var properties)
+            ? properties
+            : [];
     }
 }

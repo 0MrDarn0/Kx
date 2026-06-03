@@ -27,4 +27,18 @@ public interface IControlRegistry {
     /// <param name="control">The created control, when successful.</param>
     /// <returns><see langword="true"/> when a matching control factory was found.</returns>
     bool TryCreate(IVisualContext context, ControlConfig config, out UIElement? control);
+
+    /// <summary>
+    /// Registers editable property descriptors for a control type.
+    /// </summary>
+    /// <param name="type">The unique markup type name.</param>
+    /// <param name="properties">The property descriptors exposed for tooling.</param>
+    void RegisterProperties(string type, IEnumerable<ControlPropertyDescriptor> properties);
+
+    /// <summary>
+    /// Returns editable property descriptors for a control type.
+    /// </summary>
+    /// <param name="type">The unique markup type name.</param>
+    /// <returns>The registered property descriptors or an empty list when none are registered.</returns>
+    IReadOnlyList<ControlPropertyDescriptor> GetProperties(string type);
 }
