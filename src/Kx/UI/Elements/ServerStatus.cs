@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Net.Sockets;
 
 using Kx.App;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -359,7 +360,11 @@ public sealed class ServerStatus : UIElement {
         DesiredSize = new System.Drawing.Size((int)(220 * dpi), (int)(24 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         if (!Visible || _font is null || _iconFont is null)
             return;
 
@@ -371,7 +376,7 @@ public sealed class ServerStatus : UIElement {
             if (_currentBitmap is not null) {
                 float imageSize = Math.Min(contentRect.Height, 16f * DpiScale);
                 float imageTop = centerY - (imageSize / 2f);
-                canvas.DrawBitmap(_currentBitmap, new SKRect(x, imageTop, x + imageSize, imageTop + imageSize));
+                skCanvas.DrawBitmap(_currentBitmap, new SKRect(x, imageTop, x + imageSize, imageTop + imageSize));
                 x += imageSize + IndicatorSpacing;
             }
             else if (!string.IsNullOrWhiteSpace(_currentIndicator)) {
@@ -381,7 +386,7 @@ public sealed class ServerStatus : UIElement {
                 };
 
                 float baseline = centerY - ((_iconFont.Metrics.Ascent + _iconFont.Metrics.Descent) / 2f);
-                canvas.DrawText(_currentIndicator, x, baseline, _iconFont, indicatorPaint);
+                skCanvas.DrawText(_currentIndicator, x, baseline, _iconFont, indicatorPaint);
 
                 _iconFont.MeasureText(_currentIndicator, out SKRect indicatorBounds);
                 x += indicatorBounds.Width + IndicatorSpacing;
@@ -393,7 +398,7 @@ public sealed class ServerStatus : UIElement {
 
         _textPaint.Color = _currentColor;
         float textBaseline = centerY - ((_font.Metrics.Ascent + _font.Metrics.Descent) / 2f);
-        canvas.DrawText(_currentText, x, textBaseline, _font, _textPaint);
+        skCanvas.DrawText(_currentText, x, textBaseline, _font, _textPaint);
     }
 
     protected override void Dispose(bool disposing) {

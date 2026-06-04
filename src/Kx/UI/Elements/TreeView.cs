@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using System.Drawing;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using SkiaSharp;
@@ -68,13 +69,17 @@ public sealed class TreeView : UIElement {
         DesiredSize = new Size((int)(240 * dpi), (int)(260 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         if (_font is null || !Visible)
             return;
 
         var rect = LayoutRect;
         var content = ContentRect;
-        canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _bgPaint);
+        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _bgPaint);
 
         int itemHeight = GetItemHeight();
         int y = content.Top;
@@ -84,7 +89,7 @@ public sealed class TreeView : UIElement {
             var itemRect = new Rectangle(content.Left, y, content.Width, itemHeight);
 
             if (i == _selectedIndex)
-                canvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _selectedPaint);
+                skCanvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _selectedPaint);
 
             // expand/collapse icon
             float iconX = itemRect.Left + level * 12 + 4;
@@ -105,12 +110,12 @@ public sealed class TreeView : UIElement {
                     path.LineTo(iconX + 8, iconY + 4);
                     path.Close();
                 }
-                canvas.DrawPath(path, paint);
+                skCanvas.DrawPath(path, paint);
             }
 
             float textX = itemRect.Left + level * 12 + 16;
             float baseline = itemRect.Top - _font.Metrics.Ascent + 2;
-            canvas.DrawText(node.Name, textX, baseline, _font, _textPaint);
+            skCanvas.DrawText(node.Name, textX, baseline, _font, _textPaint);
 
             y += itemHeight;
         }

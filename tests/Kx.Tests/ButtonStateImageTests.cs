@@ -2,6 +2,7 @@ using System.Drawing;
 
 using Kx.Core.Event;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.State;
@@ -21,7 +22,7 @@ public sealed class ButtonStateImageTests {
         button.SetStateImages(CreateSolidBitmap(SKColors.Red), CreateSolidBitmap(SKColors.Green), CreateSolidBitmap(SKColors.Blue));
 
         using var surface = CreateSurface(out var canvas, out var bitmap);
-        button.Draw(canvas);
+        button.Draw(new SkiaTestCanvas(canvas));
 
         Assert.Equal(SKColors.Red, bitmap.GetPixel(20, 20));
     }
@@ -33,7 +34,7 @@ public sealed class ButtonStateImageTests {
         button.OnMouseMove(new Point(20, 20));
 
         using var surface = CreateSurface(out var canvas, out var bitmap);
-        button.Draw(canvas);
+        button.Draw(new SkiaTestCanvas(canvas));
 
         Assert.Equal(SKColors.Green, bitmap.GetPixel(20, 20));
     }
@@ -46,7 +47,7 @@ public sealed class ButtonStateImageTests {
         button.OnMouseDown(new Point(20, 20));
 
         using var surface = CreateSurface(out var canvas, out var bitmap);
-        button.Draw(canvas);
+        button.Draw(new SkiaTestCanvas(canvas));
 
         Assert.Equal(SKColors.Blue, bitmap.GetPixel(20, 20));
     }
@@ -62,7 +63,7 @@ public sealed class ButtonStateImageTests {
         context.UIElementManager.MouseMove(new Point(80, 80));
 
         using var surface = CreateSurface(out var canvas, out var bitmap);
-        button.Draw(canvas);
+        button.Draw(new SkiaTestCanvas(canvas));
 
         Assert.Equal(SKColors.Red, bitmap.GetPixel(20, 20));
     }
@@ -80,7 +81,7 @@ public sealed class ButtonStateImageTests {
         context.UIElementManager.MouseUp(new Point(80, 80));
 
         using var surface = CreateSurface(out var canvas, out var bitmap);
-        button.Draw(canvas);
+        button.Draw(new SkiaTestCanvas(canvas));
 
         Assert.Equal(SKColors.Red, bitmap.GetPixel(20, 20));
     }
@@ -150,6 +151,20 @@ public sealed class ButtonStateImageTests {
         public void Invoke(Action action) {
             ArgumentNullException.ThrowIfNull(action);
             action();
+        }
+    }
+
+    private sealed class SkiaTestCanvas(SKCanvas canvas) : IKxCanvas {
+        private readonly SKCanvas _canvas = canvas;
+
+        public bool TryGetBackend<TBackend>(out TBackend? backend) where TBackend : class {
+            if (_canvas is TBackend typedCanvas) {
+                backend = typedCanvas;
+                return true;
+            }
+
+            backend = null;
+            return false;
         }
     }
 }

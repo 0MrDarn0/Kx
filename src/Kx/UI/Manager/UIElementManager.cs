@@ -3,6 +3,7 @@
 
 using Kx.Core.Extensions;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.VisualTree;
@@ -266,9 +267,9 @@ public class UIElementManager : IUIElementManager, IDisposable {
     }
 
     /// <summary>
-    /// Renders all visible visuals to the given canvas.
+    /// Renders all visible visuals to the given canvas abstraction.
     /// </summary>
-    public void Render(SKCanvas canvas) {
+    public void Render(IKxCanvas canvas) {
         foreach (var el in _elements)
             if (el.Visible)
                 el.Draw(canvas);

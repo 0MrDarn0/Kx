@@ -3,6 +3,7 @@
 
 using System.Drawing;
 
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.UI.Layout;
@@ -74,7 +75,11 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         return wasDragging || _isHovered;
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         var rect = new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
         if (rect.IsEmpty)
             return;
@@ -98,7 +103,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             IsAntialias = true
         };
 
-        canvas.DrawRoundRect(trackRect, 2f * DpiScale, 2f * DpiScale, trackPaint);
+        skCanvas.DrawRoundRect(trackRect, 2f * DpiScale, 2f * DpiScale, trackPaint);
 
         const float gripThickness = 2f;
         const float gripLength = 18f;
@@ -109,7 +114,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             float centerY = trackRect.MidY;
             for (int offset = -1; offset <= 1; offset++) {
                 float y = centerY + offset * gripSpacing;
-                DrawGrip(canvas, gripPaint, new SKRect(centerX - gripThickness / 2f, y - gripLength / 2f, centerX + gripThickness / 2f, y + gripLength / 2f), gripThickness);
+                DrawGrip(skCanvas, gripPaint, new SKRect(centerX - gripThickness / 2f, y - gripLength / 2f, centerX + gripThickness / 2f, y + gripLength / 2f), gripThickness);
             }
 
             return;
@@ -119,7 +124,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         float horizontalCenterY = trackRect.MidY;
         for (int offset = -1; offset <= 1; offset++) {
             float x = horizontalCenterX + offset * gripSpacing;
-            DrawGrip(canvas, gripPaint, new SKRect(x - gripLength / 2f, horizontalCenterY - gripThickness / 2f, x + gripLength / 2f, horizontalCenterY + gripThickness / 2f), gripThickness);
+            DrawGrip(skCanvas, gripPaint, new SKRect(x - gripLength / 2f, horizontalCenterY - gripThickness / 2f, x + gripLength / 2f, horizontalCenterY + gripThickness / 2f), gripThickness);
         }
     }
 

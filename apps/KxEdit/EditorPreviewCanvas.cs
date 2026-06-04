@@ -5,6 +5,7 @@ using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.Layout;
 using Kx.Sdk.UI.Markup;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Themes;
 using Kx.UI.Platform;
 
@@ -66,9 +67,13 @@ internal sealed class EditorPreviewCanvas : UIElement {
         DesiredSize = new Size((int)(980 * dpi), (int)(760 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         var rect = LayoutRect;
-        canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _canvasPaint);
+        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _canvasPaint);
 
         if (_document is null)
             return;
@@ -79,22 +84,22 @@ internal sealed class EditorPreviewCanvas : UIElement {
         _titleBarPaint.Color = ParseColor(_document.FrameDefault.TitleBarColor, new SKColor(40, 46, 54));
         _borderPaint.Color = ParseColor(_document.FrameDefault.BorderColor, new SKColor(88, 98, 114));
 
-        canvas.DrawRoundRect(_windowRect, 18, 18, _windowPaint);
-        canvas.DrawRoundRect(_windowRect, 18, 18, _borderPaint);
+        skCanvas.DrawRoundRect(_windowRect, 18, 18, _windowPaint);
+        skCanvas.DrawRoundRect(_windowRect, 18, 18, _borderPaint);
 
         float titleHeight = GetTitleBarHeight();
         var titleRect = new SKRect(_windowRect.Left, _windowRect.Top, _windowRect.Right, _windowRect.Top + titleHeight);
-        canvas.DrawRoundRect(titleRect, 18, 18, _titleBarPaint);
-        canvas.DrawText(_document.FrameDefault.Title ?? "Preview", _windowRect.Left + 18, _windowRect.Top + 24, SKTextAlign.Left, _titleFont, _textPaint);
+        skCanvas.DrawRoundRect(titleRect, 18, 18, _titleBarPaint);
+        skCanvas.DrawText(_document.FrameDefault.Title ?? "Preview", _windowRect.Left + 18, _windowRect.Top + 24, SKTextAlign.Left, _titleFont, _textPaint);
 
-        DrawCloseButton(canvas, _document.Frame, _windowRect, _previewScale);
+        DrawCloseButton(skCanvas, _document.Frame, _windowRect, _previewScale);
 
 
         _hits.Clear();
         _hits.Add(new PreviewHit(null, _windowRect, SKRect.Empty));
-        DrawControls(canvas, _document.Controls.Where(control => IsFrameLayer(control.Layer)), _windowRect.Left, _windowRect.Top, 0);
-        DrawControls(canvas, _document.Controls.Where(control => IsContentLayer(control.Layer)), _contentRect.Left, _contentRect.Top, 0);
-        DrawControls(canvas, _document.Controls.Where(control => IsOverlayLayer(control.Layer)), _windowRect.Left, _windowRect.Top, 0);
+        DrawControls(skCanvas, _document.Controls.Where(control => IsFrameLayer(control.Layer)), _windowRect.Left, _windowRect.Top, 0);
+        DrawControls(skCanvas, _document.Controls.Where(control => IsContentLayer(control.Layer)), _contentRect.Left, _contentRect.Top, 0);
+        DrawControls(skCanvas, _document.Controls.Where(control => IsOverlayLayer(control.Layer)), _windowRect.Left, _windowRect.Top, 0);
     }
 
     public override bool OnMouseDown(Point p) {

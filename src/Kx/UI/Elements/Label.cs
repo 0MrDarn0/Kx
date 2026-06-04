@@ -1,10 +1,11 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Core.Extensions;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Binding;
 using Kx.Sdk.UI.Elements;
-using Kx.Core.Extensions;
 
 using SkiaSharp;
 
@@ -40,13 +41,17 @@ public class Label : UIElement {
             .AddPadding(Padding, dpi);
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         using var paint = new SKPaint {
             Color = Color.Value,
             IsAntialias = true
         };
 
-        canvas.DrawText(
+        skCanvas.DrawText(
             Text.Value,
             ContentRect.X,
             ContentRect.Y - Font.Value.Metrics.Ascent,

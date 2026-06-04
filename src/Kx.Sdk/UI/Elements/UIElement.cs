@@ -6,8 +6,7 @@ using System.Drawing;
 using Kx.Sdk.UI.Binding;
 using Kx.Sdk.UI.Layout;
 using Kx.Sdk.UI.VisualTree;
-
-using SkiaSharp;
+using Kx.Sdk.Rendering;
 
 namespace Kx.Sdk.UI.Elements;
 
@@ -129,14 +128,14 @@ public abstract class UIElement : Visual, IDockable {
         _bounds.Value = finalRect;
     }
 
-    public override void Draw(SKCanvas canvas) {
+    public override void Draw(IKxCanvas canvas) {
         if (!Visible)
             return;
 
         OnDraw(canvas);
     }
 
-    protected abstract void OnDraw(SKCanvas canvas);
+    protected abstract void OnDraw(IKxCanvas canvas);
 
 
     private static Size AddMargin(Size size, Thickness margin, float dpi) {

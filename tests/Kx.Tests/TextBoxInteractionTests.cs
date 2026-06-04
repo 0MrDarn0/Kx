@@ -3,6 +3,7 @@ using System.Text;
 
 using Kx.Core.Event;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.State;
@@ -88,7 +89,7 @@ public sealed class TextBoxInteractionTests {
         using var surface = SKSurface.Create(new SKImageInfo(100, 80), bitmap.GetPixels(), bitmap.RowBytes);
         var canvas = surface.Canvas;
         canvas.Clear(SKColors.Transparent);
-        textBox.Draw(canvas);
+        textBox.Draw(new SkiaTestCanvas(canvas));
         canvas.Flush();
     }
 
@@ -147,6 +148,20 @@ public sealed class TextBoxInteractionTests {
         public void Invoke(Action action) {
             ArgumentNullException.ThrowIfNull(action);
             action();
+        }
+    }
+
+    private sealed class SkiaTestCanvas(SKCanvas canvas) : IKxCanvas {
+        private readonly SKCanvas _canvas = canvas;
+
+        public bool TryGetBackend<TBackend>(out TBackend? backend) where TBackend : class {
+            if (_canvas is TBackend typedCanvas) {
+                backend = typedCanvas;
+                return true;
+            }
+
+            backend = null;
+            return false;
         }
     }
 }

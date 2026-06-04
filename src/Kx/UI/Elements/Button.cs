@@ -3,6 +3,7 @@
 
 using Kx.Core.Extensions;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -289,7 +290,11 @@ public class Button : UIElement {
     }
 
     // UIElement verlangt protected abstract OnDraw(SKCanvas)
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         if (!Visible)
             return;
 
@@ -302,7 +307,7 @@ public class Button : UIElement {
                 : _normalImage;
 
         if (stateImage is not null) {
-            canvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
+            skCanvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
             _textPaint.Color = IsEnabled
                 ? ForegroundColor
                 : DisabledForegroundColor;
@@ -325,8 +330,8 @@ public class Button : UIElement {
 
             var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);
 
-            canvas.DrawRect(skRect, _bgPaint);
-            canvas.DrawRect(skRect, _borderPaint);
+            skCanvas.DrawRect(skRect, _bgPaint);
+            skCanvas.DrawRect(skRect, _borderPaint);
         }
 
         var text = Text ?? string.Empty;
@@ -337,7 +342,7 @@ public class Button : UIElement {
         float x = r.Left + (r.Width - textBounds.Width) / 2f - textBounds.Left;
         float y = r.Top + (r.Height - textBounds.Height) / 2f - textBounds.Top;
 
-        canvas.DrawText(text, x, y, _font, _textPaint);
+        skCanvas.DrawText(text, x, y, _font, _textPaint);
     }
 
     // Input Handling

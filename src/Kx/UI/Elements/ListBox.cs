@@ -3,6 +3,7 @@
 
 using System.Drawing;
 
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -274,32 +275,36 @@ public sealed class ListBox : UIElement {
         DesiredSize = new Size((int)(240 * dpi), (int)(260 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         if (_font is null || !Visible)
             return;
 
         Rectangle rect = LayoutRect;
         Rectangle contentRect = ContentRect;
 
-        canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
+        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
 
         if (GlowEnabled && BorderThickness > 0f) {
             using var glowImageFilter = SKImageFilter.CreateBlur(GlowRadius, GlowRadius);
             _glowPaint.ImageFilter = glowImageFilter;
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _glowPaint);
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _glowPaint);
             _glowPaint.ImageFilter = null;
         }
 
         if (BorderThickness > 0f)
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
 
         int itemHeight = GetItemHeight();
         int availableListWidth = Math.Max(16, contentRect.Width - ScrollBarWidth - 4);
         int visibleItemCount = Math.Max(1, contentRect.Height / Math.Max(1, itemHeight));
         _firstVisibleIndex = Math.Clamp(_firstVisibleIndex, 0, Math.Max(0, _items.Count - visibleItemCount));
 
-        canvas.Save();
-        canvas.ClipRect(new SKRect(contentRect.Left, contentRect.Top, contentRect.Right - ScrollBarWidth, contentRect.Bottom));
+        skCanvas.Save();
+        skCanvas.ClipRect(new SKRect(contentRect.Left, contentRect.Top, contentRect.Right - ScrollBarWidth, contentRect.Bottom));
 
         for (int slot = 0; slot < visibleItemCount; slot++) {
             int itemIndex = _firstVisibleIndex + slot;
@@ -308,25 +313,25 @@ public sealed class ListBox : UIElement {
 
             var itemRect = new Rectangle(contentRect.Left, contentRect.Top + slot * itemHeight, availableListWidth, itemHeight - ItemGap);
             if (itemIndex == _selectedIndex) {
-                canvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _selectedItemPaint);
-                canvas.DrawRect(itemRect.Left + 0.5f, itemRect.Top + 0.5f, itemRect.Width - 1f, itemRect.Height - 1f, _selectedItemBorderPaint);
+                skCanvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _selectedItemPaint);
+                skCanvas.DrawRect(itemRect.Left + 0.5f, itemRect.Top + 0.5f, itemRect.Width - 1f, itemRect.Height - 1f, _selectedItemBorderPaint);
             }
             else if (itemIndex == _hoveredIndex)
-                canvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _hoveredItemPaint);
+                skCanvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _hoveredItemPaint);
 
             string itemText = TruncateText(_items[itemIndex], Math.Max(20f, itemRect.Width - ItemPadding * 2f));
             float baseline = itemRect.Top + ItemPadding - _font.Metrics.Ascent;
-            canvas.DrawText(itemText, itemRect.Left + ItemPadding, baseline, _font, _textPaint);
+            skCanvas.DrawText(itemText, itemRect.Left + ItemPadding, baseline, _font, _textPaint);
 
             if (slot < visibleItemCount - 1 && itemIndex < _items.Count - 1) {
                 float separatorY = itemRect.Bottom + (ItemGap / 2f);
-                canvas.DrawLine(itemRect.Left + ItemPadding, separatorY, itemRect.Right - ItemPadding, separatorY, _separatorPaint);
+                skCanvas.DrawLine(itemRect.Left + ItemPadding, separatorY, itemRect.Right - ItemPadding, separatorY, _separatorPaint);
             }
         }
 
-        canvas.Restore();
+        skCanvas.Restore();
 
-        DrawScrollBar(canvas, contentRect, itemHeight, visibleItemCount);
+        DrawScrollBar(skCanvas, contentRect, itemHeight, visibleItemCount);
     }
 
     public override bool OnMouseDown(Point point) {

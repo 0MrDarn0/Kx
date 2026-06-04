@@ -4,6 +4,7 @@
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.VisualTree;
+using Kx.Sdk.Rendering;
 
 using SkiaSharp;
 
@@ -30,13 +31,13 @@ public abstract class Panel(IVisualContext ctx, string id) : UIElement(ctx, id),
         return removed;
     }
 
-    public override void Draw(SKCanvas canvas) {
+    public override void Draw(IKxCanvas canvas) {
         base.Draw(canvas);
         foreach (var child in Children)
             if (child.Visible)
                 child.Draw(canvas);
     }
 
-    protected override void OnDraw(SKCanvas canvas) { }
+    protected override void OnDraw(IKxCanvas canvas) { }
 
 }

@@ -3,6 +3,7 @@
 
 using System.Drawing;
 
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -77,18 +78,22 @@ public sealed class ProgressBar : UIElement {
         DesiredSize = new Size((int)(240 * dpi), (int)(8 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         if (!Visible)
             return;
 
         Rectangle rect = LayoutRect;
-        canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
+        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
 
         if (Progress > 0f)
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width * Progress, rect.Height, _fillPaint);
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width * Progress, rect.Height, _fillPaint);
 
         if (BorderThickness > 0f)
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
     }
 
     protected override void Dispose(bool disposing) {

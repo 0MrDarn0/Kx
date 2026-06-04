@@ -4,6 +4,7 @@
 using System.Drawing;
 
 using Kx.Sdk.Plugin;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
@@ -131,7 +132,11 @@ public sealed class Example : IPlugin {
             DesiredSize = new Size((int)(160 * dpi), (int)(40 * dpi));
         }
 
-        protected override void OnDraw(SKCanvas canvas) {
+        protected override void OnDraw(IKxCanvas canvas) {
+            var skCanvas = canvas.As<SKCanvas>();
+            if (skCanvas is null)
+                return;
+
             using var backgroundPaint = new SKPaint {
                 IsAntialias = true,
                 Color = new SKColor(72, 114, 255)
@@ -145,13 +150,13 @@ public sealed class Example : IPlugin {
             using var font = new SKFont(SKTypeface.Default, 14 * DpiScale);
 
             var rect = new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
-            canvas.DrawRoundRect(rect, 8 * DpiScale, 8 * DpiScale, backgroundPaint);
+            skCanvas.DrawRoundRect(rect, 8 * DpiScale, 8 * DpiScale, backgroundPaint);
 
             font.MeasureText(_text, out var textBounds);
             float x = rect.MidX - textBounds.MidX;
             float y = rect.MidY - textBounds.MidY;
 
-            canvas.DrawText(_text, x, y, font, textPaint);
+            skCanvas.DrawText(_text, x, y, font, textPaint);
         }
     }
 }

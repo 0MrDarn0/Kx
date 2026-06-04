@@ -980,12 +980,13 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     // ============================================================
     private void Draw(SKCanvas canvas, Size size) {
         RecordFrameTimestamp();
+        var renderCanvas = new SkiaCanvas(canvas);
 
         DrawWindowFrame(canvas, size);
 
         try {
             _ctx.UIElementManager.LayoutAll(_ctx.Frame!.GetContentRect(size), new SKRect(0, 0, size.Width, size.Height));
-            _ctx.UIElementManager.Render(canvas);
+            _ctx.UIElementManager.Render(renderCanvas);
         }
         catch (Exception ex) {
             Debug.WriteLine($"UI render error: {ex}");
