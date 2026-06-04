@@ -153,6 +153,65 @@ public class Button : UIElement {
 
     public event Action? Click;
 
+    /// <summary>
+    /// Assigns the foreground color and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithForeground(SKColor color) {
+        ForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the disabled foreground color and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithDisabledForeground(SKColor color) {
+        DisabledForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns border color and thickness and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithBorder(SKColor color, float thickness) {
+        BorderColor = color;
+        BorderThickness = thickness;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns button background colors for all interaction states and returns the same button.
+    /// </summary>
+    /// <param name="normal">The default background color.</param>
+    /// <param name="hover">The hover background color.</param>
+    /// <param name="pressed">The pressed background color.</param>
+    /// <param name="disabled">The disabled background color.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithButtonStates(SKColor normal, SKColor hover, SKColor pressed, SKColor disabled) {
+        BackgroundColor = normal;
+        HoverBackgroundColor = hover;
+        PressedBackgroundColor = pressed;
+        DisabledBackgroundColor = disabled;
+        return this;
+    }
+
+    /// <summary>
+    /// Attaches a click handler and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="onClick">The callback invoked for click events.</param>
+    /// <returns>The same button instance.</returns>
+    public Button OnClick(Action onClick) {
+        ArgumentNullException.ThrowIfNull(onClick);
+        Click += onClick;
+        return this;
+    }
+
     private bool _isPressed;
     private bool _isHovered;
 
@@ -210,6 +269,7 @@ public class Button : UIElement {
         UpdateFont();
 
         var text = Text ?? string.Empty;
+        _font ??= new SKFont(SKTypeface.Default, _scaledFontSize);
         _font.MeasureText(text, out SKRect textBounds);
 
         var padH = (int)Math.Ceiling((Padding.Left + Padding.Right) * dpi);

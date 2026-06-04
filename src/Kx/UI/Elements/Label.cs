@@ -21,6 +21,16 @@ public class Label : UIElement {
         Color = new Property<SKColor>(ctx.UiThread, SKColors.White, Invalidate);
     }
 
+    /// <summary>
+    /// Assigns the foreground color and returns the same label for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same label instance.</returns>
+    public Label WithForeground(SKColor color) {
+        Color.Value = color;
+        return this;
+    }
+
     public override void Measure(float dpi) {
         var width = Font.Value.MeasureText(Text.Value);
         var height = Font.Value.Metrics.Descent - Font.Value.Metrics.Ascent;

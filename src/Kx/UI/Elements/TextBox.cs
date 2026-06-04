@@ -221,6 +221,38 @@ public sealed class TextBox : UIElement {
         }
     }
 
+    /// <summary>
+    /// Assigns the foreground color and returns the same text box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same text box instance.</returns>
+    public TextBox WithForeground(SKColor color) {
+        ForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the background color and returns the same text box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same text box instance.</returns>
+    public TextBox WithBackground(SKColor color) {
+        BackgroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns border color and thickness and returns the same text box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same text box instance.</returns>
+    public TextBox WithBorder(SKColor color, float thickness) {
+        BorderColor = color;
+        BorderThickness = thickness;
+        return this;
+    }
+
     public override void OnDpiChanged(float scale) {
         base.OnDpiChanged(scale);
         UpdateFont();

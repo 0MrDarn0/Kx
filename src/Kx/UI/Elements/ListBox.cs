@@ -182,6 +182,38 @@ public sealed class ListBox : UIElement {
     public float GlowRadius { get; set; } = 6f;
 
     /// <summary>
+    /// Assigns the foreground color and returns the same list box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same list box instance.</returns>
+    public ListBox WithForeground(SKColor color) {
+        ForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the background color and returns the same list box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same list box instance.</returns>
+    public ListBox WithBackground(SKColor color) {
+        BackgroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns border color and thickness and returns the same list box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same list box instance.</returns>
+    public ListBox WithBorder(SKColor color, float thickness) {
+        BorderColor = color;
+        BorderThickness = thickness;
+        return this;
+    }
+
+    /// <summary>
     /// Replaces the current list items.
     /// </summary>
     public void SetItems(IEnumerable<string>? items) {

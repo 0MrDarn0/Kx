@@ -36,6 +36,80 @@ public abstract class UIElement : Visual, IDockable {
         Parent = parent;
     }
 
+    /// <summary>
+    /// Assigns the target grid row and column for this element.
+    /// </summary>
+    /// <param name="row">The zero-based grid row index.</param>
+    /// <param name="column">The zero-based grid column index.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement InGrid(int row, int column) {
+        GridRow = row;
+        GridColumn = column;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the target grid row, column, and spans for this element.
+    /// </summary>
+    /// <param name="row">The zero-based grid row index.</param>
+    /// <param name="column">The zero-based grid column index.</param>
+    /// <param name="rowSpan">The number of rows to span.</param>
+    /// <param name="columnSpan">The number of columns to span.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement InGrid(int row, int column, int rowSpan, int columnSpan) {
+        GridRow = row;
+        GridColumn = column;
+        GridRowSpan = Math.Max(1, rowSpan);
+        GridColumnSpan = Math.Max(1, columnSpan);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the margin using individual edge values.
+    /// </summary>
+    /// <param name="left">The left margin.</param>
+    /// <param name="top">The top margin.</param>
+    /// <param name="right">The right margin.</param>
+    /// <param name="bottom">The bottom margin.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithMargin(int left, int top, int right, int bottom) {
+        Margin = new Thickness(left, top, right, bottom);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the margin using a uniform value.
+    /// </summary>
+    /// <param name="all">The uniform margin value.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithMargin(int all) {
+        Margin = new Thickness(all);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the padding using individual edge values.
+    /// </summary>
+    /// <param name="left">The left padding.</param>
+    /// <param name="top">The top padding.</param>
+    /// <param name="right">The right padding.</param>
+    /// <param name="bottom">The bottom padding.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithPadding(int left, int top, int right, int bottom) {
+        Padding = new Thickness(left, top, right, bottom);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the padding using a uniform value.
+    /// </summary>
+    /// <param name="all">The uniform padding value.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithPadding(int all) {
+        Padding = new Thickness(all);
+        return this;
+    }
+
     public override void Measure(float dpi) {
         if (FixedBounds is Rectangle fixedBounds) {
             DesiredSize = AddMargin(AddPadding(fixedBounds.Size, Padding, dpi), Margin, dpi);
