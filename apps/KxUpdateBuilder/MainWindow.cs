@@ -17,12 +17,12 @@ using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
 
+using SkiaSharp;
+
 using KxButton = Kx.UI.Elements.Button;
 using KxLabel = Kx.UI.Elements.Label;
 using KxListBox = Kx.UI.Elements.ListBox;
 using KxTextBox = Kx.UI.Elements.TextBox;
-
-using SkiaSharp;
 
 namespace KxUpdateBuilder;
 
@@ -97,12 +97,9 @@ public sealed class MainWindow : Window {
         KxTextBox updateFolderTextBox = CreateInputTextBox("builder_update_folder", row: 2, column: 1);
         KxTextBox uploadFolderTextBox = CreateInputTextBox("builder_upload_folder", row: 3, column: 1);
         KxTextBox newsTitleTextBox = CreateInputTextBox("builder_news_title", row: 5, column: 1);
-        KxTextBox newsContentTextBox = CreateNewsContentTextBox()
-            .InGrid(6, 1);
-        KxListBox newsEntriesListBox = CreateNewsEntriesListBox()
-            .InGrid(8, 1, 1, 1);
-        KxTextBox outputTextBox = CreateOutputTextBox()
-            .InGrid(11, 0, 1, 3);
+        KxTextBox newsContentTextBox = CreateNewsContentTextBox().InGrid(6, 1);
+        KxListBox newsEntriesListBox = CreateNewsEntriesListBox().InGrid(8, 1, 1, 1);
+        KxTextBox outputTextBox = CreateOutputTextBox().InGrid(11, 0, 1, 3);
 
         KxLabel statusLabel = CreateLabel("builder_status", "Ready.", 11, _secondaryTextColor, row: 10, column: 0, columnSpan: 3);
         KxButton openUpdateFolderButton = CreateActionButton("builder_open_update", "Open", row: 2, column: 2, OnOpenUpdateFolderClicked);
@@ -130,28 +127,28 @@ public sealed class MainWindow : Window {
         _updateNewsButton = updateNewsButton;
         _removeNewsButton = removeNewsButton;
 
-        root.AddChild(CreateLabel("builder_title", "Kx Update Builder", 20, _accentColor, row: 0, column: 0, columnSpan: 3));
-        root.AddChild(CreateLabel("builder_subtitle", "Mirror update files into the upload folder and generate a file-based update.json manifest.", 11, _secondaryTextColor, row: 1, column: 0, columnSpan: 3));
-        root.AddChild(CreateFieldLabel("builder_update_folder_label", "Update folder", row: 2));
-        root.AddChild(updateFolderTextBox);
-        root.AddChild(openUpdateFolderButton);
-        root.AddChild(CreateFieldLabel("builder_upload_folder_label", "Upload folder", row: 3));
-        root.AddChild(uploadFolderTextBox);
-        root.AddChild(openUploadFolderButton);
-        root.AddChild(CreateFieldLabel("builder_overwrite_label", "Existing output", row: 4));
-        root.AddChild(overwriteToggleButton);
-        root.AddChild(buildButton);
-        root.AddChild(CreateFieldLabel("builder_news_title_label", "News title", row: 5));
-        root.AddChild(newsTitleTextBox);
-        root.AddChild(CreateFieldLabel("builder_news_content_label", "News content", row: 6));
-        root.AddChild(newsContentTextBox);
-        root.AddChild(CreateFieldLabel("builder_news_entries_label", "News entries", row: 7));
-        root.AddChild(removeNewsButton);
-        root.AddChild(newsEntriesListBox);
-        root.AddChild(addNewsButton);
-        root.AddChild(updateNewsButton);
-        root.AddChild(statusLabel);
-        root.AddChild(outputTextBox);
+        CreateLabel("builder_title", "Kx Update Builder", 20, _accentColor, row: 0, column: 0, columnSpan: 3).AddTo(root);
+        CreateLabel("builder_subtitle", "Mirror update files into the upload folder and generate a file-based update.json manifest.", 11, _secondaryTextColor, row: 1, column: 0, columnSpan: 3).AddTo(root);
+        CreateFieldLabel("builder_update_folder_label", "Update folder", row: 2).AddTo(root);
+        updateFolderTextBox.AddTo(root);
+        openUpdateFolderButton.AddTo(root);
+        CreateFieldLabel("builder_upload_folder_label", "Upload folder", row: 3).AddTo(root);
+        uploadFolderTextBox.AddTo(root);
+        openUploadFolderButton.AddTo(root);
+        CreateFieldLabel("builder_overwrite_label", "Existing output", row: 4).AddTo(root);
+        overwriteToggleButton.AddTo(root);
+        buildButton.AddTo(root);
+        CreateFieldLabel("builder_news_title_label", "News title", row: 5).AddTo(root);
+        newsTitleTextBox.AddTo(root);
+        CreateFieldLabel("builder_news_content_label", "News content", row: 6).AddTo(root);
+        newsContentTextBox.AddTo(root);
+        CreateFieldLabel("builder_news_entries_label", "News entries", row: 7).AddTo(root);
+        removeNewsButton.AddTo(root);
+        newsEntriesListBox.AddTo(root);
+        addNewsButton.AddTo(root);
+        updateNewsButton.AddTo(root);
+        statusLabel.AddTo(root);
+        outputTextBox.AddTo(root);
 
         _ctx.UIElementManager.Add(root);
     }
@@ -348,13 +345,12 @@ public sealed class MainWindow : Window {
     }
 
     private KxButton CreateActionButton(string id, string text, int row, int column, Action onClick) {
-        return new KxButton(_ctx, id, text) {
-            DisabledForegroundColor = _secondaryTextColor,
-        }
+        return new KxButton(_ctx, id, text)
             .InGrid(row, column)
             .WithMargin(0, 2, 0, 2)
             .WithPadding(10, 8, 10, 8)
             .WithForeground(_panelTextColor)
+            .WithDisabledForeground(_secondaryTextColor)
             .WithBorder(_inputBorderColor, 1)
             .WithButtonStates(_buttonBackgroundColor, _buttonHoverBackgroundColor, _buttonPressedBackgroundColor, _buttonDisabledBackgroundColor)
             .OnClick(onClick);

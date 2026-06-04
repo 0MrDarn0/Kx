@@ -174,6 +174,7 @@ public static class UiElementFluentExtensions {
     public static Kx.UI.Elements.Button WithBorder(this Kx.UI.Elements.Button button, SKColor color, float thickness) {
         ArgumentNullException.ThrowIfNull(button);
         button.BorderColor = color;
+        button.BorderThickness = thickness;
         return button;
     }
 
@@ -245,6 +246,32 @@ public static class UiElementFluentExtensions {
         button.PressedBackgroundColor = pressed;
         button.DisabledBackgroundColor = disabled;
         return button;
+    }
+
+    /// <summary>
+    /// Assigns the disabled foreground color of a button.
+    /// </summary>
+    /// <param name="button">The target button.</param>
+    /// <param name="color">The color to apply for disabled text rendering.</param>
+    /// <returns>The same button instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Button WithDisabledForeground(this Kx.UI.Elements.Button button, SKColor color) {
+        ArgumentNullException.ThrowIfNull(button);
+        button.DisabledForegroundColor = color;
+        return button;
+    }
+
+    /// <summary>
+    /// Adds an element to the given panel and returns the same element.
+    /// </summary>
+    /// <typeparam name="TElement">The concrete UI element type.</typeparam>
+    /// <param name="element">The target UI element.</param>
+    /// <param name="panel">The target panel container.</param>
+    /// <returns>The same UI element instance to support fluent chaining.</returns>
+    public static TElement AddTo<TElement>(this TElement element, Kx.UI.Elements.Panel.Panel panel) where TElement : UIElement {
+        ArgumentNullException.ThrowIfNull(element);
+        ArgumentNullException.ThrowIfNull(panel);
+        panel.AddChild(element);
+        return element;
     }
 
     /// <summary>
