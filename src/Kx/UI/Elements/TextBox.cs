@@ -20,6 +20,11 @@ public sealed class TextBox : UIElement {
     private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = SKColors.Gold, Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
     private readonly SKPaint _scrollBarPaint = new() { IsAntialias = true, Color = new SKColor(124, 110, 75, 160) };
     private readonly SKPaint _glowPaint = new() { IsAntialias = true, Color = new SKColor(255, 255, 255, 180), Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
+    private KxColor _foregroundColor = new(255, 255, 255);
+    private KxColor _backgroundColor = new(16, 16, 16);
+    private KxColor _borderColor = new(255, 215, 0);
+    private KxColor _scrollBarColor = new(124, 110, 75, 160);
+    private KxColor _glowColor = new(255, 255, 255, 180);
 
     private string _text;
     private string _fontFamily = "Segoe UI";
@@ -167,26 +172,29 @@ public sealed class TextBox : UIElement {
         Invalidate();
     }
 
-    public SKColor ForegroundColor {
-        get => _textPaint.Color;
+    public KxColor ForegroundColor {
+        get => _foregroundColor;
         set {
-            _textPaint.Color = value;
+            _foregroundColor = value;
+            _textPaint.Color = ToSkColor(value);
             Invalidate();
         }
     }
 
-    public SKColor BackgroundColor {
-        get => _backgroundPaint.Color;
+    public KxColor BackgroundColor {
+        get => _backgroundColor;
         set {
-            _backgroundPaint.Color = value;
+            _backgroundColor = value;
+            _backgroundPaint.Color = ToSkColor(value);
             Invalidate();
         }
     }
 
-    public SKColor BorderColor {
-        get => _borderPaint.Color;
+    public KxColor BorderColor {
+        get => _borderColor;
         set {
-            _borderPaint.Color = value;
+            _borderColor = value;
+            _borderPaint.Color = ToSkColor(value);
             Invalidate();
         }
     }
@@ -201,10 +209,11 @@ public sealed class TextBox : UIElement {
         }
     }
 
-    public SKColor ScrollBarColor {
-        get => _scrollBarPaint.Color;
+    public KxColor ScrollBarColor {
+        get => _scrollBarColor;
         set {
-            _scrollBarPaint.Color = value;
+            _scrollBarColor = value;
+            _scrollBarPaint.Color = ToSkColor(value);
             Invalidate();
         }
     }
@@ -214,10 +223,11 @@ public sealed class TextBox : UIElement {
     public override bool CanFocus => true;
     public bool GlowEnabled { get; set; }
     public float GlowRadius { get; set; } = 6f;
-    public SKColor GlowColor {
-        get => _glowPaint.Color;
+    public KxColor GlowColor {
+        get => _glowColor;
         set {
-            _glowPaint.Color = value;
+            _glowColor = value;
+            _glowPaint.Color = ToSkColor(value);
             Invalidate();
         }
     }
@@ -227,7 +237,7 @@ public sealed class TextBox : UIElement {
     /// </summary>
     /// <param name="color">The color to apply.</param>
     /// <returns>The same text box instance.</returns>
-    public TextBox WithForeground(SKColor color) {
+    public TextBox WithForeground(KxColor color) {
         ForegroundColor = color;
         return this;
     }
@@ -237,7 +247,7 @@ public sealed class TextBox : UIElement {
     /// </summary>
     /// <param name="color">The color to apply.</param>
     /// <returns>The same text box instance.</returns>
-    public TextBox WithBackground(SKColor color) {
+    public TextBox WithBackground(KxColor color) {
         BackgroundColor = color;
         return this;
     }
@@ -248,7 +258,7 @@ public sealed class TextBox : UIElement {
     /// <param name="color">The border color to apply.</param>
     /// <param name="thickness">The border thickness to apply.</param>
     /// <returns>The same text box instance.</returns>
-    public TextBox WithBorder(SKColor color, float thickness) {
+    public TextBox WithBorder(KxColor color, float thickness) {
         BorderColor = color;
         BorderThickness = thickness;
         return this;
@@ -975,5 +985,9 @@ public sealed class TextBox : UIElement {
         }
 
         _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, FontSize * DpiScale);
+    }
+
+    private static SKColor ToSkColor(KxColor color) {
+        return new SKColor(color.R, color.G, color.B, color.A);
     }
 }

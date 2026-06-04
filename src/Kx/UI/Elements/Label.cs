@@ -14,12 +14,17 @@ namespace Kx.UI.Elements;
 public class Label : UIElement {
     public Property<string> Text { get; }
     public Property<SKFont> Font { get; }
-    public Property<SKColor> Color { get; }
+    private readonly Property<KxColor> _color;
+
+    public KxColor ForegroundColor {
+        get => _color.Value;
+        set => _color.Value = value;
+    }
 
     public Label(IVisualContext ctx, string id, string text, float size) : base(ctx, id) {
         Text = new Property<string>(ctx.UiThread, text, Invalidate);
         Font = new Property<SKFont>(ctx.UiThread, new SKFont(SKTypeface.Default, size), Invalidate);
-        Color = new Property<SKColor>(ctx.UiThread, SKColors.White, Invalidate);
+        _color = new Property<KxColor>(ctx.UiThread, KxColor.Parse("#FFFFFF"), Invalidate);
     }
 
     /// <summary>
@@ -27,8 +32,8 @@ public class Label : UIElement {
     /// </summary>
     /// <param name="color">The color to apply.</param>
     /// <returns>The same label instance.</returns>
-    public Label WithForeground(SKColor color) {
-        Color.Value = color;
+    public Label WithForeground(KxColor color) {
+        ForegroundColor = color;
         return this;
     }
 
@@ -47,7 +52,7 @@ public class Label : UIElement {
             return;
 
         using var paint = new SKPaint {
-            Color = Color.Value,
+            Color = _color.Value.ToSKColor(),
             IsAntialias = true
         };
 

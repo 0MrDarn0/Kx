@@ -5,6 +5,7 @@ using System.Diagnostics;
 
 using Kx.App;
 using Kx.Sdk.Logging;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.Layout;
@@ -16,8 +17,6 @@ using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
 
-using SkiaSharp;
-
 using KxButton = Kx.UI.Elements.Button;
 using KxLabel = Kx.UI.Elements.Label;
 using KxListBox = Kx.UI.Elements.ListBox;
@@ -27,15 +26,15 @@ namespace KxUpdateBuilder;
 
 public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IWindowFrameRegistry windowFrameRegistry, IWindowContentRegistry windowContentRegistry) : Window(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, windowFrameRegistry, windowContentRegistry) {
 
-    private static readonly SKColor _panelTextColor = new(0xF5, 0xF5, 0xF5);
-    private static readonly SKColor _secondaryTextColor = new(0xB7, 0xBC, 0xC6);
-    private static readonly SKColor _accentColor = new(0x6C, 0xB2, 0xFF);
-    private static readonly SKColor _errorTextColor = new(0xFF, 0x7B, 0x72);
-    private static readonly SKColor _inputBorderColor = new(0x3A, 0x3D, 0x46);
-    private static readonly SKColor _buttonBackgroundColor = new(0x2B, 0x2D, 0x34);
-    private static readonly SKColor _buttonHoverBackgroundColor = new(0x35, 0x38, 0x41);
-    private static readonly SKColor _buttonPressedBackgroundColor = new(0x40, 0x44, 0x4F);
-    private static readonly SKColor _buttonDisabledBackgroundColor = new(0x26, 0x28, 0x2F);
+    private static readonly KxColor _panelTextColor = new(0xF5, 0xF5, 0xF5);
+    private static readonly KxColor _secondaryTextColor = new(0xB7, 0xBC, 0xC6);
+    private static readonly KxColor _accentColor = new(0x6C, 0xB2, 0xFF);
+    private static readonly KxColor _errorTextColor = new(0xFF, 0x7B, 0x72);
+    private static readonly KxColor _inputBorderColor = new(0x3A, 0x3D, 0x46);
+    private static readonly KxColor _buttonBackgroundColor = new(0x2B, 0x2D, 0x34);
+    private static readonly KxColor _buttonHoverBackgroundColor = new(0x35, 0x38, 0x41);
+    private static readonly KxColor _buttonPressedBackgroundColor = new(0x40, 0x44, 0x4F);
+    private static readonly KxColor _buttonDisabledBackgroundColor = new(0x26, 0x28, 0x2F);
 
     private readonly UpdatePackageBuilder _packageBuilder = new();
 
@@ -317,7 +316,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
     private void SetStatus(string message, bool isError) {
         KxLabel statusLabel = GetRequiredLabel(_statusLabel);
         statusLabel.Text.Value = message;
-        statusLabel.Color.Value = isError ? _errorTextColor : _secondaryTextColor;
+        statusLabel.ForegroundColor = isError ? _errorTextColor : _secondaryTextColor;
     }
 
     private static string GetText(KxTextBox? textBox) {
@@ -344,7 +343,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
         return CreateLabel(id, text, 12, _panelTextColor, row, 0, 1);
     }
 
-    private KxLabel CreateLabel(string id, string text, float size, SKColor color, int row, int column, int columnSpan) {
+    private KxLabel CreateLabel(string id, string text, float size, KxColor color, int row, int column, int columnSpan) {
         KxLabel label = new KxLabel(_ctx, id, text, size)
             .WithForeground(color);
 
@@ -360,7 +359,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
         }
             .WithForeground(_panelTextColor)
             .WithBorder(_inputBorderColor, 1)
-            .WithBackground(new SKColor(0x21, 0x23, 0x29));
+            .WithBackground(new KxColor(0x21, 0x23, 0x29));
 
         textBox.InGrid(row, column)
             .WithMargin(0, 2, 10, 2);
@@ -374,7 +373,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
         }
             .WithForeground(_panelTextColor)
             .WithBorder(_inputBorderColor, 1)
-            .WithBackground(new SKColor(0x19, 0x1B, 0x20));
+            .WithBackground(new KxColor(0x19, 0x1B, 0x20));
 
         textBox.WithMargin(0, 6, 0, 0)
             .WithPadding(10);
@@ -388,7 +387,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
         }
             .WithForeground(_panelTextColor)
             .WithBorder(_inputBorderColor, 1)
-            .WithBackground(new SKColor(0x21, 0x23, 0x29));
+            .WithBackground(new KxColor(0x21, 0x23, 0x29));
 
         textBox.WithMargin(0, 2, 10, 2)
             .WithPadding(8);
@@ -397,14 +396,14 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
 
     private KxListBox CreateNewsEntriesListBox() {
         KxListBox listBox = new KxListBox(_ctx, "builder_news_entries") {
-            SelectedItemColor = new SKColor(0x4A, 0x67, 0x91, 180),
-            HoveredItemColor = new SKColor(0x30, 0x35, 0x40, 180),
+            SelectedItemColor = new KxColor(0x4A, 0x67, 0x91, 180),
+            HoveredItemColor = new KxColor(0x30, 0x35, 0x40, 180),
             SelectedItemBorderColor = _accentColor,
             ScrollBarColor = _accentColor
         }
             .WithForeground(_panelTextColor)
             .WithBorder(_inputBorderColor, 1)
-            .WithBackground(new SKColor(0x19, 0x1B, 0x20));
+            .WithBackground(new KxColor(0x19, 0x1B, 0x20));
 
         listBox.WithMargin(0, 2, 0, 2);
         return listBox;
@@ -508,7 +507,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
 
     private void RefreshNewsEntries(bool selectFirst, int? preferredIndex = null) {
         UpdateNewsListResult result = _packageBuilder.LoadNewsEntries(new UpdateNewsLoadRequest(GetText(_uploadFolderTextBox)));
-        _newsEntries = result.Entries.ToList();
+        _newsEntries = [.. result.Entries];
 
         KxListBox newsEntriesListBox = GetRequiredListBox(_newsEntriesListBox);
         newsEntriesListBox.SetItems(_newsEntries.Select((entry, index) => $"{index + 1:00}. {GetDisplayTitle(entry)}"));

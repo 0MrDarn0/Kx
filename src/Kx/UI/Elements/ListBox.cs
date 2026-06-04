@@ -3,6 +3,7 @@
 
 using System.Drawing;
 
+using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
@@ -98,26 +99,26 @@ public sealed class ListBox : UIElement {
         Invalidate();
     }
 
-    public SKColor ForegroundColor {
-        get => _textPaint.Color;
+    public KxColor ForegroundColor {
+        get => _textPaint.Color.ToKxColor();
         set {
-            _textPaint.Color = value;
+            _textPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor BackgroundColor {
-        get => _backgroundPaint.Color;
+    public KxColor BackgroundColor {
+        get => _backgroundPaint.Color.ToKxColor();
         set {
-            _backgroundPaint.Color = value;
+            _backgroundPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor BorderColor {
-        get => _borderPaint.Color;
+    public KxColor BorderColor {
+        get => _borderPaint.Color.ToKxColor();
         set {
-            _borderPaint.Color = value;
+            _borderPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -130,52 +131,52 @@ public sealed class ListBox : UIElement {
         }
     }
 
-    public SKColor SelectedItemColor {
-        get => _selectedItemPaint.Color;
+    public KxColor SelectedItemColor {
+        get => _selectedItemPaint.Color.ToKxColor();
         set {
-            _selectedItemPaint.Color = value;
+            _selectedItemPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor HoveredItemColor {
-        get => _hoveredItemPaint.Color;
+    public KxColor HoveredItemColor {
+        get => _hoveredItemPaint.Color.ToKxColor();
         set {
-            _hoveredItemPaint.Color = value;
+            _hoveredItemPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor SelectedItemBorderColor {
-        get => _selectedItemBorderPaint.Color;
+    public KxColor SelectedItemBorderColor {
+        get => _selectedItemBorderPaint.Color.ToKxColor();
         set {
-            _selectedItemBorderPaint.Color = value;
+            _selectedItemBorderPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor SeparatorColor {
-        get => _separatorPaint.Color;
+    public KxColor SeparatorColor {
+        get => _separatorPaint.Color.ToKxColor();
         set {
-            _separatorPaint.Color = value;
+            _separatorPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor ScrollBarColor {
-        get => _scrollBarPaint.Color;
+    public KxColor ScrollBarColor {
+        get => _scrollBarPaint.Color.ToKxColor();
         set {
-            _scrollBarPaint.Color = value;
+            _scrollBarPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
     public bool GlowEnabled { get; set; }
 
-    public SKColor GlowColor {
-        get => _glowPaint.Color;
+    public KxColor GlowColor {
+        get => _glowPaint.Color.ToKxColor();
         set {
-            _glowPaint.Color = value;
+            _glowPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -187,7 +188,7 @@ public sealed class ListBox : UIElement {
     /// </summary>
     /// <param name="color">The color to apply.</param>
     /// <returns>The same list box instance.</returns>
-    public ListBox WithForeground(SKColor color) {
+    public ListBox WithForeground(KxColor color) {
         ForegroundColor = color;
         return this;
     }
@@ -197,7 +198,7 @@ public sealed class ListBox : UIElement {
     /// </summary>
     /// <param name="color">The color to apply.</param>
     /// <returns>The same list box instance.</returns>
-    public ListBox WithBackground(SKColor color) {
+    public ListBox WithBackground(KxColor color) {
         BackgroundColor = color;
         return this;
     }
@@ -208,7 +209,7 @@ public sealed class ListBox : UIElement {
     /// <param name="color">The border color to apply.</param>
     /// <param name="thickness">The border thickness to apply.</param>
     /// <returns>The same list box instance.</returns>
-    public ListBox WithBorder(SKColor color, float thickness) {
+    public ListBox WithBorder(KxColor color, float thickness) {
         BorderColor = color;
         BorderThickness = thickness;
         return this;

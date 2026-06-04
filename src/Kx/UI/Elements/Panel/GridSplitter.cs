@@ -1,8 +1,7 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Drawing;
-
+using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
@@ -22,15 +21,46 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
     private float _secondStartSize;
     private GridLength _firstStartLength;
     private GridLength _secondStartLength;
+    private KxColor _trackColor = new(110, 110, 110, 96);
+    private KxColor _hoverTrackColor = new(150, 150, 150, 132);
+    private KxColor _activeTrackColor = new(214, 214, 214, 176);
+    private KxColor _gripColor = new(255, 255, 255, 180);
 
     public uOrientation Orientation { get; set; } = uOrientation.Vertical;
     public float MinSegmentSize { get; set; } = 48f;
     public int? TargetColumn { get; set; }
     public int? TargetRow { get; set; }
-    public SKColor TrackColor { get; set; } = new SKColor(110, 110, 110, 96);
-    public SKColor HoverTrackColor { get; set; } = new SKColor(150, 150, 150, 132);
-    public SKColor ActiveTrackColor { get; set; } = new SKColor(214, 214, 214, 176);
-    public SKColor GripColor { get; set; } = new SKColor(255, 255, 255, 180);
+    public KxColor TrackColor {
+        get => _trackColor;
+        set {
+            _trackColor = value;
+            Invalidate();
+        }
+    }
+
+    public KxColor HoverTrackColor {
+        get => _hoverTrackColor;
+        set {
+            _hoverTrackColor = value;
+            Invalidate();
+        }
+    }
+
+    public KxColor ActiveTrackColor {
+        get => _activeTrackColor;
+        set {
+            _activeTrackColor = value;
+            Invalidate();
+        }
+    }
+
+    public KxColor GripColor {
+        get => _gripColor;
+        set {
+            _gripColor = value;
+            Invalidate();
+        }
+    }
 
     public override bool OnMouseDown(Point p) {
         if (!Bounds.Contains(p))
@@ -87,10 +117,10 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         var trackRect = GetTrackRect(rect);
 
         var trackColor = _isDragging
-            ? ActiveTrackColor
+            ? _activeTrackColor.ToSKColor()
             : _isHovered
-                ? HoverTrackColor
-                : TrackColor;
+                ? _hoverTrackColor.ToSKColor()
+                : _trackColor.ToSKColor();
 
         using var trackPaint = new SKPaint {
             Color = trackColor,
@@ -98,7 +128,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             IsAntialias = true
         };
         using var gripPaint = new SKPaint {
-            Color = GripColor,
+            Color = _gripColor.ToSKColor(),
             Style = SKPaintStyle.Fill,
             IsAntialias = true
         };
@@ -147,6 +177,8 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         canvas.DrawRoundRect(gripRect, radius, radius, paint);
     }
 
+
+
     private bool TryCaptureStartSizes() {
         if (!TryGetResizeTargets(out int firstIndex, out int secondIndex))
             return false;
@@ -160,8 +192,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             _secondStartLength = grid.Columns[secondIndex].Width;
             _firstStartSize = grid.Columns[firstIndex].ActualWidth;
             _secondStartSize = grid.Columns[secondIndex].ActualWidth;
-        }
-        else {
+        } else {
             _firstStartLength = grid.Rows[firstIndex].Height;
             _secondStartLength = grid.Rows[secondIndex].Height;
             _firstStartSize = grid.Rows[firstIndex].ActualHeight;
@@ -198,8 +229,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
 
         if (Orientation == uOrientation.Vertical) {
             ApplyColumnResize(grid.Columns[firstIndex], grid.Columns[secondIndex], firstSize, secondSize);
-        }
-        else {
+        } else {
             ApplyRowResize(grid.Rows[firstIndex], grid.Rows[secondIndex], firstSize, secondSize);
         }
 

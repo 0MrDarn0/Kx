@@ -2,12 +2,11 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.Payloads;
 using Kx.Sdk.UI.VisualTree;
-
-using SkiaSharp;
 
 namespace Kx.UI.Actions;
 
@@ -123,11 +122,11 @@ internal static class BuiltInMarkupActionRegistrar {
         }
 
         var visual = ResolveTarget(context, targetId);
-        var color = SKColor.Parse(colorValue);
+        var color = KxColor.Parse(colorValue);
 
         switch (visual) {
             case Kx.UI.Elements.Label label:
-                label.Color.Value = color;
+                label.ForegroundColor = color;
                 break;
 
             default:

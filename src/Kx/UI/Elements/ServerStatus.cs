@@ -58,10 +58,10 @@ public sealed class ServerStatus : UIElement {
     private SKBitmap? _onlineBitmap;
     private SKBitmap? _offlineBitmap;
     private SKBitmap? _timeoutBitmap;
-    private SKColor _checkingColor = SKColor.Parse("#DAA520");
-    private SKColor _onlineColor = SKColor.Parse("#4CAF50");
-    private SKColor _offlineColor = SKColor.Parse("#E57373");
-    private SKColor _timeoutColor = SKColor.Parse("#FFB74D");
+    private KxColor _checkingColor = KxColor.Parse("#DAA520");
+    private KxColor _onlineColor = KxColor.Parse("#4CAF50");
+    private KxColor _offlineColor = KxColor.Parse("#E57373");
+    private KxColor _timeoutColor = KxColor.Parse("#FFB74D");
     private string _currentText = string.Empty;
     private string _currentIndicator = string.Empty;
     private SKColor _currentColor = SKColors.White;
@@ -288,7 +288,7 @@ public sealed class ServerStatus : UIElement {
         }
     }
 
-    public SKColor CheckingColor {
+    public KxColor CheckingColor {
         get => _checkingColor;
         set {
             _checkingColor = value;
@@ -297,7 +297,7 @@ public sealed class ServerStatus : UIElement {
         }
     }
 
-    public SKColor OnlineColor {
+    public KxColor OnlineColor {
         get => _onlineColor;
         set {
             _onlineColor = value;
@@ -306,7 +306,7 @@ public sealed class ServerStatus : UIElement {
         }
     }
 
-    public SKColor OfflineColor {
+    public KxColor OfflineColor {
         get => _offlineColor;
         set {
             _offlineColor = value;
@@ -315,7 +315,7 @@ public sealed class ServerStatus : UIElement {
         }
     }
 
-    public SKColor TimeoutColor {
+    public KxColor TimeoutColor {
         get => _timeoutColor;
         set {
             _timeoutColor = value;
@@ -378,8 +378,7 @@ public sealed class ServerStatus : UIElement {
                 float imageTop = centerY - (imageSize / 2f);
                 skCanvas.DrawBitmap(_currentBitmap, new SKRect(x, imageTop, x + imageSize, imageTop + imageSize));
                 x += imageSize + IndicatorSpacing;
-            }
-            else if (!string.IsNullOrWhiteSpace(_currentIndicator)) {
+            } else if (!string.IsNullOrWhiteSpace(_currentIndicator)) {
                 using var indicatorPaint = new SKPaint {
                     IsAntialias = true,
                     Color = _currentColor
@@ -508,8 +507,7 @@ public sealed class ServerStatus : UIElement {
         if (_customTypeface is null) {
             _typeface?.Dispose();
             _typeface = CreateTypeface(_fontFamily, _bold, _italic);
-        }
-        else {
+        } else {
             _typeface?.Dispose();
             _typeface = null;
         }
@@ -523,10 +521,10 @@ public sealed class ServerStatus : UIElement {
         string resolvedName = ResolveDisplayName();
 
         (_currentColor, _currentIndicator, _currentBitmap, string template) = _currentState switch {
-            ServerStatusState.Checking => (_checkingColor, _checkingIndicator, _checkingBitmap, _checkingText),
-            ServerStatusState.Online => (_onlineColor, _onlineIndicator, _onlineBitmap, _onlineText),
-            ServerStatusState.Timeout => (_timeoutColor, _timeoutIndicator, _timeoutBitmap, _timeoutText),
-            ServerStatusState.Offline => (_offlineColor, _offlineIndicator, _offlineBitmap, _offlineText),
+            ServerStatusState.Checking => (ToSkColor(_checkingColor), _checkingIndicator, _checkingBitmap, _checkingText),
+            ServerStatusState.Online => (ToSkColor(_onlineColor), _onlineIndicator, _onlineBitmap, _onlineText),
+            ServerStatusState.Timeout => (ToSkColor(_timeoutColor), _timeoutIndicator, _timeoutBitmap, _timeoutText),
+            ServerStatusState.Offline => (ToSkColor(_offlineColor), _offlineIndicator, _offlineBitmap, _offlineText),
             _ => (SKColors.Transparent, string.Empty, null, string.Empty)
         };
 
@@ -544,6 +542,8 @@ public sealed class ServerStatus : UIElement {
 
         return "Server";
     }
+
+    private static SKColor ToSkColor(KxColor color) => new(color.R, color.G, color.B, color.A);
 
     private void SetImageResource(ref string? resourceIdField, ref SKBitmap? bitmapField, string? value) {
         string? normalizedValue = string.IsNullOrWhiteSpace(value) ? null : value.Trim();

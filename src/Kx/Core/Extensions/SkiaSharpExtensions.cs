@@ -3,6 +3,8 @@
 
 using System.Drawing.Imaging;
 
+using Kx.Sdk.Rendering;
+
 using SkiaSharp;
 
 namespace Kx.Core.Extensions;
@@ -20,6 +22,12 @@ public static class SkiaSharpExtensions {
 
     public static SKColor ToSKColor(this System.Drawing.Color color)
        => new(color.R, color.G, color.B, color.A);
+
+    public static SKColor ToSKColor(this KxColor color)
+       => new(color.R, color.G, color.B, color.A);
+
+    public static KxColor ToKxColor(this SKColor color)
+       => new(color.Red, color.Green, color.Blue, color.Alpha);
 
 
     public static SKBitmap ToSKBitmapEx(this Image image) {

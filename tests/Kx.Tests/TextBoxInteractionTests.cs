@@ -17,6 +17,9 @@ using SkiaSharp;
 namespace Kx.Tests;
 
 public sealed class TextBoxInteractionTests {
+    private static readonly KxColor _backgroundColor = new(0, 0, 0);
+    private static readonly KxColor _scrollBarColor = new(255, 0, 255);
+
     [Fact]
     public void WhenScrollMarkerIsDraggedOutsideTextBoxThenDragStillUpdatesMarkerPosition() {
         var context = new TestVisualContext();
@@ -60,9 +63,9 @@ public sealed class TextBoxInteractionTests {
 
     private static Kx.UI.Elements.TextBox CreateScrollableTextBox(TestVisualContext context) {
         var textBox = new Kx.UI.Elements.TextBox(context, "textBox", CreateLongText()) {
-            BackgroundColor = SKColors.Black,
+            BackgroundColor = _backgroundColor,
             BorderThickness = 0f,
-            ScrollBarColor = SKColors.Magenta,
+            ScrollBarColor = _scrollBarColor,
             FixedBounds = new Rectangle(0, 0, 100, 80)
         };
 

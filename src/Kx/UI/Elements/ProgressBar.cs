@@ -3,6 +3,7 @@
 
 using System.Drawing;
 
+using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
@@ -29,26 +30,26 @@ public sealed class ProgressBar : UIElement {
         }
     }
 
-    public SKColor FillColor {
-        get => _fillPaint.Color;
+    public KxColor FillColor {
+        get => _fillPaint.Color.ToKxColor();
         set {
-            _fillPaint.Color = value;
+            _fillPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor BorderColor {
-        get => _borderPaint.Color;
+    public KxColor BorderColor {
+        get => _borderPaint.Color.ToKxColor();
         set {
-            _borderPaint.Color = value;
+            _borderPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor BackgroundColor {
-        get => _backgroundPaint.Color;
+    public KxColor BackgroundColor {
+        get => _backgroundPaint.Color.ToKxColor();
         set {
-            _backgroundPaint.Color = value;
+            _backgroundPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }

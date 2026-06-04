@@ -3,7 +3,7 @@
 
 using Kx.App;
 using Kx.Sdk.Logging;
-using Kx.Sdk.UI;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.Elements;
@@ -16,8 +16,6 @@ using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
 using Kx.UI.Platform;
 
-using SkiaSharp;
-
 using Button = Kx.UI.Elements.Button;
 using Label = Kx.UI.Elements.Label;
 using ListBox = Kx.UI.Elements.ListBox;
@@ -27,6 +25,19 @@ using TextBox = Kx.UI.Elements.TextBox;
 namespace KxEdit;
 
 public sealed class MainWindow : Window {
+    private static readonly KxColor _statusTextColor = new(205, 214, 226);
+    private static readonly KxColor _buttonBackgroundColor = new(48, 98, 180);
+    private static readonly KxColor _buttonHoverBackgroundColor = new(65, 120, 210);
+    private static readonly KxColor _buttonPressedBackgroundColor = new(34, 82, 156);
+    private static readonly KxColor _buttonBorderColor = new(98, 148, 230);
+    private static readonly KxColor _buttonForegroundColor = new(255, 255, 255);
+    private static readonly KxColor _captionTextColor = new(255, 226, 148);
+    private static readonly KxColor _valueTextColor = new(206, 214, 226);
+    private static readonly KxColor _inputBackgroundColor = new(14, 18, 24);
+    private static readonly KxColor _inputBorderColor = new(74, 86, 102);
+    private static readonly KxColor _inputForegroundColor = new(230, 236, 245);
+    private static readonly KxColor _inputScrollBarColor = new(104, 116, 132, 180);
+
     private static readonly string[] _availableControlTypes = [
         "Label",
         "Button",
@@ -308,7 +319,7 @@ public sealed class MainWindow : Window {
             GridColumnSpan = 2,
             Margin = new Thickness(12, 4, 12, 0)
         };
-        _statusLabel.Color.Value = new SKColor(205, 214, 226);
+        _statusLabel.ForegroundColor = _statusTextColor;
         return _statusLabel;
     }
 
@@ -480,11 +491,11 @@ public sealed class MainWindow : Window {
         var button = new Button(_ctx, id, text) {
             Padding = new Thickness(10, 6, 10, 6)
         };
-        button.BackgroundColor = new SKColor(48, 98, 180);
-        button.HoverBackgroundColor = new SKColor(65, 120, 210);
-        button.PressedBackgroundColor = new SKColor(34, 82, 156);
-        button.BorderColor = new SKColor(98, 148, 230);
-        button.ForegroundColor = SKColors.White;
+        button.BackgroundColor = _buttonBackgroundColor;
+        button.HoverBackgroundColor = _buttonHoverBackgroundColor;
+        button.PressedBackgroundColor = _buttonPressedBackgroundColor;
+        button.BorderColor = _buttonBorderColor;
+        button.ForegroundColor = _buttonForegroundColor;
         button.Click += onClick;
         return button;
     }
@@ -493,7 +504,7 @@ public sealed class MainWindow : Window {
         var label = new Label(_ctx, id, text, 12) {
             Margin = new Thickness(2, 2, 0, 0)
         };
-        label.Color.Value = new SKColor(255, 226, 148);
+        label.ForegroundColor = _captionTextColor;
         return label;
     }
 
@@ -501,7 +512,7 @@ public sealed class MainWindow : Window {
         var label = new Label(_ctx, id, text, 10) {
             Margin = new Thickness(2, 1, 0, 0)
         };
-        label.Color.Value = new SKColor(206, 214, 226);
+        label.ForegroundColor = _valueTextColor;
         return label;
     }
 
@@ -511,10 +522,10 @@ public sealed class MainWindow : Window {
             Multiline = multiline,
             ReadOnly = false
         };
-        input.BackgroundColor = new SKColor(14, 18, 24);
-        input.BorderColor = new SKColor(74, 86, 102);
-        input.ForegroundColor = new SKColor(230, 236, 245);
-        input.ScrollBarColor = new SKColor(104, 116, 132, 180);
+        input.BackgroundColor = _inputBackgroundColor;
+        input.BorderColor = _inputBorderColor;
+        input.ForegroundColor = _inputForegroundColor;
+        input.ScrollBarColor = _inputScrollBarColor;
         return input;
     }
 
