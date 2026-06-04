@@ -292,81 +292,79 @@ public sealed class MainWindow : Window {
     }
 
     private KxLabel CreateLabel(string id, string text, float size, SKColor color, int row, int column, int columnSpan) {
-        KxLabel label = new KxLabel(_ctx, id, text, size)
+        return new KxLabel(_ctx, id, text, size)
             .InGrid(row, column, 1, columnSpan)
-            .WithMargin(0, 8, 8, 0);
-
-        label.Color.Value = color;
-        return label;
+            .WithMargin(0, 8, 8, 0)
+            .WithForeground(color);
     }
 
     private KxTextBox CreateInputTextBox(string id, int row, int column) {
         return new KxTextBox(_ctx, id, string.Empty) {
             Multiline = false,
             ReadOnly = false,
-            Margin = new Thickness(0, 2, 10, 2),
             BorderThickness = 1,
             BorderColor = _inputBorderColor,
-            ForegroundColor = _panelTextColor,
-            BackgroundColor = new SKColor(0x21, 0x23, 0x29)
-        }.InGrid(row, column);
+        }
+            .InGrid(row, column)
+            .WithMargin(0, 2, 10, 2)
+            .WithForeground(_panelTextColor)
+            .WithBackground(new SKColor(0x21, 0x23, 0x29));
     }
 
     private KxTextBox CreateOutputTextBox() {
         return new KxTextBox(_ctx, "builder_output", string.Empty) {
             ReadOnly = true,
             Multiline = true,
-            Margin = new Thickness(0, 6, 0, 0),
-            Padding = new Thickness(10),
             BorderThickness = 1,
             BorderColor = _inputBorderColor,
-            ForegroundColor = _panelTextColor,
-            BackgroundColor = new SKColor(0x19, 0x1B, 0x20)
-        };
+        }
+            .WithMargin(0, 6, 0, 0)
+            .WithPadding(10)
+            .WithForeground(_panelTextColor)
+            .WithBackground(new SKColor(0x19, 0x1B, 0x20));
     }
 
     private KxTextBox CreateNewsContentTextBox() {
         return new KxTextBox(_ctx, "builder_news_content", string.Empty) {
             Multiline = true,
             ReadOnly = false,
-            Margin = new Thickness(0, 2, 10, 2),
-            Padding = new Thickness(8),
             BorderThickness = 1,
             BorderColor = _inputBorderColor,
-            ForegroundColor = _panelTextColor,
-            BackgroundColor = new SKColor(0x21, 0x23, 0x29)
-        };
+        }
+            .WithMargin(0, 2, 10, 2)
+            .WithPadding(8)
+            .WithForeground(_panelTextColor)
+            .WithBackground(new SKColor(0x21, 0x23, 0x29));
     }
 
     private KxListBox CreateNewsEntriesListBox() {
         return new KxListBox(_ctx, "builder_news_entries") {
-            Margin = new Thickness(0, 2, 0, 2),
             BorderThickness = 1,
             BorderColor = _inputBorderColor,
-            ForegroundColor = _panelTextColor,
-            BackgroundColor = new SKColor(0x19, 0x1B, 0x20),
             SelectedItemColor = new SKColor(0x4A, 0x67, 0x91, 180),
             HoveredItemColor = new SKColor(0x30, 0x35, 0x40, 180),
             SelectedItemBorderColor = _accentColor,
             ScrollBarColor = _accentColor
-        };
+        }
+            .WithMargin(0, 2, 0, 2)
+            .WithForeground(_panelTextColor)
+            .WithBackground(new SKColor(0x19, 0x1B, 0x20));
     }
 
     private KxButton CreateActionButton(string id, string text, int row, int column, Action onClick) {
-        KxButton button = new KxButton(_ctx, id, text) {
-            Margin = new Thickness(0, 2, 0, 2),
-            Padding = new Thickness(10, 8, 10, 8),
-            ForegroundColor = _panelTextColor,
+        return new KxButton(_ctx, id, text) {
             BackgroundColor = _buttonBackgroundColor,
             HoverBackgroundColor = _buttonHoverBackgroundColor,
             PressedBackgroundColor = _buttonPressedBackgroundColor,
             DisabledBackgroundColor = _buttonDisabledBackgroundColor,
             DisabledForegroundColor = _secondaryTextColor,
             BorderColor = _inputBorderColor
-        }.InGrid(row, column);
-
-        button.Click += onClick;
-        return button;
+        }
+            .InGrid(row, column)
+            .WithMargin(0, 2, 0, 2)
+            .WithPadding(10, 8, 10, 8)
+            .WithForeground(_panelTextColor)
+            .OnClick(onClick);
     }
 
     private void OnAddNewsClicked() {

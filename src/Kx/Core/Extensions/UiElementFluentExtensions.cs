@@ -4,6 +4,8 @@
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.Layout;
 
+using SkiaSharp;
+
 namespace Kx.Core.Extensions;
 
 /// <summary>
@@ -100,5 +102,102 @@ public static class UiElementFluentExtensions {
         ArgumentNullException.ThrowIfNull(element);
         element.Padding = new Thickness(all);
         return element;
+    }
+
+    /// <summary>
+    /// Assigns the foreground color of a label.
+    /// </summary>
+    /// <param name="label">The target label.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same label instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Label WithForeground(this Kx.UI.Elements.Label label, SKColor color) {
+        ArgumentNullException.ThrowIfNull(label);
+        label.Color.Value = color;
+        return label;
+    }
+
+    /// <summary>
+    /// Assigns the foreground color of a button.
+    /// </summary>
+    /// <param name="button">The target button.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same button instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Button WithForeground(this Kx.UI.Elements.Button button, SKColor color) {
+        ArgumentNullException.ThrowIfNull(button);
+        button.ForegroundColor = color;
+        return button;
+    }
+
+    /// <summary>
+    /// Assigns the foreground color of a text box.
+    /// </summary>
+    /// <param name="textBox">The target text box.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same text box instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.TextBox WithForeground(this Kx.UI.Elements.TextBox textBox, SKColor color) {
+        ArgumentNullException.ThrowIfNull(textBox);
+        textBox.ForegroundColor = color;
+        return textBox;
+    }
+
+    /// <summary>
+    /// Assigns the foreground color of a list box.
+    /// </summary>
+    /// <param name="listBox">The target list box.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same list box instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.ListBox WithForeground(this Kx.UI.Elements.ListBox listBox, SKColor color) {
+        ArgumentNullException.ThrowIfNull(listBox);
+        listBox.ForegroundColor = color;
+        return listBox;
+    }
+
+    /// <summary>
+    /// Assigns the background color of a button.
+    /// </summary>
+    /// <param name="button">The target button.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same button instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Button WithBackground(this Kx.UI.Elements.Button button, SKColor color) {
+        ArgumentNullException.ThrowIfNull(button);
+        button.BackgroundColor = color;
+        return button;
+    }
+
+    /// <summary>
+    /// Assigns the background color of a text box.
+    /// </summary>
+    /// <param name="textBox">The target text box.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same text box instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.TextBox WithBackground(this Kx.UI.Elements.TextBox textBox, SKColor color) {
+        ArgumentNullException.ThrowIfNull(textBox);
+        textBox.BackgroundColor = color;
+        return textBox;
+    }
+
+    /// <summary>
+    /// Assigns the background color of a list box.
+    /// </summary>
+    /// <param name="listBox">The target list box.</param>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same list box instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.ListBox WithBackground(this Kx.UI.Elements.ListBox listBox, SKColor color) {
+        ArgumentNullException.ThrowIfNull(listBox);
+        listBox.BackgroundColor = color;
+        return listBox;
+    }
+
+    /// <summary>
+    /// Attaches a click handler to a button.
+    /// </summary>
+    /// <param name="button">The target button.</param>
+    /// <param name="onClick">The callback invoked for click events.</param>
+    /// <returns>The same button instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Button OnClick(this Kx.UI.Elements.Button button, Action onClick) {
+        ArgumentNullException.ThrowIfNull(button);
+        ArgumentNullException.ThrowIfNull(onClick);
+        button.Click += onClick;
+        return button;
     }
 }
