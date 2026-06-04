@@ -302,12 +302,11 @@ public sealed class MainWindow : Window {
         return new KxTextBox(_ctx, id, string.Empty) {
             Multiline = false,
             ReadOnly = false,
-            BorderThickness = 1,
-            BorderColor = _inputBorderColor,
         }
             .InGrid(row, column)
             .WithMargin(0, 2, 10, 2)
             .WithForeground(_panelTextColor)
+            .WithBorder(_inputBorderColor, 1)
             .WithBackground(new SKColor(0x21, 0x23, 0x29));
     }
 
@@ -315,12 +314,11 @@ public sealed class MainWindow : Window {
         return new KxTextBox(_ctx, "builder_output", string.Empty) {
             ReadOnly = true,
             Multiline = true,
-            BorderThickness = 1,
-            BorderColor = _inputBorderColor,
         }
             .WithMargin(0, 6, 0, 0)
             .WithPadding(10)
             .WithForeground(_panelTextColor)
+            .WithBorder(_inputBorderColor, 1)
             .WithBackground(new SKColor(0x19, 0x1B, 0x20));
     }
 
@@ -328,19 +326,16 @@ public sealed class MainWindow : Window {
         return new KxTextBox(_ctx, "builder_news_content", string.Empty) {
             Multiline = true,
             ReadOnly = false,
-            BorderThickness = 1,
-            BorderColor = _inputBorderColor,
         }
             .WithMargin(0, 2, 10, 2)
             .WithPadding(8)
             .WithForeground(_panelTextColor)
+            .WithBorder(_inputBorderColor, 1)
             .WithBackground(new SKColor(0x21, 0x23, 0x29));
     }
 
     private KxListBox CreateNewsEntriesListBox() {
         return new KxListBox(_ctx, "builder_news_entries") {
-            BorderThickness = 1,
-            BorderColor = _inputBorderColor,
             SelectedItemColor = new SKColor(0x4A, 0x67, 0x91, 180),
             HoveredItemColor = new SKColor(0x30, 0x35, 0x40, 180),
             SelectedItemBorderColor = _accentColor,
@@ -348,22 +343,20 @@ public sealed class MainWindow : Window {
         }
             .WithMargin(0, 2, 0, 2)
             .WithForeground(_panelTextColor)
+            .WithBorder(_inputBorderColor, 1)
             .WithBackground(new SKColor(0x19, 0x1B, 0x20));
     }
 
     private KxButton CreateActionButton(string id, string text, int row, int column, Action onClick) {
         return new KxButton(_ctx, id, text) {
-            BackgroundColor = _buttonBackgroundColor,
-            HoverBackgroundColor = _buttonHoverBackgroundColor,
-            PressedBackgroundColor = _buttonPressedBackgroundColor,
-            DisabledBackgroundColor = _buttonDisabledBackgroundColor,
             DisabledForegroundColor = _secondaryTextColor,
-            BorderColor = _inputBorderColor
         }
             .InGrid(row, column)
             .WithMargin(0, 2, 0, 2)
             .WithPadding(10, 8, 10, 8)
             .WithForeground(_panelTextColor)
+            .WithBorder(_inputBorderColor, 1)
+            .WithButtonStates(_buttonBackgroundColor, _buttonHoverBackgroundColor, _buttonPressedBackgroundColor, _buttonDisabledBackgroundColor)
             .OnClick(onClick);
     }
 

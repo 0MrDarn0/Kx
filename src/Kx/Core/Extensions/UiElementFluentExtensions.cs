@@ -165,6 +165,19 @@ public static class UiElementFluentExtensions {
     }
 
     /// <summary>
+    /// Assigns the border color and thickness of a button.
+    /// </summary>
+    /// <param name="button">The target button.</param>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same button instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Button WithBorder(this Kx.UI.Elements.Button button, SKColor color, float thickness) {
+        ArgumentNullException.ThrowIfNull(button);
+        button.BorderColor = color;
+        return button;
+    }
+
+    /// <summary>
     /// Assigns the background color of a text box.
     /// </summary>
     /// <param name="textBox">The target text box.</param>
@@ -173,6 +186,20 @@ public static class UiElementFluentExtensions {
     public static Kx.UI.Elements.TextBox WithBackground(this Kx.UI.Elements.TextBox textBox, SKColor color) {
         ArgumentNullException.ThrowIfNull(textBox);
         textBox.BackgroundColor = color;
+        return textBox;
+    }
+
+    /// <summary>
+    /// Assigns the border color and thickness of a text box.
+    /// </summary>
+    /// <param name="textBox">The target text box.</param>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same text box instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.TextBox WithBorder(this Kx.UI.Elements.TextBox textBox, SKColor color, float thickness) {
+        ArgumentNullException.ThrowIfNull(textBox);
+        textBox.BorderColor = color;
+        textBox.BorderThickness = thickness;
         return textBox;
     }
 
@@ -186,6 +213,38 @@ public static class UiElementFluentExtensions {
         ArgumentNullException.ThrowIfNull(listBox);
         listBox.BackgroundColor = color;
         return listBox;
+    }
+
+    /// <summary>
+    /// Assigns the border color and thickness of a list box.
+    /// </summary>
+    /// <param name="listBox">The target list box.</param>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same list box instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.ListBox WithBorder(this Kx.UI.Elements.ListBox listBox, SKColor color, float thickness) {
+        ArgumentNullException.ThrowIfNull(listBox);
+        listBox.BorderColor = color;
+        listBox.BorderThickness = thickness;
+        return listBox;
+    }
+
+    /// <summary>
+    /// Assigns button background colors for all interaction states.
+    /// </summary>
+    /// <param name="button">The target button.</param>
+    /// <param name="normal">The default background color.</param>
+    /// <param name="hover">The hover background color.</param>
+    /// <param name="pressed">The pressed background color.</param>
+    /// <param name="disabled">The disabled background color.</param>
+    /// <returns>The same button instance to support fluent chaining.</returns>
+    public static Kx.UI.Elements.Button WithButtonStates(this Kx.UI.Elements.Button button, SKColor normal, SKColor hover, SKColor pressed, SKColor disabled) {
+        ArgumentNullException.ThrowIfNull(button);
+        button.BackgroundColor = normal;
+        button.HoverBackgroundColor = hover;
+        button.PressedBackgroundColor = pressed;
+        button.DisabledBackgroundColor = disabled;
+        return button;
     }
 
     /// <summary>

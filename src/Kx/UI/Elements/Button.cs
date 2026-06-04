@@ -143,6 +143,14 @@ public class Button : UIElement {
         }
     }
 
+    public float BorderThickness {
+        get => _borderPaint.StrokeWidth;
+        set {
+            _borderPaint.StrokeWidth = Math.Max(0f, value);
+            Invalidate();
+        }
+    }
+
     public event Action? Click;
 
     private bool _isPressed;
@@ -238,21 +246,17 @@ public class Button : UIElement {
             _textPaint.Color = IsEnabled
                 ? ForegroundColor
                 : DisabledForegroundColor;
-        }
-        else {
+        } else {
             if (!IsEnabled) {
                 _bgPaint.Color = DisabledBackgroundColor;
                 _textPaint.Color = DisabledForegroundColor;
-            }
-            else if (_isPressed) {
+            } else if (_isPressed) {
                 _bgPaint.Color = PressedBackgroundColor;
                 _textPaint.Color = ForegroundColor;
-            }
-            else if (_isHovered || IsFocused) {
+            } else if (_isHovered || IsFocused) {
                 _bgPaint.Color = HoverBackgroundColor;
                 _textPaint.Color = ForegroundColor;
-            }
-            else {
+            } else {
                 _bgPaint.Color = BackgroundColor;
                 _textPaint.Color = ForegroundColor;
             }
@@ -380,8 +384,7 @@ public class Button : UIElement {
             var weight = _bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
             var slant = _italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
             _typeface = SKTypeface.FromFamilyName(_fontFamily, weight, SKFontStyleWidth.Normal, slant);
-        }
-        else {
+        } else {
             _typeface?.Dispose();
             _typeface = null;
         }
