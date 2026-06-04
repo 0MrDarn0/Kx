@@ -4,6 +4,7 @@
 using System.Diagnostics;
 
 using Kx.App;
+using Kx.Core.Extensions;
 using Kx.Sdk.Logging;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
@@ -96,17 +97,12 @@ public sealed class MainWindow : Window {
         KxTextBox updateFolderTextBox = CreateInputTextBox("builder_update_folder", row: 2, column: 1);
         KxTextBox uploadFolderTextBox = CreateInputTextBox("builder_upload_folder", row: 3, column: 1);
         KxTextBox newsTitleTextBox = CreateInputTextBox("builder_news_title", row: 5, column: 1);
-        KxTextBox newsContentTextBox = CreateNewsContentTextBox();
-        newsContentTextBox.GridRow = 6;
-        newsContentTextBox.GridColumn = 1;
-        KxListBox newsEntriesListBox = CreateNewsEntriesListBox();
-        newsEntriesListBox.GridRow = 8;
-        newsEntriesListBox.GridColumn = 1;
-        newsEntriesListBox.GridColumnSpan = 1;
-        KxTextBox outputTextBox = CreateOutputTextBox();
-        outputTextBox.GridRow = 11;
-        outputTextBox.GridColumn = 0;
-        outputTextBox.GridColumnSpan = 3;
+        KxTextBox newsContentTextBox = CreateNewsContentTextBox()
+            .InGrid(6, 1);
+        KxListBox newsEntriesListBox = CreateNewsEntriesListBox()
+            .InGrid(8, 1, 1, 1);
+        KxTextBox outputTextBox = CreateOutputTextBox()
+            .InGrid(11, 0, 1, 3);
 
         KxLabel statusLabel = CreateLabel("builder_status", "Ready.", 11, _secondaryTextColor, row: 10, column: 0, columnSpan: 3);
         KxButton openUpdateFolderButton = CreateActionButton("builder_open_update", "Open", row: 2, column: 2, OnOpenUpdateFolderClicked);
@@ -296,12 +292,9 @@ public sealed class MainWindow : Window {
     }
 
     private KxLabel CreateLabel(string id, string text, float size, SKColor color, int row, int column, int columnSpan) {
-        KxLabel label = new(_ctx, id, text, size) {
-            GridRow = row,
-            GridColumn = column,
-            GridColumnSpan = columnSpan,
-            Margin = new Thickness(0, 8, 8, 0)
-        };
+        KxLabel label = new KxLabel(_ctx, id, text, size)
+            .InGrid(row, column, 1, columnSpan)
+            .WithMargin(0, 8, 8, 0);
 
         label.Color.Value = color;
         return label;
@@ -309,8 +302,6 @@ public sealed class MainWindow : Window {
 
     private KxTextBox CreateInputTextBox(string id, int row, int column) {
         return new KxTextBox(_ctx, id, string.Empty) {
-            GridRow = row,
-            GridColumn = column,
             Multiline = false,
             ReadOnly = false,
             Margin = new Thickness(0, 2, 10, 2),
@@ -318,7 +309,7 @@ public sealed class MainWindow : Window {
             BorderColor = _inputBorderColor,
             ForegroundColor = _panelTextColor,
             BackgroundColor = new SKColor(0x21, 0x23, 0x29)
-        };
+        }.InGrid(row, column);
     }
 
     private KxTextBox CreateOutputTextBox() {
@@ -362,9 +353,7 @@ public sealed class MainWindow : Window {
     }
 
     private KxButton CreateActionButton(string id, string text, int row, int column, Action onClick) {
-        KxButton button = new(_ctx, id, text) {
-            GridRow = row,
-            GridColumn = column,
+        KxButton button = new KxButton(_ctx, id, text) {
             Margin = new Thickness(0, 2, 0, 2),
             Padding = new Thickness(10, 8, 10, 8),
             ForegroundColor = _panelTextColor,
@@ -374,7 +363,7 @@ public sealed class MainWindow : Window {
             DisabledBackgroundColor = _buttonDisabledBackgroundColor,
             DisabledForegroundColor = _secondaryTextColor,
             BorderColor = _inputBorderColor
-        };
+        }.InGrid(row, column);
 
         button.Click += onClick;
         return button;
