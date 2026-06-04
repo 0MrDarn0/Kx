@@ -25,6 +25,7 @@ public class Button : UIElement {
     private KxColor _disabledBackgroundColor = new(240, 240, 240, 255);
     private KxColor _disabledForegroundColor = new(160, 160, 160, 255);
     private KxColor _borderColor = new(180, 180, 180, 255);
+    private float _borderThickness = 1f;
 
     public string Text {
         get => _text;
@@ -139,15 +140,14 @@ public class Button : UIElement {
         get => _borderColor;
         set {
             _borderColor = value;
-            _borderPaint.Color = ToSkColor(_borderColor);
             Invalidate();
         }
     }
 
     public float BorderThickness {
-        get => _borderPaint.StrokeWidth;
+        get => _borderThickness;
         set {
-            _borderPaint.StrokeWidth = Math.Max(0f, value);
+            _borderThickness = Math.Max(0f, value);
             Invalidate();
         }
     }
@@ -216,10 +216,6 @@ public class Button : UIElement {
     private bool _isPressed;
     private bool _isHovered;
 
-    private readonly SKPaint _textPaint = new() { IsAntialias = true, Color = new SKColor(0, 0, 0, 255) };
-    private readonly SKPaint _bgPaint = new() { IsAntialias = true, Color = new SKColor(230, 230, 230, 255) };
-    private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = new SKColor(180, 180, 180, 255), StrokeWidth = 1, Style = SKPaintStyle.Stroke };
-
     private SKFont? _font;
     private SKTypeface? _typeface;
     private SKTypeface? _customTypeface;
@@ -230,7 +226,6 @@ public class Button : UIElement {
 
     public Button(IVisualContext ctx, string id, string text) : base(ctx, id) {
         _text = text;
-        _borderPaint.Color = ToSkColor(_borderColor);
         UpdateFont();
     }
 
@@ -262,7 +257,7 @@ public class Button : UIElement {
     public override void OnDpiChanged(float scale) {
         base.OnDpiChanged(scale);
         UpdateFont();
-        _borderPaint.StrokeWidth = Math.Max(1f, scale);
+        _borderThickness = Math.Max(1f, scale);
         Invalidate();
     }
 
@@ -291,10 +286,6 @@ public class Button : UIElement {
 
     // UIElement verlangt protected abstract OnDraw(SKCanvas)
     protected override void OnDraw(IKxCanvas canvas) {
-        var skCanvas = canvas.As<SKCanvas>();
-        if (skCanvas is null)
-            return;
-
         if (!Visible)
             return;
 
@@ -306,32 +297,32 @@ public class Button : UIElement {
                 ? _hoverImage ?? _normalImage
                 : _normalImage;
 
+        KxColor textColor;
+
         if (stateImage is not null) {
-            skCanvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
-            _textPaint.Color = IsEnabled
-                ? ToSkColor(_foregroundColor)
-                : ToSkColor(_disabledForegroundColor);
+            canvas.DrawBitmap(stateImage, LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
+            textColor = IsEnabled
+                ? _foregroundColor
+                : _disabledForegroundColor;
         } else {
+            KxColor backgroundColor;
+
             if (!IsEnabled) {
-                _bgPaint.Color = ToSkColor(_disabledBackgroundColor);
-                _textPaint.Color = ToSkColor(_disabledForegroundColor);
+                backgroundColor = _disabledBackgroundColor;
+                textColor = _disabledForegroundColor;
             } else if (_isPressed) {
-                _bgPaint.Color = ToSkColor(_pressedBackgroundColor);
-                _textPaint.Color = ToSkColor(_foregroundColor);
+                backgroundColor = _pressedBackgroundColor;
+                textColor = _foregroundColor;
             } else if (_isHovered || IsFocused) {
-                _bgPaint.Color = ToSkColor(_hoverBackgroundColor);
-                _textPaint.Color = ToSkColor(_foregroundColor);
+                backgroundColor = _hoverBackgroundColor;
+                textColor = _foregroundColor;
             } else {
-                _bgPaint.Color = ToSkColor(_backgroundColor);
-                _textPaint.Color = ToSkColor(_foregroundColor);
+                backgroundColor = _backgroundColor;
+                textColor = _foregroundColor;
             }
 
-            _borderPaint.Color = ToSkColor(_borderColor);
-
-            var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);
-
-            skCanvas.DrawRect(skRect, _bgPaint);
-            skCanvas.DrawRect(skRect, _borderPaint);
+            canvas.DrawRect(r.Left, r.Top, r.Right, r.Bottom, backgroundColor);
+            canvas.DrawRectStroke(r.Left, r.Top, r.Right, r.Bottom, _borderColor, _borderThickness);
         }
 
         var text = Text ?? string.Empty;
@@ -342,7 +333,7 @@ public class Button : UIElement {
         float x = r.Left + (r.Width - textBounds.Width) / 2f - textBounds.Left;
         float y = r.Top + (r.Height - textBounds.Height) / 2f - textBounds.Top;
 
-        skCanvas.DrawText(text, x, y, _font, _textPaint);
+        canvas.DrawText(text, x, y, _scaledFontSize, textColor, _fontFamily, _bold, _italic);
     }
 
     // Input Handling
@@ -456,6 +447,4 @@ public class Button : UIElement {
 
         _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, _scaledFontSize);
     }
-
-    private static SKColor ToSkColor(KxColor color) => new(color.R, color.G, color.B, color.A);
 }

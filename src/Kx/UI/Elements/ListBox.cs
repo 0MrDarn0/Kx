@@ -19,15 +19,18 @@ public sealed class ListBox : UIElement {
     private const int ScrollBarWidth = 8;
     private const int MinimumScrollMarkerHeight = 20;
 
-    private readonly SKPaint _textPaint = new() { IsAntialias = true, Color = SKColors.White };
-    private readonly SKPaint _backgroundPaint = new() { IsAntialias = true, Color = new SKColor(16, 16, 16) };
-    private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = new SKColor(124, 110, 75), Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
-    private readonly SKPaint _selectedItemPaint = new() { IsAntialias = true, Color = new SKColor(124, 110, 75, 180), Style = SKPaintStyle.Fill };
-    private readonly SKPaint _hoveredItemPaint = new() { IsAntialias = true, Color = new SKColor(70, 70, 70, 180), Style = SKPaintStyle.Fill };
-    private readonly SKPaint _selectedItemBorderPaint = new() { IsAntialias = true, Color = new SKColor(232, 217, 180, 220), Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
-    private readonly SKPaint _separatorPaint = new() { IsAntialias = true, Color = new SKColor(92, 82, 56, 120), Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
-    private readonly SKPaint _scrollBarPaint = new() { IsAntialias = true, Color = new SKColor(124, 110, 75, 180), Style = SKPaintStyle.Fill };
-    private readonly SKPaint _glowPaint = new() { IsAntialias = true, Color = new SKColor(255, 255, 255, 180), Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
+    private KxColor _textColor = SKColors.White.ToKxColor();
+    private KxColor _backgroundColor = new(16, 16, 16);
+    private KxColor _borderColor = new(124, 110, 75);
+    private KxColor _selectedItemColor = new(124, 110, 75, 180);
+    private KxColor _hoveredItemColor = new(70, 70, 70, 180);
+    private KxColor _selectedItemBorderColor = new(232, 217, 180, 220);
+    private KxColor _separatorColor = new(92, 82, 56, 120);
+    private KxColor _scrollBarColor = new(124, 110, 75, 180);
+    private KxColor _glowColor = new(255, 255, 255, 180);
+    private float _borderThickness = 2f;
+    private float _selectedItemBorderThickness = 1f;
+    private float _separatorThickness = 1f;
 
     private readonly List<string> _items = [];
     private string _fontFamily = "Segoe UI";
@@ -40,7 +43,11 @@ public sealed class ListBox : UIElement {
     private int _selectedIndex = -1;
     private int _hoveredIndex = -1;
     private int _firstVisibleIndex;
-    private SKRect _scrollMarkerRect;
+    private KxRect _scrollMarkerRect;
+    private bool _isDraggingScrollMarker;
+    private bool _isHoveringScrollMarker;
+    private int _dragStartY;
+    private int _firstVisibleIndexAtDragStart;
 
     public ListBox(IVisualContext context, string id) : base(context, id) {
         Padding = new Kx.Sdk.UI.Layout.Thickness(4);
@@ -100,73 +107,73 @@ public sealed class ListBox : UIElement {
     }
 
     public KxColor ForegroundColor {
-        get => _textPaint.Color.ToKxColor();
+        get => _textColor;
         set {
-            _textPaint.Color = value.ToSKColor();
+            _textColor = value;
             Invalidate();
         }
     }
 
     public KxColor BackgroundColor {
-        get => _backgroundPaint.Color.ToKxColor();
+        get => _backgroundColor;
         set {
-            _backgroundPaint.Color = value.ToSKColor();
+            _backgroundColor = value;
             Invalidate();
         }
     }
 
     public KxColor BorderColor {
-        get => _borderPaint.Color.ToKxColor();
+        get => _borderColor;
         set {
-            _borderPaint.Color = value.ToSKColor();
+            _borderColor = value;
             Invalidate();
         }
     }
 
     public float BorderThickness {
-        get => _borderPaint.StrokeWidth;
+        get => _borderThickness;
         set {
-            _borderPaint.StrokeWidth = Math.Max(0f, value);
+            _borderThickness = Math.Max(0f, value);
             Invalidate();
         }
     }
 
     public KxColor SelectedItemColor {
-        get => _selectedItemPaint.Color.ToKxColor();
+        get => _selectedItemColor;
         set {
-            _selectedItemPaint.Color = value.ToSKColor();
+            _selectedItemColor = value;
             Invalidate();
         }
     }
 
     public KxColor HoveredItemColor {
-        get => _hoveredItemPaint.Color.ToKxColor();
+        get => _hoveredItemColor;
         set {
-            _hoveredItemPaint.Color = value.ToSKColor();
+            _hoveredItemColor = value;
             Invalidate();
         }
     }
 
     public KxColor SelectedItemBorderColor {
-        get => _selectedItemBorderPaint.Color.ToKxColor();
+        get => _selectedItemBorderColor;
         set {
-            _selectedItemBorderPaint.Color = value.ToSKColor();
+            _selectedItemBorderColor = value;
             Invalidate();
         }
     }
 
     public KxColor SeparatorColor {
-        get => _separatorPaint.Color.ToKxColor();
+        get => _separatorColor;
         set {
-            _separatorPaint.Color = value.ToSKColor();
+            _separatorColor = value;
             Invalidate();
         }
     }
 
     public KxColor ScrollBarColor {
-        get => _scrollBarPaint.Color.ToKxColor();
+        get => _scrollBarColor;
         set {
-            _scrollBarPaint.Color = value.ToSKColor();
+            _scrollBarColor = value;
             Invalidate();
         }
     }
@@ -174,9 +181,9 @@ public sealed class ListBox : UIElement {
     public bool GlowEnabled { get; set; }
 
     public KxColor GlowColor {
-        get => _glowPaint.Color.ToKxColor();
+        get => _glowColor;
         set {
-            _glowPaint.Color = value.ToSKColor();
+            _glowColor = value;
             Invalidate();
         }
     }
@@ -287,17 +294,22 @@ public sealed class ListBox : UIElement {
         Rectangle rect = LayoutRect;
         Rectangle contentRect = ContentRect;
 
-        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
+        canvas.DrawRect(rect.Left, rect.Top, rect.Right, rect.Bottom, _backgroundColor);
 
         if (GlowEnabled && BorderThickness > 0f) {
             using var glowImageFilter = SKImageFilter.CreateBlur(GlowRadius, GlowRadius);
-            _glowPaint.ImageFilter = glowImageFilter;
-            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _glowPaint);
-            _glowPaint.ImageFilter = null;
+            using var glowPaint = new SKPaint {
+                IsAntialias = true,
+                Color = _glowColor.ToSKColor(),
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = _borderThickness,
+                ImageFilter = glowImageFilter
+            };
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, glowPaint);
         }
 
         if (BorderThickness > 0f)
-            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
+            canvas.DrawRectStroke(rect.Left, rect.Top, rect.Right, rect.Bottom, _borderColor, _borderThickness);
 
         int itemHeight = GetItemHeight();
         int availableListWidth = Math.Max(16, contentRect.Width - ScrollBarWidth - 4);
@@ -314,30 +326,47 @@ public sealed class ListBox : UIElement {
 
             var itemRect = new Rectangle(contentRect.Left, contentRect.Top + slot * itemHeight, availableListWidth, itemHeight - ItemGap);
             if (itemIndex == _selectedIndex) {
-                skCanvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _selectedItemPaint);
-                skCanvas.DrawRect(itemRect.Left + 0.5f, itemRect.Top + 0.5f, itemRect.Width - 1f, itemRect.Height - 1f, _selectedItemBorderPaint);
+                canvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Right, itemRect.Bottom, _selectedItemColor);
+                canvas.DrawRectStroke(itemRect.Left + 0.5f, itemRect.Top + 0.5f, itemRect.Right - 0.5f, itemRect.Bottom - 0.5f, _selectedItemBorderColor, _selectedItemBorderThickness);
             }
             else if (itemIndex == _hoveredIndex)
-                skCanvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _hoveredItemPaint);
+                canvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Right, itemRect.Bottom, _hoveredItemColor);
 
             string itemText = TruncateText(_items[itemIndex], Math.Max(20f, itemRect.Width - ItemPadding * 2f));
             float baseline = itemRect.Top + ItemPadding - _font.Metrics.Ascent;
-            skCanvas.DrawText(itemText, itemRect.Left + ItemPadding, baseline, _font, _textPaint);
+            canvas.DrawText(itemText, itemRect.Left + ItemPadding, baseline, _font.Size, _textColor, _fontFamily, _bold, _italic);
 
             if (slot < visibleItemCount - 1 && itemIndex < _items.Count - 1) {
                 float separatorY = itemRect.Bottom + (ItemGap / 2f);
-                skCanvas.DrawLine(itemRect.Left + ItemPadding, separatorY, itemRect.Right - ItemPadding, separatorY, _separatorPaint);
+                canvas.DrawLine(itemRect.Left + ItemPadding, separatorY, itemRect.Right - ItemPadding, separatorY, _separatorColor, _separatorThickness);
             }
         }
 
         skCanvas.Restore();
 
-        DrawScrollBar(skCanvas, contentRect, itemHeight, visibleItemCount);
+        DrawScrollBar(canvas, contentRect, itemHeight, visibleItemCount);
     }
 
     public override bool OnMouseDown(Point point) {
         if (!Bounds.Contains(point))
             return false;
+
+        if (IsPointInScrollBar(point)) {
+            if (IsPointInScrollMarker(point)) {
+                _isDraggingScrollMarker = true;
+                _isHoveringScrollMarker = true;
+                _dragStartY = point.Y;
+                _firstVisibleIndexAtDragStart = _firstVisibleIndex;
+                return true;
+            }
+
+            if (point.Y < _scrollMarkerRect.Top)
+                ScrollByViewport(-1);
+            else if (point.Y > _scrollMarkerRect.Bottom)
+                ScrollByViewport(1);
+
+            return true;
+        }
 
         int itemIndex = GetItemIndexAt(point);
         if (itemIndex < 0)
@@ -348,6 +377,39 @@ public sealed class ListBox : UIElement {
     }
 
     public override bool OnMouseMove(Point point) {
+        if (_isDraggingScrollMarker) {
+            if (!TryGetScrollMetrics(out int visibleItemCount, out int maxFirstVisibleIndex, out _))
+                return false;
+
+            float markerHeight = Math.Max(MinimumScrollMarkerHeight, ContentRect.Height * (visibleItemCount / (float)_items.Count));
+            float markerTravel = Math.Max(1f, ContentRect.Height - markerHeight);
+            float markerDelta = point.Y - _dragStartY;
+            int indexDelta = (int)Math.Round((markerDelta / markerTravel) * maxFirstVisibleIndex);
+            int nextFirstVisibleIndex = Math.Clamp(_firstVisibleIndexAtDragStart + indexDelta, 0, maxFirstVisibleIndex);
+
+            if (nextFirstVisibleIndex == _firstVisibleIndex)
+                return true;
+
+            _firstVisibleIndex = nextFirstVisibleIndex;
+            Invalidate();
+            return true;
+        }
+
+        bool isHoveringScrollMarker = IsPointInScrollMarker(point);
+        if (_isHoveringScrollMarker != isHoveringScrollMarker) {
+            _isHoveringScrollMarker = isHoveringScrollMarker;
+            Invalidate();
+        }
+
+        if (IsPointInScrollBar(point)) {
+            if (_hoveredIndex >= 0) {
+                _hoveredIndex = -1;
+                Invalidate();
+            }
+
+            return true;
+        }
+
         int hoveredIndex = Bounds.Contains(point)
             ? GetItemIndexAt(point)
             : -1;
@@ -356,6 +418,16 @@ public sealed class ListBox : UIElement {
             return hoveredIndex >= 0;
 
         _hoveredIndex = hoveredIndex;
+        Invalidate();
+        return true;
+    }
+
+    public override bool OnMouseUp(Point point) {
+        if (!_isDraggingScrollMarker)
+            return false;
+
+        _isDraggingScrollMarker = false;
+        _isHoveringScrollMarker = IsPointInScrollMarker(point);
         Invalidate();
         return true;
     }
@@ -381,6 +453,8 @@ public sealed class ListBox : UIElement {
 
     public override void OnFocusLost() {
         _hoveredIndex = -1;
+        _isDraggingScrollMarker = false;
+        _isHoveringScrollMarker = false;
         Invalidate();
     }
 
@@ -389,15 +463,6 @@ public sealed class ListBox : UIElement {
             _font?.Dispose();
             _customTypeface?.Dispose();
             _typeface?.Dispose();
-            _textPaint.Dispose();
-            _backgroundPaint.Dispose();
-            _borderPaint.Dispose();
-            _selectedItemPaint.Dispose();
-            _hoveredItemPaint.Dispose();
-            _selectedItemBorderPaint.Dispose();
-            _separatorPaint.Dispose();
-            _scrollBarPaint.Dispose();
-            _glowPaint.Dispose();
         }
 
         base.Dispose(disposing);
@@ -414,6 +479,9 @@ public sealed class ListBox : UIElement {
     private int GetItemIndexAt(Point point) {
         Rectangle contentRect = ContentRect;
         if (!contentRect.Contains(point))
+            return -1;
+
+        if (point.X >= contentRect.Right - ScrollBarWidth)
             return -1;
 
         int itemHeight = GetItemHeight();
@@ -436,8 +504,8 @@ public sealed class ListBox : UIElement {
             _firstVisibleIndex = _selectedIndex - visibleItemCount + 1;
     }
 
-    private void DrawScrollBar(SKCanvas canvas, Rectangle contentRect, int itemHeight, int visibleItemCount) {
-        _scrollMarkerRect = SKRect.Empty;
+    private void DrawScrollBar(IKxCanvas canvas, Rectangle contentRect, int itemHeight, int visibleItemCount) {
+        _scrollMarkerRect = new KxRect(0f, 0f, 0f, 0f);
 
         int maxFirstVisibleIndex = Math.Max(0, _items.Count - visibleItemCount);
         if (maxFirstVisibleIndex <= 0)
@@ -448,8 +516,52 @@ public sealed class ListBox : UIElement {
         float markerTravel = Math.Max(1f, visibleHeight - markerHeight);
         float markerY = contentRect.Top + (_firstVisibleIndex / (float)maxFirstVisibleIndex) * markerTravel;
 
-        _scrollMarkerRect = new SKRect(contentRect.Right - ScrollBarWidth + 1, markerY, contentRect.Right - 1, markerY + markerHeight);
-        canvas.DrawRect(_scrollMarkerRect, _scrollBarPaint);
+        _scrollMarkerRect = new KxRect(contentRect.Right - ScrollBarWidth + 1, markerY, contentRect.Right - 1, markerY + markerHeight);
+        canvas.DrawRect(_scrollMarkerRect.Left, _scrollMarkerRect.Top, _scrollMarkerRect.Right, _scrollMarkerRect.Bottom, ResolveScrollMarkerColor());
+    }
+
+    private KxColor ResolveScrollMarkerColor() {
+        if (_isDraggingScrollMarker)
+            return new KxColor(_scrollBarColor.R, _scrollBarColor.G, _scrollBarColor.B, 255);
+
+        if (_isHoveringScrollMarker)
+            return new KxColor(_scrollBarColor.R, _scrollBarColor.G, _scrollBarColor.B, (byte)Math.Min(255, _scrollBarColor.A + 40));
+
+        return _scrollBarColor;
+    }
+
+    private bool IsPointInScrollBar(Point point) {
+        Rectangle contentRect = ContentRect;
+        if (!contentRect.Contains(point))
+            return false;
+
+        return point.X >= contentRect.Right - ScrollBarWidth;
+    }
+
+    private bool IsPointInScrollMarker(Point point) {
+        return point.X >= _scrollMarkerRect.Left
+            && point.X <= _scrollMarkerRect.Right
+            && point.Y >= _scrollMarkerRect.Top
+            && point.Y <= _scrollMarkerRect.Bottom;
+    }
+
+    private void ScrollByViewport(int direction) {
+        if (!TryGetScrollMetrics(out int visibleItemCount, out int maxFirstVisibleIndex, out _))
+            return;
+
+        int nextFirstVisibleIndex = Math.Clamp(_firstVisibleIndex + (visibleItemCount * direction), 0, maxFirstVisibleIndex);
+        if (nextFirstVisibleIndex == _firstVisibleIndex)
+            return;
+
+        _firstVisibleIndex = nextFirstVisibleIndex;
+        Invalidate();
+    }
+
+    private bool TryGetScrollMetrics(out int visibleItemCount, out int maxFirstVisibleIndex, out int itemHeight) {
+        itemHeight = GetItemHeight();
+        visibleItemCount = Math.Max(1, ContentRect.Height / Math.Max(1, itemHeight));
+        maxFirstVisibleIndex = Math.Max(0, _items.Count - visibleItemCount);
+        return maxFirstVisibleIndex > 0;
     }
 
     private string TruncateText(string text, float maxWidth) {
@@ -491,9 +603,8 @@ public sealed class ListBox : UIElement {
         }
 
         _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, _fontSize * DpiScale);
-        _selectedItemBorderPaint.StrokeWidth = Math.Max(1f, DpiScale);
-        _separatorPaint.StrokeWidth = Math.Max(1f, DpiScale * 0.75f);
-        _borderPaint.StrokeWidth = Math.Max(1f, _borderPaint.StrokeWidth);
-        _glowPaint.StrokeWidth = _borderPaint.StrokeWidth;
+        _selectedItemBorderThickness = Math.Max(1f, DpiScale);
+        _separatorThickness = Math.Max(1f, DpiScale * 0.75f);
+        _borderThickness = Math.Max(1f, _borderThickness);
     }
 }

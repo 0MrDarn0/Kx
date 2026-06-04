@@ -21,9 +21,9 @@ public sealed class TreeView : UIElement {
         }
     }
 
-    private readonly SKPaint _textPaint = new() { IsAntialias = true, Color = SKColors.White };
-    private readonly SKPaint _bgPaint = new() { IsAntialias = true, Color = new SKColor(16, 16, 16) };
-    private readonly SKPaint _selectedPaint = new() { IsAntialias = true, Color = new SKColor(124, 110, 75, 180), Style = SKPaintStyle.Fill };
+    private KxColor _textColor = KxColor.Parse("#FFFFFF");
+    private KxColor _backgroundColor = new(16, 16, 16);
+    private KxColor _selectedColor = new(124, 110, 75, 180);
     private SKFont? _font;
     private float _fontSize = 12f;
 
@@ -70,16 +70,12 @@ public sealed class TreeView : UIElement {
     }
 
     protected override void OnDraw(IKxCanvas canvas) {
-        var skCanvas = canvas.As<SKCanvas>();
-        if (skCanvas is null)
-            return;
-
         if (_font is null || !Visible)
             return;
 
         var rect = LayoutRect;
         var content = ContentRect;
-        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _bgPaint);
+        canvas.DrawRect(rect.Left, rect.Top, rect.Right, rect.Bottom, _backgroundColor);
 
         int itemHeight = GetItemHeight();
         int y = content.Top;
@@ -89,33 +85,27 @@ public sealed class TreeView : UIElement {
             var itemRect = new Rectangle(content.Left, y, content.Width, itemHeight);
 
             if (i == _selectedIndex)
-                skCanvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Width, itemRect.Height, _selectedPaint);
+                canvas.DrawRect(itemRect.Left, itemRect.Top, itemRect.Right, itemRect.Bottom, _selectedColor);
 
             // expand/collapse icon
             float iconX = itemRect.Left + level * 12 + 4;
-            float iconY = itemRect.Top + (itemHeight - 8) / 2f;
+            float iconY = itemRect.Top + (itemHeight - 8f) / 2f;
             if (node.Children.Count > 0) {
-                // triangle
-                using var paint = new SKPaint { Color = SKColors.White, IsAntialias = true };
-                var path = new SKPath();
+                float iconSize = 8f;
+                float stroke = Math.Max(1f, DpiScale);
                 if (node.IsExpanded) {
-                    path.MoveTo(iconX, iconY);
-                    path.LineTo(iconX + 8, iconY);
-                    path.LineTo(iconX + 4, iconY + 8);
-                    path.Close();
+                    canvas.DrawLine(iconX, iconY + 2f, iconX + (iconSize / 2f), iconY + iconSize - 1f, _textColor, stroke);
+                    canvas.DrawLine(iconX + iconSize, iconY + 2f, iconX + (iconSize / 2f), iconY + iconSize - 1f, _textColor, stroke);
                 }
                 else {
-                    path.MoveTo(iconX, iconY);
-                    path.LineTo(iconX, iconY + 8);
-                    path.LineTo(iconX + 8, iconY + 4);
-                    path.Close();
+                    canvas.DrawLine(iconX + 2f, iconY, iconX + iconSize - 1f, iconY + (iconSize / 2f), _textColor, stroke);
+                    canvas.DrawLine(iconX + 2f, iconY + iconSize, iconX + iconSize - 1f, iconY + (iconSize / 2f), _textColor, stroke);
                 }
-                skCanvas.DrawPath(path, paint);
             }
 
             float textX = itemRect.Left + level * 12 + 16;
             float baseline = itemRect.Top - _font.Metrics.Ascent + 2;
-            skCanvas.DrawText(node.Name, textX, baseline, _font, _textPaint);
+            canvas.DrawText(node.Name, textX, baseline, _font.Size, _textColor);
 
             y += itemHeight;
         }
@@ -201,9 +191,6 @@ public sealed class TreeView : UIElement {
     protected override void Dispose(bool disposing) {
         if (disposing) {
             _font?.Dispose();
-            _textPaint.Dispose();
-            _bgPaint.Dispose();
-            _selectedPaint.Dispose();
         }
 
         base.Dispose(disposing);

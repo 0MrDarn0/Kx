@@ -2,6 +2,7 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Sdk.Events;
+using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
@@ -176,7 +177,7 @@ public sealed class TextBox : UIElement {
         get => _foregroundColor;
         set {
             _foregroundColor = value;
-            _textPaint.Color = ToSkColor(value);
+            _textPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -185,7 +186,7 @@ public sealed class TextBox : UIElement {
         get => _backgroundColor;
         set {
             _backgroundColor = value;
-            _backgroundPaint.Color = ToSkColor(value);
+            _backgroundPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -194,7 +195,7 @@ public sealed class TextBox : UIElement {
         get => _borderColor;
         set {
             _borderColor = value;
-            _borderPaint.Color = ToSkColor(value);
+            _borderPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -213,7 +214,7 @@ public sealed class TextBox : UIElement {
         get => _scrollBarColor;
         set {
             _scrollBarColor = value;
-            _scrollBarPaint.Color = ToSkColor(value);
+            _scrollBarPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -227,7 +228,7 @@ public sealed class TextBox : UIElement {
         get => _glowColor;
         set {
             _glowColor = value;
-            _glowPaint.Color = ToSkColor(value);
+            _glowPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -985,9 +986,5 @@ public sealed class TextBox : UIElement {
         }
 
         _font = new SKFont(_customTypeface ?? _typeface ?? SKTypeface.Default, FontSize * DpiScale);
-    }
-
-    private static SKColor ToSkColor(KxColor color) {
-        return new SKColor(color.R, color.G, color.B, color.A);
     }
 }

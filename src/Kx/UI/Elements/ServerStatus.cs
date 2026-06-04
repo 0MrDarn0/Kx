@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Net.Sockets;
 
 using Kx.App;
+using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
@@ -521,10 +522,10 @@ public sealed class ServerStatus : UIElement {
         string resolvedName = ResolveDisplayName();
 
         (_currentColor, _currentIndicator, _currentBitmap, string template) = _currentState switch {
-            ServerStatusState.Checking => (ToSkColor(_checkingColor), _checkingIndicator, _checkingBitmap, _checkingText),
-            ServerStatusState.Online => (ToSkColor(_onlineColor), _onlineIndicator, _onlineBitmap, _onlineText),
-            ServerStatusState.Timeout => (ToSkColor(_timeoutColor), _timeoutIndicator, _timeoutBitmap, _timeoutText),
-            ServerStatusState.Offline => (ToSkColor(_offlineColor), _offlineIndicator, _offlineBitmap, _offlineText),
+            ServerStatusState.Checking => (_checkingColor.ToSKColor(), _checkingIndicator, _checkingBitmap, _checkingText),
+            ServerStatusState.Online => (_onlineColor.ToSKColor(), _onlineIndicator, _onlineBitmap, _onlineText),
+            ServerStatusState.Timeout => (_timeoutColor.ToSKColor(), _timeoutIndicator, _timeoutBitmap, _timeoutText),
+            ServerStatusState.Offline => (_offlineColor.ToSKColor(), _offlineIndicator, _offlineBitmap, _offlineText),
             _ => (SKColors.Transparent, string.Empty, null, string.Empty)
         };
 
@@ -542,9 +543,6 @@ public sealed class ServerStatus : UIElement {
 
         return "Server";
     }
-
-    private static SKColor ToSkColor(KxColor color) => new(color.R, color.G, color.B, color.A);
-
     private void SetImageResource(ref string? resourceIdField, ref SKBitmap? bitmapField, string? value) {
         string? normalizedValue = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         if (string.Equals(resourceIdField, normalizedValue, StringComparison.Ordinal))

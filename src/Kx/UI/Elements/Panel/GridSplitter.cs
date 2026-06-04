@@ -1,13 +1,10 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.UI.Layout;
-
-using SkiaSharp;
 
 using uOrientation = Kx.UI.Layout.Orientation;
 
@@ -106,34 +103,19 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
     }
 
     protected override void OnDraw(IKxCanvas canvas) {
-        var skCanvas = canvas.As<SKCanvas>();
-        if (skCanvas is null)
-            return;
-
-        var rect = new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
+        var rect = new KxRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
         if (rect.IsEmpty)
             return;
 
         var trackRect = GetTrackRect(rect);
 
         var trackColor = _isDragging
-            ? _activeTrackColor.ToSKColor()
+            ? _activeTrackColor
             : _isHovered
-                ? _hoverTrackColor.ToSKColor()
-                : _trackColor.ToSKColor();
+                ? _hoverTrackColor
+                : _trackColor;
 
-        using var trackPaint = new SKPaint {
-            Color = trackColor,
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
-        using var gripPaint = new SKPaint {
-            Color = _gripColor.ToSKColor(),
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
-
-        skCanvas.DrawRoundRect(trackRect, 2f * DpiScale, 2f * DpiScale, trackPaint);
+        canvas.DrawRoundedRect(trackRect.Left, trackRect.Top, trackRect.Right, trackRect.Bottom, 2f * DpiScale, 2f * DpiScale, trackColor);
 
         const float gripThickness = 2f;
         const float gripLength = 18f;
@@ -144,7 +126,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             float centerY = trackRect.MidY;
             for (int offset = -1; offset <= 1; offset++) {
                 float y = centerY + offset * gripSpacing;
-                DrawGrip(skCanvas, gripPaint, new SKRect(centerX - gripThickness / 2f, y - gripLength / 2f, centerX + gripThickness / 2f, y + gripLength / 2f), gripThickness);
+                DrawGrip(canvas, centerX - gripThickness / 2f, y - gripLength / 2f, centerX + gripThickness / 2f, y + gripLength / 2f, gripThickness, _gripColor);
             }
 
             return;
@@ -154,30 +136,28 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         float horizontalCenterY = trackRect.MidY;
         for (int offset = -1; offset <= 1; offset++) {
             float x = horizontalCenterX + offset * gripSpacing;
-            DrawGrip(skCanvas, gripPaint, new SKRect(x - gripLength / 2f, horizontalCenterY - gripThickness / 2f, x + gripLength / 2f, horizontalCenterY + gripThickness / 2f), gripThickness);
+            DrawGrip(canvas, x - gripLength / 2f, horizontalCenterY - gripThickness / 2f, x + gripLength / 2f, horizontalCenterY + gripThickness / 2f, gripThickness, _gripColor);
         }
     }
 
-    private SKRect GetTrackRect(SKRect bounds) {
+    private KxRect GetTrackRect(KxRect bounds) {
         float visualThickness = Math.Max(3f * DpiScale, 4f * DpiScale);
         float edgeInset = 1f * DpiScale;
 
         if (Orientation == uOrientation.Vertical) {
             float width = Math.Min(visualThickness, bounds.Width);
             float left = bounds.MidX - width / 2f;
-            return new SKRect(left, bounds.Top + edgeInset, left + width, Math.Max(bounds.Top + edgeInset, bounds.Bottom - edgeInset));
+            return new KxRect(left, bounds.Top + edgeInset, left + width, Math.Max(bounds.Top + edgeInset, bounds.Bottom - edgeInset));
         }
 
         float height = Math.Min(visualThickness, bounds.Height);
         float top = bounds.MidY - height / 2f;
-        return new SKRect(bounds.Left + edgeInset, top, Math.Max(bounds.Left + edgeInset, bounds.Right - edgeInset), top + height);
+        return new KxRect(bounds.Left + edgeInset, top, Math.Max(bounds.Left + edgeInset, bounds.Right - edgeInset), top + height);
     }
 
-    private static void DrawGrip(SKCanvas canvas, SKPaint paint, SKRect gripRect, float radius) {
-        canvas.DrawRoundRect(gripRect, radius, radius, paint);
+    private static void DrawGrip(IKxCanvas canvas, float left, float top, float right, float bottom, float radius, KxColor color) {
+        canvas.DrawRoundedRect(left, top, right, bottom, radius, radius, color);
     }
-
-
 
     private bool TryCaptureStartSizes() {
         if (!TryGetResizeTargets(out int firstIndex, out int secondIndex))

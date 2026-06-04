@@ -47,21 +47,13 @@ public class Label : UIElement {
     }
 
     protected override void OnDraw(IKxCanvas canvas) {
-        var skCanvas = canvas.As<SKCanvas>();
-        if (skCanvas is null)
-            return;
-
-        using var paint = new SKPaint {
-            Color = _color.Value.ToSKColor(),
-            IsAntialias = true
-        };
-
-        skCanvas.DrawText(
+        canvas.DrawText(
             Text.Value,
             ContentRect.X,
             ContentRect.Y - Font.Value.Metrics.Ascent,
-            Font.Value,
-            paint
+            Font.Value.Size,
+            _color.Value,
+            font: Font.Value
         );
     }
 }
