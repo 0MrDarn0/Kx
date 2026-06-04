@@ -4,7 +4,6 @@
 using System.Diagnostics;
 
 using Kx.App;
-using Kx.Core.Extensions;
 using Kx.Sdk.Logging;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
@@ -26,7 +25,8 @@ using KxTextBox = Kx.UI.Elements.TextBox;
 
 namespace KxUpdateBuilder;
 
-public sealed class MainWindow : Window {
+public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IWindowFrameRegistry windowFrameRegistry, IWindowContentRegistry windowContentRegistry) : Window(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, windowFrameRegistry, windowContentRegistry) {
+
     private static readonly SKColor _panelTextColor = new(0xF5, 0xF5, 0xF5);
     private static readonly SKColor _secondaryTextColor = new(0xB7, 0xBC, 0xC6);
     private static readonly SKColor _accentColor = new(0x6C, 0xB2, 0xFF);
@@ -73,10 +73,6 @@ public sealed class MainWindow : Window {
         KxButton AddNewsButton,
         KxButton UpdateNewsButton,
         KxButton RemoveNewsButton);
-
-    public MainWindow(IWindowHost host, ITrayService tray, ILoggingService log, IMarkupActionRegistry actionRegistry, IUiCommandRegistry commandRegistry, IUiStateStore stateStore, IControlRegistry controlRegistry, IWindowFrameRegistry windowFrameRegistry, IWindowContentRegistry windowContentRegistry)
-        : base(host, tray, log, actionRegistry, commandRegistry, stateStore, controlRegistry, windowFrameRegistry, windowContentRegistry) {
-    }
 
     protected override void OnInitialize() {
         base.OnInitialize();
