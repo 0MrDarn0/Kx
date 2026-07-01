@@ -3,6 +3,8 @@
 
 using System.Drawing;
 
+using Kx.Core.Extensions;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -11,9 +13,9 @@ using SkiaSharp;
 namespace Kx.UI.Elements;
 
 public sealed class ProgressBar : UIElement {
-    private readonly SKPaint _fillPaint = new() { IsAntialias = true, Color = SKColors.Goldenrod };
-    private readonly SKPaint _backgroundPaint = new() { IsAntialias = true, Color = SKColors.Transparent };
-    private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = SKColors.Black, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
+    private KxColor _fillColor = SKColors.Goldenrod.ToKxColor();
+    private KxColor _backgroundColor = SKColors.Transparent.ToKxColor();
+    private KxColor _borderColor = SKColors.Black.ToKxColor();
     private float _progress;
     private float _borderThickness = 1f;
 
@@ -28,26 +30,26 @@ public sealed class ProgressBar : UIElement {
         }
     }
 
-    public SKColor FillColor {
-        get => _fillPaint.Color;
+    public KxColor FillColor {
+        get => _fillColor;
         set {
-            _fillPaint.Color = value;
+            _fillColor = value;
             Invalidate();
         }
     }
 
-    public SKColor BorderColor {
-        get => _borderPaint.Color;
+    public KxColor BorderColor {
+        get => _borderColor;
         set {
-            _borderPaint.Color = value;
+            _borderColor = value;
             Invalidate();
         }
     }
 
-    public SKColor BackgroundColor {
-        get => _backgroundPaint.Color;
+    public KxColor BackgroundColor {
+        get => _backgroundColor;
         set {
-            _backgroundPaint.Color = value;
+            _backgroundColor = value;
             Invalidate();
         }
     }
@@ -56,14 +58,12 @@ public sealed class ProgressBar : UIElement {
         get => _borderThickness;
         set {
             _borderThickness = Math.Max(0f, value);
-            _borderPaint.StrokeWidth = _borderThickness * DpiScale;
             Invalidate();
         }
     }
 
     public override void OnDpiChanged(float scale) {
         base.OnDpiChanged(scale);
-        _borderPaint.StrokeWidth = _borderThickness * scale;
     }
 
     public override void Measure(float dpi) {
@@ -77,27 +77,17 @@ public sealed class ProgressBar : UIElement {
         DesiredSize = new Size((int)(240 * dpi), (int)(8 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
         if (!Visible)
             return;
 
         Rectangle rect = LayoutRect;
-        canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
+        canvas.DrawRect(rect.Left, rect.Top, rect.Right, rect.Bottom, _backgroundColor);
 
         if (Progress > 0f)
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width * Progress, rect.Height, _fillPaint);
+            canvas.DrawRect(rect.Left, rect.Top, rect.Left + (rect.Width * Progress), rect.Bottom, _fillColor);
 
         if (BorderThickness > 0f)
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
-    }
-
-    protected override void Dispose(bool disposing) {
-        if (disposing) {
-            _fillPaint.Dispose();
-            _backgroundPaint.Dispose();
-            _borderPaint.Dispose();
-        }
-
-        base.Dispose(disposing);
+            canvas.DrawRectStroke(rect.Left, rect.Top, rect.Right, rect.Bottom, _borderColor, _borderThickness * DpiScale);
     }
 }

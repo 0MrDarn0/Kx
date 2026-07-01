@@ -6,8 +6,7 @@ using System.Drawing;
 using Kx.Sdk.UI.Binding;
 using Kx.Sdk.UI.Layout;
 using Kx.Sdk.UI.VisualTree;
-
-using SkiaSharp;
+using Kx.Sdk.Rendering;
 
 namespace Kx.Sdk.UI.Elements;
 
@@ -36,6 +35,80 @@ public abstract class UIElement : Visual, IDockable {
         Parent = parent;
     }
 
+    /// <summary>
+    /// Assigns the target grid row and column for this element.
+    /// </summary>
+    /// <param name="row">The zero-based grid row index.</param>
+    /// <param name="column">The zero-based grid column index.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement InGrid(int row, int column) {
+        GridRow = row;
+        GridColumn = column;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the target grid row, column, and spans for this element.
+    /// </summary>
+    /// <param name="row">The zero-based grid row index.</param>
+    /// <param name="column">The zero-based grid column index.</param>
+    /// <param name="rowSpan">The number of rows to span.</param>
+    /// <param name="columnSpan">The number of columns to span.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement InGrid(int row, int column, int rowSpan, int columnSpan) {
+        GridRow = row;
+        GridColumn = column;
+        GridRowSpan = Math.Max(1, rowSpan);
+        GridColumnSpan = Math.Max(1, columnSpan);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the margin using individual edge values.
+    /// </summary>
+    /// <param name="left">The left margin.</param>
+    /// <param name="top">The top margin.</param>
+    /// <param name="right">The right margin.</param>
+    /// <param name="bottom">The bottom margin.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithMargin(int left, int top, int right, int bottom) {
+        Margin = new Thickness(left, top, right, bottom);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the margin using a uniform value.
+    /// </summary>
+    /// <param name="all">The uniform margin value.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithMargin(int all) {
+        Margin = new Thickness(all);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the padding using individual edge values.
+    /// </summary>
+    /// <param name="left">The left padding.</param>
+    /// <param name="top">The top padding.</param>
+    /// <param name="right">The right padding.</param>
+    /// <param name="bottom">The bottom padding.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithPadding(int left, int top, int right, int bottom) {
+        Padding = new Thickness(left, top, right, bottom);
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the padding using a uniform value.
+    /// </summary>
+    /// <param name="all">The uniform padding value.</param>
+    /// <returns>The same element instance for fluent configuration.</returns>
+    public UIElement WithPadding(int all) {
+        Padding = new Thickness(all);
+        return this;
+    }
+
     public override void Measure(float dpi) {
         if (FixedBounds is Rectangle fixedBounds) {
             DesiredSize = AddMargin(AddPadding(fixedBounds.Size, Padding, dpi), Margin, dpi);
@@ -55,153 +128,15 @@ public abstract class UIElement : Visual, IDockable {
         _bounds.Value = finalRect;
     }
 
-    public override void Draw(SKCanvas canvas) {
+    public override void Draw(IKxCanvas canvas) {
         if (!Visible)
             return;
 
         OnDraw(canvas);
-
-        if (DebugOverlay.Enabled)
-            DrawDebugOverlay(canvas);
     }
 
-    protected virtual void DrawDebugOverlay(SKCanvas canvas) {
-        if (!DebugOverlay.Enabled)
-            return;
+    protected abstract void OnDraw(IKxCanvas canvas);
 
-        if (DebugOverlay.ShowOnlyHoveredElement && !ReferenceEquals(Context.UIElementManager.HoveredElement, this))
-            return;
-
-        var fontSize = DebugOverlay.FontSize * DpiScale;
-        using var font = new SKFont(SKTypeface.Default, fontSize);
-        using var textPaint = new SKPaint { IsAntialias = true, Color = DebugOverlay.TextColor };
-        using var bgPaint = new SKPaint { IsAntialias = true, Color = DebugOverlay.TextBgColor, Style = SKPaintStyle.Fill };
-        using var boundsPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 1f, IsAntialias = true, Color = DebugOverlay.BoundsColor };
-        using var layoutPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 1f, IsAntialias = true, Color = DebugOverlay.LayoutColor };
-        using var contentPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 1f, IsAntialias = true, Color = DebugOverlay.ContentColor };
-
-        var clip = canvas.LocalClipBounds;
-        var canvasRect = new SKRect(0, 0, clip.Width, clip.Height);
-
-        if (DebugOverlay.ShowBounds)
-            canvas.DrawRect(ToSkRect(Bounds), boundsPaint);
-
-        if (DebugOverlay.ShowLayoutRect)
-            canvas.DrawRect(ToSkRect(LayoutRect), layoutPaint);
-
-        if (DebugOverlay.ShowContentRect)
-            canvas.DrawRect(ToSkRect(ContentRect), contentPaint);
-
-        var metaItems = DebugOverlay.ShowMeta
-            ? GetDebugMetaItems()
-            : [];
-
-        var parentItems = DebugOverlay.ShowParentChain
-            ? GetDebugParentItems()
-            : [];
-
-        if (metaItems.Count == 0 && parentItems.Count == 0)
-            return;
-
-        float startX = LayoutRect.Left;
-        float baseY = LayoutRect.Top + LayoutRect.Height + (DebugOverlay.ItemSpacing * DpiScale);
-        float itemPadding = DebugOverlay.ItemPadding * DpiScale;
-        float itemSpacing = DebugOverlay.ItemSpacing * DpiScale;
-
-        static void MeasureText(SKFont font, string text, out float width, out float height) {
-            font.MeasureText(text, out SKRect tb);
-            width = tb.Width;
-            height = font.Size;
-        }
-
-        float occupiedHeight = 0f;
-        if (metaItems.Count > 0) {
-            float y = baseY;
-            foreach (var text in metaItems) {
-                var maxWidth = Math.Max(20f, canvasRect.Width - startX - itemPadding * 2f);
-                var drawText = text;
-                MeasureText(font, drawText, out float tw, out float th);
-                if (tw > maxWidth) {
-                    drawText = TruncateTextToWidth(drawText, font, maxWidth);
-                    MeasureText(font, drawText, out tw, out th);
-                }
-
-                float itemW = tw + itemPadding * 2f;
-                float itemH = th + itemPadding * 2f;
-                var candidate = new SKRect(startX, y, startX + itemW, y + itemH);
-
-                if (candidate.Bottom > canvasRect.Bottom)
-                    break;
-
-                canvas.DrawRect(candidate, bgPaint);
-                var textX = candidate.Left + itemPadding;
-                var textY = candidate.Top + itemPadding + th;
-                canvas.DrawText(drawText, textX, textY, font, textPaint);
-
-                y += itemH + itemSpacing;
-                occupiedHeight = y - baseY;
-            }
-        }
-
-        if (parentItems.Count > 0) {
-            float parentStartY = baseY + Math.Max(occupiedHeight, 0f) + itemSpacing;
-            float y = parentStartY;
-
-            foreach (var text in parentItems) {
-                var maxWidth = Math.Max(20f, canvasRect.Width - startX - itemPadding * 2f);
-                var drawText = text;
-                MeasureText(font, drawText, out float tw, out float th);
-                if (tw > maxWidth) {
-                    drawText = TruncateTextToWidth(drawText, font, maxWidth);
-                    MeasureText(font, drawText, out tw, out th);
-                }
-
-                float itemW = tw + itemPadding * 2f;
-                float itemH = th + itemPadding * 2f;
-                var candidate = new SKRect(startX, y, startX + itemW, y + itemH);
-
-                if (candidate.Bottom > canvasRect.Bottom)
-                    break;
-
-                canvas.DrawRect(candidate, bgPaint);
-                var textX = candidate.Left + itemPadding;
-                var textY = candidate.Top + itemPadding + th;
-                canvas.DrawText(drawText, textX, textY, font, textPaint);
-
-                y += itemH + itemSpacing;
-            }
-        }
-    }
-
-    protected abstract void OnDraw(SKCanvas canvas);
-
-    private List<string> GetDebugMetaItems() {
-        List<string> items = [
-            $"{GetType().Name}#{Id}  L:{Layer} Z:{ZIndex}  visible:{Visible} focused:{IsFocused}",
-            $"bounds {FormatRectangle(Bounds)}  layout {FormatRectangle(LayoutRect)}  content {FormatRectangle(ContentRect)}",
-            $"dock {Dock}  grid r{GridRow}/c{GridColumn}  span {GridRowSpan}x{GridColumnSpan}",
-            $"margin {FormatThickness(Margin)}  padding {FormatThickness(Padding)}  offset [{VisualOffset.X},{VisualOffset.Y}]  dpi {DpiScale:0.##}"
-        ];
-
-        if (FixedBounds is Rectangle fixedBounds)
-            items.Add($"fixed {FormatRectangle(fixedBounds)}");
-
-        return items;
-    }
-
-    private List<string> GetDebugParentItems() {
-        List<string> items = [];
-
-        var current = this;
-        int depth = 0;
-        while (current != null && depth < DebugOverlay.MaxParentItems) {
-            items.Add($"{new string(' ', depth * 2)}{current.GetType().Name}#{current.Id} (L:{current.Layer} Z:{current.ZIndex})");
-            current = current.Parent;
-            depth++;
-        }
-
-        return items;
-    }
 
     private static Size AddMargin(Size size, Thickness margin, float dpi) {
         return new Size(
@@ -252,54 +187,5 @@ public abstract class UIElement : Visual, IDockable {
             : layoutRect.Bottom + (int)(fixedBounds.Y * dpi) - height;
 
         return new Rectangle(x, y, width, height);
-    }
-
-    private static SKRect ToSkRect(Rectangle rect) {
-        return new SKRect(rect.Left, rect.Top, rect.Right, rect.Bottom);
-    }
-
-    private static string FormatRectangle(Rectangle rect) {
-        return $"[{rect.X},{rect.Y},{rect.Width},{rect.Height}]";
-    }
-
-    private static string FormatThickness(Thickness thickness) {
-        return $"[{thickness.Left},{thickness.Top},{thickness.Right},{thickness.Bottom}]";
-    }
-
-    private static string TruncateTextToWidth(string text, SKFont font, float maxWidth) {
-        if (string.IsNullOrEmpty(text))
-            return text;
-
-        font.MeasureText(text, out SKRect tb);
-        if (tb.Width <= maxWidth)
-            return text;
-
-        const string ellipsis = "…";
-        int left = 0;
-        int right = text.Length;
-        string candidate;
-
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            candidate = string.Concat(text.AsSpan(0, Math.Max(0, mid)), ellipsis);
-            font.MeasureText(candidate, out SKRect truncatedBounds);
-            if (truncatedBounds.Width > maxWidth)
-                right = mid - 1;
-            else
-                left = mid + 1;
-        }
-
-        int length = Math.Max(0, left - 1);
-        candidate = string.Concat(text.AsSpan(0, Math.Min(length, text.Length)), ellipsis);
-
-        while (true) {
-            font.MeasureText(candidate, out SKRect fittedBounds);
-            if (fittedBounds.Width <= maxWidth || candidate.Length <= 1)
-                break;
-
-            candidate = string.Concat(candidate.AsSpan(0, candidate.Length - 2), ellipsis);
-        }
-
-        return candidate;
     }
 }

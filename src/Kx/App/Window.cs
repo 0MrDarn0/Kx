@@ -109,10 +109,8 @@ public abstract class Window : IDisposable {
         _logger?.Info($"{typeof(Window).FullName} OnInitialize()");
     }
 
-    protected virtual async void OnShown() {
-        _ctx.RequestRender();
-        _ctx.Events.NotifyAll(new WindowShownEvent());
-        _logger?.Info($"{typeof(Window).FullName} OnShown()");
+    protected virtual void OnShown() {
+        _ = OnShownAsyncWrapper();
     }
 
     protected virtual void OnClosed(bool userClosing) {
@@ -128,6 +126,18 @@ public abstract class Window : IDisposable {
     protected virtual void OnFocusChanged(FocusState state) {
         _ctx.Events.NotifyAll(new WindowFocusChangedEvent(state));
         _logger?.Info($"{typeof(Window).FullName} OnFocusChanged({state})");
+    }
+
+    private async Task OnShownAsyncWrapper() {
+        try {
+            await Task.Yield();
+            _ctx.RequestRender();
+            await Task.Run(() => _ctx.Events.NotifyAll(new WindowShownEvent())).ConfigureAwait(false);
+            _logger?.Info($"{typeof(Window).FullName} OnShown()");
+        }
+        catch (Exception ex) {
+            _logger?.Error("Unhandled exception in OnShown.", ex);
+        }
     }
 
     protected virtual void InitializeConfiguredControls() {

@@ -4,6 +4,7 @@
 using System.Drawing;
 
 using Kx.Sdk.Plugin;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
@@ -12,8 +13,6 @@ using Kx.Sdk.UI.Markup;
 using Kx.Sdk.UI.Payloads;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.UI.Themes;
-
-using SkiaSharp;
 
 namespace Kx.Plugin;
 
@@ -131,27 +130,24 @@ public sealed class Example : IPlugin {
             DesiredSize = new Size((int)(160 * dpi), (int)(40 * dpi));
         }
 
-        protected override void OnDraw(SKCanvas canvas) {
-            using var backgroundPaint = new SKPaint {
-                IsAntialias = true,
-                Color = new SKColor(72, 114, 255)
-            };
+        protected override void OnDraw(IKxCanvas canvas) {
+            float left = LayoutRect.Left;
+            float top = LayoutRect.Top;
+            float right = LayoutRect.Right;
+            float bottom = LayoutRect.Bottom;
+            float radius = 8 * DpiScale;
+            float fontSize = 14 * DpiScale;
 
-            using var textPaint = new SKPaint {
-                IsAntialias = true,
-                Color = SKColors.White
-            };
+            canvas.DrawRoundedRect(left, top, right, bottom, radius, radius, new KxColor(72, 114, 255));
 
-            using var font = new SKFont(SKTypeface.Default, 14 * DpiScale);
+            canvas.MeasureText(_text, fontSize, out float textWidth, out float textHeight);
 
-            var rect = new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
-            canvas.DrawRoundRect(rect, 8 * DpiScale, 8 * DpiScale, backgroundPaint);
+            float centerX = left + ((right - left) / 2f);
+            float centerY = top + ((bottom - top) / 2f);
+            float x = centerX - (textWidth / 2f);
+            float y = centerY + (textHeight / 2f);
 
-            font.MeasureText(_text, out var textBounds);
-            float x = rect.MidX - textBounds.MidX;
-            float y = rect.MidY - textBounds.MidY;
-
-            canvas.DrawText(_text, x, y, font, textPaint);
+            canvas.DrawText(_text, x, y, fontSize, KxColor.Parse("#FFFFFF"));
         }
     }
 }

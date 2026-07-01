@@ -2,6 +2,7 @@ using System.Drawing;
 
 using Kx.Core.Event;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.Elements;
@@ -11,8 +12,6 @@ using Kx.Sdk.WindowHost;
 using Kx.UI.Commands;
 using Kx.UI.Manager;
 using Kx.UI.State;
-
-using SkiaSharp;
 
 namespace Kx.Tests;
 
@@ -92,12 +91,12 @@ public sealed class UIElementManagerInteractionTests {
             base.Measure(dpi);
         }
 
-        protected override void OnDraw(SKCanvas canvas) {
+        protected override void OnDraw(IKxCanvas canvas) {
         }
     }
 
     private sealed class PassiveChild(IVisualContext context, string id) : UIElement(context, id) {
-        protected override void OnDraw(SKCanvas canvas) {
+        protected override void OnDraw(IKxCanvas canvas) {
         }
     }
 }

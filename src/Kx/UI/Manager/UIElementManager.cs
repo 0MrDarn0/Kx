@@ -3,6 +3,7 @@
 
 using Kx.Core.Extensions;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.VisualTree;
@@ -11,33 +12,107 @@ using SkiaSharp;
 
 namespace Kx.UI.Manager;
 
-public class UIElementManager : IUIElementManager {
+/// <summary>
+/// Manages the visual tree of UI elements, including layout, hit testing,
+/// focus, modal overlays, and input dispatch.
+/// </summary>
+public class UIElementManager : IUIElementManager, IDisposable {
+
+    // ---------------------------------------------------------------------
+    // Fields
+    // ---------------------------------------------------------------------
 
     private readonly List<IVisual> _elements = [];
     private readonly List<IVisual> _roots = [];
+    private readonly ReaderWriterLockSlim _lock = new();
+
     private IVisual? _hoveredElement;
     private IVisual? _capturedElement;
+    private bool _disposed;
 
+    private readonly Comparison<IVisual> _sortComparison = (a, b) => {
+        int layer = a.Layer.CompareTo(b.Layer);
+        return layer != 0
+            ? layer
+            : a.ZIndex.CompareTo(b.ZIndex);
+    };
+
+    // ---------------------------------------------------------------------
+    // Properties
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Gets all registered visuals (including roots and children).
+    /// </summary>
     public IEnumerable<IVisual> Elements => _elements;
+
+    /// <summary>
+    /// Gets all root visuals (top-level elements).
+    /// </summary>
     public IEnumerable<IVisual> Roots => _roots;
+
+    /// <summary>
+    /// Gets the currently hovered visual, if any.
+    /// </summary>
     public IVisual? HoveredElement => _hoveredElement;
 
-    public float DpiScale { get; private set; } = 1f;
+    /// <summary>
+    /// Gets the currently focused visual, if any.
+    /// </summary>
     public IVisual? FocusedElement { get; private set; }
+
+    /// <summary>
+    /// Gets the currently active modal visual, if any.
+    /// When set, only this visual receives hit testing and mouse input.
+    /// </summary>
     public IVisual? ModalElement { get; private set; }
 
+    /// <summary>
+    /// Gets the current DPI scale used for layout and rendering.
+    /// </summary>
+    public float DpiScale { get; private set; } = 1f;
+
+    // ---------------------------------------------------------------------
+    // Public API
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Returns a thread-safe snapshot of all registered visuals.
+    /// </summary>
+    public IReadOnlyList<IVisual> GetElementsSnapshot() {
+        _lock.EnterReadLock();
+        try {
+            return [.. _elements];
+        }
+        finally {
+            _lock.ExitReadLock();
+        }
+    }
+
+    /// <summary>
+    /// Adds a visual to the manager and, if applicable, to the root collection.
+    /// </summary>
     public void Add(IVisual el) {
         if (el == null)
             return;
 
-        _elements.Add(el);
+        _lock.EnterWriteLock();
+        try {
+            _elements.Add(el);
 
-        if (el is not UIElement { Parent: not null } && !_roots.Contains(el))
-            _roots.Add(el);
+            if (el is not UIElement { Parent: not null } && !_roots.Contains(el))
+                _roots.Add(el);
 
-        SortElements();
+            SortElements();
+        }
+        finally {
+            _lock.ExitWriteLock();
+        }
     }
 
+    /// <summary>
+    /// Tries to find a visual by its <see cref="IVisual.Id"/> in the visual tree.
+    /// </summary>
     public bool TryGet(string id, out IVisual? visual) {
         if (string.IsNullOrWhiteSpace(id)) {
             visual = null;
@@ -53,9 +128,13 @@ public class UIElementManager : IUIElementManager {
         return false;
     }
 
+    /// <summary>
+    /// Adds a visual as a root element, optionally attaching it to the element list.
+    /// </summary>
     public void AddRoot(IVisual root) {
         if (root == null)
             return;
+
         if (!_elements.Contains(root))
             _elements.Add(root);
 
@@ -68,6 +147,9 @@ public class UIElementManager : IUIElementManager {
         SortElements();
     }
 
+    /// <summary>
+    /// Removes a visual from the manager and disposes it.
+    /// </summary>
     public void Remove(IVisual el) {
         if (el == null)
             return;
@@ -81,28 +163,11 @@ public class UIElementManager : IUIElementManager {
         el.Dispose();
     }
 
-    private void SortElements() {
-        _elements.Sort((a, b) => {
-            int layer = a.Layer.CompareTo(b.Layer);
-            if (layer != 0)
-                return layer;
-            return a.ZIndex.CompareTo(b.ZIndex);
-        });
-
-        _roots.Sort((a, b) => {
-            int layer = a.Layer.CompareTo(b.Layer);
-            if (layer != 0)
-                return layer;
-            return a.ZIndex.CompareTo(b.ZIndex);
-        });
-    }
-
     /// <summary>
-    /// LayoutAll: arrangiert nur die Root-Elemente.
-    /// Der Aufrufer (Renderer) muss das Content-Rect und das Window-Rect übergeben.
-    /// - contentRect: Bereich innerhalb des Fensterrahmens (renderer.GetContentRect(...))
-    /// - windowRect: gesamtes Fenster (0,0..width,height) für Overlays/Popups
+    /// Arranges all root elements within the given content and window rectangles.
     /// </summary>
+    /// <param name="contentRect">Client area inside the window frame.</param>
+    /// <param name="windowRect">Full window area for overlays/popups.</param>
     public void LayoutAll(SKRect contentRect, SKRect windowRect) {
         var dpi = DpiScale;
 
@@ -115,20 +180,31 @@ public class UIElementManager : IUIElementManager {
         }
     }
 
+    /// <summary>
+    /// Brings the specified visual to the front by adjusting its Z-index.
+    /// </summary>
     public void BringToFront(IVisual el) {
         if (el == null)
             return;
+
         el.ZIndex = _elements.Count != 0 ? _elements.Max(x => x.ZIndex) + 1 : 0;
         SortElements();
     }
 
+    /// <summary>
+    /// Sends the specified visual to the back by adjusting its Z-index.
+    /// </summary>
     public void SendToBack(IVisual el) {
         if (el == null)
             return;
+
         el.ZIndex = _elements.Count != 0 ? _elements.Min(x => x.ZIndex) - 1 : 0;
         SortElements();
     }
 
+    /// <summary>
+    /// Sets keyboard focus to the specified visual.
+    /// </summary>
     public void SetFocus(IVisual el) {
         if (FocusedElement == el)
             return;
@@ -148,6 +224,9 @@ public class UIElementManager : IUIElementManager {
         el.OnFocusGained();
     }
 
+    /// <summary>
+    /// Clears the current keyboard focus, if any.
+    /// </summary>
     public void ClearFocus() {
         var previous = FocusedElement;
 
@@ -159,15 +238,24 @@ public class UIElementManager : IUIElementManager {
         FocusedElement = null;
     }
 
+    /// <summary>
+    /// Shows a visual as a modal element and brings it to front.
+    /// </summary>
     public void ShowModal(IVisual el) {
         ModalElement = el;
         BringToFront(el);
     }
 
+    /// <summary>
+    /// Closes the currently active modal element, if any.
+    /// </summary>
     public void CloseModal() {
         ModalElement = null;
     }
 
+    /// <summary>
+    /// Updates the DPI scale and notifies all visuals.
+    /// </summary>
     public void SetDpiScale(float scale) {
         DpiScale = scale;
 
@@ -178,13 +266,29 @@ public class UIElementManager : IUIElementManager {
                 el.OnDpiChanged(scale);
     }
 
-    public void Render(SKCanvas canvas) {
+    /// <summary>
+    /// Renders all visible visuals to the given canvas abstraction.
+    /// </summary>
+    public void Render(IKxCanvas canvas) {
         foreach (var el in _elements)
             if (el.Visible)
                 el.Draw(canvas);
     }
 
+    // ---------------------------------------------------------------------
+    // Hit testing
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Performs hit testing at the given point, respecting modal elements.
+    /// </summary>
     private IVisual? HitTest(Point p) {
+        if (ModalElement != null && ModalElement.Visible) {
+            if (ModalElement.Bounds.Contains(p))
+                return ModalElement;
+            return null;
+        }
+
         foreach (var root in EnumerateHitTestRoots()) {
             var hit = HitTestRecursive(root, p);
             if (hit is not null)
@@ -194,6 +298,9 @@ public class UIElementManager : IUIElementManager {
         return null;
     }
 
+    /// <summary>
+    /// Recursively searches for a visual with the given id starting at the specified root.
+    /// </summary>
     private static bool TryGetRecursive(IVisual visual, string id, out IVisual? match) {
         if (string.Equals(visual.Id, id, StringComparison.Ordinal)) {
             match = visual;
@@ -211,27 +318,30 @@ public class UIElementManager : IUIElementManager {
         return false;
     }
 
+    /// <summary>
+    /// Recursively performs hit testing within the visual tree.
+    /// Children are tested from top to bottom (Z-order).
+    /// </summary>
     private static IVisual? HitTestRecursive(IVisual el, Point p) {
         if (!el.Visible)
             return null;
 
         if (el is IVisualContainer container && container.Children.Count != 0) {
-            var children = container.Children
-                .OrderByDescending(c => c.Layer)
-                .ThenByDescending(c => c.ZIndex);
-
-            foreach (var child in children) {
+            var children = container.Children;
+            for (var i = children.Count - 1; i >= 0; i--) {
+                var child = children[i];
                 var hit = HitTestRecursive(child, p);
                 if (hit is not null)
                     return hit;
             }
         }
 
-        return el.Bounds.Contains(p)
-            ? el
-            : null;
+        return el.Bounds.Contains(p) ? el : null;
     }
 
+    /// <summary>
+    /// Tries to dispatch an input action to the visual under the given point.
+    /// </summary>
     private bool TryDispatchHit(Point p, Func<IVisual, bool> action, out IVisual? handledElement) {
         foreach (var root in EnumerateHitTestRoots()) {
             if (TryDispatchHitRecursive(root, p, action, out handledElement))
@@ -242,55 +352,59 @@ public class UIElementManager : IUIElementManager {
         return false;
     }
 
+    /// <summary>
+    /// Recursively dispatches an input action to the first visual that handles it.
+    /// </summary>
     private static bool TryDispatchHitRecursive(IVisual el, Point p, Func<IVisual, bool> action, out IVisual? handledElement) {
-        if (!el.Visible) {
-            handledElement = null;
+        handledElement = null;
+
+        if (!el.Visible)
             return false;
-        }
 
         if (el is IVisualContainer container && container.Children.Count != 0) {
-            var children = container.Children
-                .OrderByDescending(c => c.Layer)
-                .ThenByDescending(c => c.ZIndex);
-
-            foreach (var child in children) {
+            var children = container.Children;
+            for (var i = children.Count - 1; i >= 0; i--) {
+                var child = children[i];
                 if (TryDispatchHitRecursive(child, p, action, out handledElement))
                     return true;
             }
         }
 
-        if (!el.Bounds.Contains(p)) {
-            handledElement = null;
+        if (!el.Bounds.Contains(p))
             return false;
-        }
 
         try {
-            if (!action(el)) {
-                handledElement = null;
+            if (!action(el))
                 return false;
-            }
 
             handledElement = el;
             return true;
         }
         catch {
-            handledElement = null;
             return false;
         }
-
     }
 
+    /// <summary>
+    /// Enumerates root visuals in hit-test order (topmost first).
+    /// </summary>
     private IEnumerable<IVisual> EnumerateHitTestRoots() {
         return _roots
             .OrderByDescending(x => x.Layer)
             .ThenByDescending(x => x.ZIndex);
     }
 
+    /// <summary>
+    /// Clears a tracked element reference if it matches the specified element.
+    /// </summary>
     private static void ClearTrackedElement(ref IVisual? trackedElement, IVisual element) {
         if (ReferenceEquals(trackedElement, element))
             trackedElement = null;
     }
 
+    /// <summary>
+    /// Updates the hovered element based on the current hit test result.
+    /// </summary>
     private bool UpdateHoveredElement(Point p, IVisual? hit) {
         bool handled = false;
 
@@ -304,7 +418,13 @@ public class UIElementManager : IUIElementManager {
         return handled;
     }
 
+    // ---------------------------------------------------------------------
+    // Mouse input
+    // ---------------------------------------------------------------------
 
+    /// <summary>
+    /// Handles mouse down at the given point, including capture logic.
+    /// </summary>
     public bool MouseDown(Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseDown(p);
@@ -316,6 +436,9 @@ public class UIElementManager : IUIElementManager {
         return handled;
     }
 
+    /// <summary>
+    /// Handles mouse up at the given point, releasing capture if set.
+    /// </summary>
     public bool MouseUp(Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseUp(p);
@@ -329,6 +452,9 @@ public class UIElementManager : IUIElementManager {
         return TryDispatchHit(p, el => el.OnMouseUp(p), out _);
     }
 
+    /// <summary>
+    /// Handles mouse move at the given point, including hover and capture behavior.
+    /// </summary>
     public bool MouseMove(Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseMove(p);
@@ -342,12 +468,19 @@ public class UIElementManager : IUIElementManager {
         return UpdateHoveredElement(p, HitTest(p));
     }
 
+    /// <summary>
+    /// Handles mouse wheel input at the given point.
+    /// </summary>
     public bool MouseWheel(int delta, Point p) {
         if (ModalElement != null)
             return ModalElement.OnMouseWheel(delta, p);
 
         return TryDispatchHit(p, el => el.OnMouseWheel(delta, p), out _);
     }
+
+    // ---------------------------------------------------------------------
+    // Keyboard / text input
+    // ---------------------------------------------------------------------
 
     public bool KeyDown(KeyCode key) => FocusedElement?.OnKeyDown(key) ?? false;
     public bool KeyUp(KeyCode key) => FocusedElement?.OnKeyUp(key) ?? false;
@@ -359,6 +492,10 @@ public class UIElementManager : IUIElementManager {
     public bool Redo() => FocusedElement?.OnRedo() ?? false;
     public bool DeleteWordLeft() => FocusedElement?.DeleteWordLeft() ?? false;
     public bool DeleteWordRight() => FocusedElement?.DeleteWordRight() ?? false;
+
+    /// <summary>
+    /// Attempts to paste text from the system clipboard into the focused element.
+    /// </summary>
     public bool PasteFromClipboard() {
         try {
             if (!System.Windows.Forms.Clipboard.ContainsText())
@@ -371,11 +508,56 @@ public class UIElementManager : IUIElementManager {
         }
     }
 
-    public void Dispose() {
-        foreach (var el in _elements)
-            el.Dispose();
+    // ---------------------------------------------------------------------
+    // Disposal
+    // ---------------------------------------------------------------------
 
-        _elements.Clear();
-        _roots.Clear();
+    /// <summary>
+    /// Disposes manager and releases internal resources.
+    /// </summary>
+    public void Dispose() {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Protected dispose implementation for derived types.
+    /// </summary>
+    /// <param name="disposing">True when called from Dispose(), false from finalizer.</param>
+    protected virtual void Dispose(bool disposing) {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+
+        if (disposing) {
+            _lock.EnterWriteLock();
+            try {
+                foreach (var el in _elements)
+                    el.Dispose();
+
+                _elements.Clear();
+                _roots.Clear();
+            }
+            finally {
+                _lock.ExitWriteLock();
+                _lock.Dispose();
+            }
+        }
+
+        // No unmanaged resources here; if added later, free them when disposing==false
+    }
+
+
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Sorts elements and roots by layer and Z-index.
+    /// </summary>
+    private void SortElements() {
+        _elements.Sort(_sortComparison);
+        _roots.Sort(_sortComparison);
     }
 }

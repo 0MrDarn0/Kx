@@ -4,9 +4,8 @@
 using System.Drawing;
 
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Binding;
-
-using SkiaSharp;
 
 namespace Kx.Sdk.UI.VisualTree;
 
@@ -56,7 +55,7 @@ public abstract class Visual : IVisual, IDisposable {
     public virtual bool DeleteWordRight() => false;
     public virtual void Measure(float dpi) { }
     public virtual void Arrange(Rectangle rect, float dpi) { }
-    public virtual void Draw(SKCanvas canvas) { }
+    public virtual void Draw(IKxCanvas canvas) { }
     public virtual bool OnMouseMove(Point p) => false;
     public virtual bool OnMouseDown(Point p) => false;
     public virtual bool OnMouseUp(Point p) => false;

@@ -7,9 +7,11 @@ using Kx.Sdk.UI.Binding;
 using Kx.Sdk.UI.Elements;
 using Kx.Sdk.UI.Layout;
 using Kx.Sdk.UI.Markup;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.UI.VisualTree;
 using Kx.App;
+using Kx.Core.Extensions;
 using Kx.UI.State;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Layout;
@@ -163,7 +165,7 @@ public static class ControlFactory {
             label.Text.Value = config.Text;
 
         if (!string.IsNullOrWhiteSpace(config.Color))
-            label.Color.Value = SKColor.Parse(config.Color);
+            label.ForegroundColor = KxColor.Parse(config.Color);
 
         if (config.Font is null)
             return;
@@ -177,7 +179,7 @@ public static class ControlFactory {
             button.Text = config.Text;
 
         if (!string.IsNullOrWhiteSpace(config.Color))
-            button.ForegroundColor = SKColor.Parse(config.Color);
+            button.ForegroundColor = KxColor.Parse(config.Color);
 
         if (config.Font is not null) {
             button.FontFamily = config.Font.Name;
@@ -204,7 +206,7 @@ public static class ControlFactory {
             textBox.Text = config.Text;
 
         if (!string.IsNullOrWhiteSpace(config.Color))
-            textBox.ForegroundColor = SKColor.Parse(config.Color);
+            textBox.ForegroundColor = KxColor.Parse(config.Color);
 
         if (config.Font is not null) {
             textBox.FontFamily = config.Font.Name;
@@ -217,13 +219,13 @@ public static class ControlFactory {
         }
 
         if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
-            textBox.BackgroundColor = backgroundColor;
+            textBox.BackgroundColor = backgroundColor.ToKxColor();
 
         if (TryGetColorProperty(config, "borderColor", out var borderColor))
-            textBox.BorderColor = borderColor;
+            textBox.BorderColor = borderColor.ToKxColor();
 
         if (TryGetColorProperty(config, "scrollBarColor", out var scrollBarColor))
-            textBox.ScrollBarColor = scrollBarColor;
+            textBox.ScrollBarColor = scrollBarColor.ToKxColor();
 
         if (TryGetFloatProperty(config, "borderThickness", out var borderThickness))
             textBox.BorderThickness = borderThickness;
@@ -238,7 +240,7 @@ public static class ControlFactory {
             textBox.GlowEnabled = glowEnabled;
 
         if (TryGetColorProperty(config, "glowColor", out var glowColor))
-            textBox.GlowColor = glowColor;
+            textBox.GlowColor = glowColor.ToKxColor();
 
         if (TryGetFloatProperty(config, "glowRadius", out var glowRadius))
             textBox.GlowRadius = glowRadius;
@@ -246,7 +248,7 @@ public static class ControlFactory {
 
     private static void ApplyListBoxProperties(Kx.UI.Elements.ListBox listBox, ControlConfig config) {
         if (!string.IsNullOrWhiteSpace(config.Color))
-            listBox.ForegroundColor = SKColor.Parse(config.Color);
+            listBox.ForegroundColor = KxColor.Parse(config.Color);
 
         if (config.Font is not null) {
             listBox.FontFamily = config.Font.Name;
@@ -259,25 +261,25 @@ public static class ControlFactory {
         }
 
         if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
-            listBox.BackgroundColor = backgroundColor;
+            listBox.BackgroundColor = backgroundColor.ToKxColor();
 
         if (TryGetColorProperty(config, "borderColor", out var borderColor))
-            listBox.BorderColor = borderColor;
+            listBox.BorderColor = borderColor.ToKxColor();
 
         if (TryGetColorProperty(config, "scrollBarColor", out var scrollBarColor))
-            listBox.ScrollBarColor = scrollBarColor;
+            listBox.ScrollBarColor = scrollBarColor.ToKxColor();
 
         if (TryGetColorProperty(config, "selectedItemColor", out var selectedItemColor))
-            listBox.SelectedItemColor = selectedItemColor;
+            listBox.SelectedItemColor = selectedItemColor.ToKxColor();
 
         if (TryGetColorProperty(config, "selectedItemBorderColor", out var selectedItemBorderColor))
-            listBox.SelectedItemBorderColor = selectedItemBorderColor;
+            listBox.SelectedItemBorderColor = selectedItemBorderColor.ToKxColor();
 
         if (TryGetColorProperty(config, "hoveredItemColor", out var hoveredItemColor))
-            listBox.HoveredItemColor = hoveredItemColor;
+            listBox.HoveredItemColor = hoveredItemColor.ToKxColor();
 
         if (TryGetColorProperty(config, "separatorColor", out var separatorColor))
-            listBox.SeparatorColor = separatorColor;
+            listBox.SeparatorColor = separatorColor.ToKxColor();
 
         if (TryGetFloatProperty(config, "borderThickness", out var borderThickness))
             listBox.BorderThickness = borderThickness;
@@ -286,7 +288,7 @@ public static class ControlFactory {
             listBox.GlowEnabled = glowEnabled;
 
         if (TryGetColorProperty(config, "glowColor", out var glowColor))
-            listBox.GlowColor = glowColor;
+            listBox.GlowColor = glowColor.ToKxColor();
 
         if (TryGetFloatProperty(config, "glowRadius", out var glowRadius))
             listBox.GlowRadius = glowRadius;
@@ -361,16 +363,16 @@ public static class ControlFactory {
             serverStatus.IconFontSize = iconFontSize;
 
         if (TryGetColorProperty(config, "checkingColor", out var checkingColor))
-            serverStatus.CheckingColor = checkingColor;
+            serverStatus.CheckingColor = checkingColor.ToKxColor();
 
         if (TryGetColorProperty(config, "onlineColor", out var onlineColor))
-            serverStatus.OnlineColor = onlineColor;
+            serverStatus.OnlineColor = onlineColor.ToKxColor();
 
         if (TryGetColorProperty(config, "offlineColor", out var offlineColor))
-            serverStatus.OfflineColor = offlineColor;
+            serverStatus.OfflineColor = offlineColor.ToKxColor();
 
         if (TryGetColorProperty(config, "timeoutColor", out var timeoutColor))
-            serverStatus.TimeoutColor = timeoutColor;
+            serverStatus.TimeoutColor = timeoutColor.ToKxColor();
 
         serverStatus.CheckingImage = GetProperty(config, "checkingImage");
         serverStatus.OnlineImage = GetProperty(config, "onlineImage");
@@ -380,13 +382,13 @@ public static class ControlFactory {
 
     private static void ApplyProgressBarProperties(Kx.UI.Elements.ProgressBar progressBar, ControlConfig config) {
         if (TryGetColorProperty(config, "fillColor", out var fillColor))
-            progressBar.FillColor = fillColor;
+            progressBar.FillColor = fillColor.ToKxColor();
 
         if (TryGetColorProperty(config, "backgroundColor", out var backgroundColor))
-            progressBar.BackgroundColor = backgroundColor;
+            progressBar.BackgroundColor = backgroundColor.ToKxColor();
 
         if (TryGetColorProperty(config, "borderColor", out var borderColor))
-            progressBar.BorderColor = borderColor;
+            progressBar.BorderColor = borderColor.ToKxColor();
 
         if (TryGetFloatProperty(config, "borderThickness", out var borderThickness))
             progressBar.BorderThickness = borderThickness;
@@ -415,7 +417,7 @@ public static class ControlFactory {
 
     private static void ApplyGridSplitterProperties(GridSplitter gridSplitter, ControlConfig config) {
         if (!string.IsNullOrWhiteSpace(config.Color))
-            gridSplitter.TrackColor = SKColor.Parse(config.Color);
+            gridSplitter.TrackColor = KxColor.Parse(config.Color);
 
         if (config.Properties.TryGetValue("orientation", out var orientation) &&
             Enum.TryParse<Kx.UI.Layout.Orientation>(orientation, ignoreCase: true, out var parsedOrientation)) {
@@ -432,13 +434,13 @@ public static class ControlFactory {
             gridSplitter.TargetRow = targetRow;
 
         if (TryGetColorProperty(config, "hoverColor", out var hoverColor))
-            gridSplitter.HoverTrackColor = hoverColor;
+            gridSplitter.HoverTrackColor = hoverColor.ToKxColor();
 
         if (TryGetColorProperty(config, "activeColor", out var activeColor))
-            gridSplitter.ActiveTrackColor = activeColor;
+            gridSplitter.ActiveTrackColor = activeColor.ToKxColor();
 
         if (TryGetColorProperty(config, "gripColor", out var gripColor))
-            gridSplitter.GripColor = gripColor;
+            gridSplitter.GripColor = gripColor.ToKxColor();
     }
 
     private static SKTypeface CreateTypeface(IVisualContext visualContext, FontConfig font) {
@@ -641,7 +643,7 @@ public static class ControlFactory {
 
         BindState(label, path, value => {
             if (UiStateValueConverter.TryGetColor(value, out var color))
-                label.Color.Value = color;
+                label.ForegroundColor = color.ToKxColor();
         });
     }
 

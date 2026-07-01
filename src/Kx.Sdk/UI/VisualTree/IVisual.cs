@@ -4,8 +4,7 @@
 using System.Drawing;
 
 using Kx.Sdk.Events;
-
-using SkiaSharp;
+using Kx.Sdk.Rendering;
 
 namespace Kx.Sdk.UI.VisualTree;
 
@@ -23,7 +22,7 @@ public interface IVisual : IDisposable {
     void OnFocusLost();
     bool OnKeyDown(KeyCode key);
     bool OnKeyUp(KeyCode key);
-    void Draw(SKCanvas canvas);
+    void Draw(IKxCanvas canvas);
     bool OnMouseMove(Point p);
     bool OnMouseDown(Point p);
     bool OnMouseUp(Point p);

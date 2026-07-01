@@ -1,8 +1,12 @@
-using System.Drawing;
+// Copyright (c) 2026 Christian Schnuck
+// Licensed under the GPL-3.0 (see LICENSE.txt)
+
 using System.Text;
 
 using Kx.Core.Event;
+using Kx.Core.Extensions;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.State;
@@ -16,6 +20,9 @@ using SkiaSharp;
 namespace Kx.Tests;
 
 public sealed class TextBoxInteractionTests {
+    private static readonly KxColor _backgroundColor = new(0, 0, 0);
+    private static readonly KxColor _scrollBarColor = new(255, 0, 255);
+
     [Fact]
     public void WhenScrollMarkerIsDraggedOutsideTextBoxThenDragStillUpdatesMarkerPosition() {
         var context = new TestVisualContext();
@@ -59,9 +66,9 @@ public sealed class TextBoxInteractionTests {
 
     private static Kx.UI.Elements.TextBox CreateScrollableTextBox(TestVisualContext context) {
         var textBox = new Kx.UI.Elements.TextBox(context, "textBox", CreateLongText()) {
-            BackgroundColor = SKColors.Black,
+            BackgroundColor = _backgroundColor,
             BorderThickness = 0f,
-            ScrollBarColor = SKColors.Magenta,
+            ScrollBarColor = _scrollBarColor,
             FixedBounds = new Rectangle(0, 0, 100, 80)
         };
 
@@ -88,7 +95,7 @@ public sealed class TextBoxInteractionTests {
         using var surface = SKSurface.Create(new SKImageInfo(100, 80), bitmap.GetPixels(), bitmap.RowBytes);
         var canvas = surface.Canvas;
         canvas.Clear(SKColors.Transparent);
-        textBox.Draw(canvas);
+        textBox.Draw(new SkiaTestCanvas(canvas));
         canvas.Flush();
     }
 
@@ -147,6 +154,98 @@ public sealed class TextBoxInteractionTests {
         public void Invoke(Action action) {
             ArgumentNullException.ThrowIfNull(action);
             action();
+        }
+    }
+
+    private sealed class SkiaTestCanvas(SKCanvas canvas) : IKxCanvas {
+        private readonly SKCanvas _canvas = canvas;
+
+        public void DrawBitmap(object bitmap, float left, float top, float right, float bottom) {
+            ArgumentNullException.ThrowIfNull(bitmap);
+
+            if (bitmap is not SKBitmap skBitmap)
+                throw new ArgumentException("Unsupported bitmap backend object.", nameof(bitmap));
+
+            _canvas.DrawBitmap(skBitmap, new SKRect(left, top, right, bottom));
+        }
+
+        public void DrawRect(float left, float top, float right, float bottom, KxColor color) {
+            using var paint = new SKPaint {
+                IsAntialias = true,
+                Color = color.ToSKColor()
+            };
+
+            _canvas.DrawRect(new SKRect(left, top, right, bottom), paint);
+        }
+
+        public void DrawRectStroke(float left, float top, float right, float bottom, KxColor color, float thickness = 1f) {
+            using var paint = new SKPaint {
+                IsAntialias = true,
+                Color = color.ToSKColor(),
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = Math.Max(0f, thickness)
+            };
+
+            _canvas.DrawRect(new SKRect(left, top, right, bottom), paint);
+        }
+
+        public void DrawLine(float x0, float y0, float x1, float y1, KxColor color, float thickness = 1f) {
+            using var paint = new SKPaint {
+                IsAntialias = true,
+                Color = color.ToSKColor(),
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = Math.Max(0f, thickness)
+            };
+
+            _canvas.DrawLine(x0, y0, x1, y1, paint);
+        }
+
+        public void DrawRoundedRect(float left, float top, float right, float bottom, float radiusX, float radiusY, KxColor color) {
+            using var paint = new SKPaint {
+                IsAntialias = true,
+                Color = color.ToSKColor()
+            };
+
+            _canvas.DrawRoundRect(new SKRect(left, top, right, bottom), radiusX, radiusY, paint);
+        }
+
+        public void DrawText(string text, float x, float y, float fontSize, KxColor color, string? fontFamily = null, bool bold = false, bool italic = false, object? font = null) {
+            using var paint = new SKPaint {
+                IsAntialias = true,
+                Color = color.ToSKColor()
+            };
+
+            if (font is SKFont skFont) {
+                _canvas.DrawText(text, x, y, skFont, paint);
+                return;
+            }
+
+            var weight = bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+            var slant = italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+            using var typeface = SKTypeface.FromFamilyName(string.IsNullOrWhiteSpace(fontFamily) ? "Segoe UI" : fontFamily, weight, SKFontStyleWidth.Normal, slant) ?? SKTypeface.Default;
+            using var resolvedFont = new SKFont(typeface, fontSize);
+
+            _canvas.DrawText(text, x, y, resolvedFont, paint);
+        }
+
+        public void MeasureText(string text, float fontSize, out float width, out float height, string? fontFamily = null, bool bold = false, bool italic = false) {
+            var weight = bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+            var slant = italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+            using var typeface = SKTypeface.FromFamilyName(string.IsNullOrWhiteSpace(fontFamily) ? "Segoe UI" : fontFamily, weight, SKFontStyleWidth.Normal, slant) ?? SKTypeface.Default;
+            using var font = new SKFont(typeface, fontSize);
+            font.MeasureText(text, out var bounds);
+            width = bounds.Width;
+            height = bounds.Height;
+        }
+
+        public bool TryGetBackend<TBackend>(out TBackend? backend) where TBackend : class {
+            if (_canvas is TBackend typedCanvas) {
+                backend = typedCanvas;
+                return true;
+            }
+
+            backend = null;
+            return false;
         }
     }
 }

@@ -1,16 +1,16 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
+using Kx.Core.Configuration;
+using Kx.Core.Event;
+using Kx.Core.Localization;
+using Kx.Core.Pipeline;
 using Kx.Sdk.Events;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.State;
 using Kx.Sdk.WindowHost;
-using Kx.Core.Configuration;
-using Kx.Core.Event;
-using Kx.Core.Localization;
-using Kx.Core.Pipeline;
 using Kx.UI.Manager;
 using Kx.UI.Themes;
 using Kx.Utility;
@@ -53,7 +53,6 @@ public sealed class WindowContext : IVisualContext, IDisposable {
         UIElementManager = new UIElementManager();
         Events = eventManager ?? new EventManager();
         LanguageLoader.Load(Config.Ui.Language);
-        UIContextProvider.Initialize(this);
     }
 
     public void SetFrame(FrameResource frame) {
@@ -128,6 +127,5 @@ public sealed class WindowContext : IVisualContext, IDisposable {
         UIElementManager.Dispose();
         (Frame as IDisposable)?.Dispose();
         Resources.Dispose();
-        UIContextProvider.Clear();
     }
 }

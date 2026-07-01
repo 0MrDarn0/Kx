@@ -1,4 +1,5 @@
 using Kx.Sdk.UI.Markup;
+using Kx.Sdk.Rendering;
 using Kx.UI.Actions;
 using Kx.UI.Elements.Panel;
 using Kx.UI.Markup;
@@ -167,8 +168,8 @@ public sealed class ControlFactoryBindingTests {
 
         var listBox = Assert.IsType<Kx.UI.Elements.ListBox>(control);
         Assert.True(listBox.GlowEnabled);
-        Assert.Equal(SKColor.Parse("#7C6E4B"), listBox.ScrollBarColor);
-        Assert.Equal(SKColor.Parse("#E8D9B4"), listBox.SelectedItemBorderColor);
+        Assert.Equal(KxColor.Parse("#7C6E4B"), listBox.ScrollBarColor);
+        Assert.Equal(KxColor.Parse("#E8D9B4"), listBox.SelectedItemBorderColor);
     }
 
     [Fact]
@@ -229,7 +230,7 @@ public sealed class ControlFactoryBindingTests {
         Assert.False(serverStatus.MonitoringEnabled);
         Assert.False(serverStatus.ShowIndicator);
         Assert.Equal(4f, serverStatus.IndicatorSpacing);
-        Assert.Equal(SKColor.Parse("#00FF00"), serverStatus.OnlineColor);
+        Assert.Equal(KxColor.Parse("#00FF00"), serverStatus.OnlineColor);
         Assert.Equal("!", serverStatus.TimeoutIndicator);
         Assert.True(serverStatus.Bold);
     }
@@ -273,7 +274,7 @@ public sealed class ControlFactoryBindingTests {
         });
 
         var button = Assert.IsType<Kx.UI.Elements.Button>(control);
-        Assert.Equal(SKColor.Parse("#E8D9B4"), button.ForegroundColor);
+        Assert.Equal(KxColor.Parse("#E8D9B4"), button.ForegroundColor);
     }
 
     [Fact]
@@ -321,8 +322,8 @@ public sealed class ControlFactoryBindingTests {
         Assert.Equal(Kx.UI.Layout.Orientation.Horizontal, splitter.Orientation);
         Assert.Equal(36f, splitter.MinSegmentSize);
         Assert.Equal(1, splitter.TargetRow);
-        Assert.Equal(SKColor.Parse("#7C6E4B"), splitter.TrackColor);
-        Assert.Equal(SKColor.Parse("#E8D9B4"), splitter.ActiveTrackColor);
+        Assert.Equal(KxColor.Parse("#7C6E4B"), splitter.TrackColor);
+        Assert.Equal(KxColor.Parse("#E8D9B4"), splitter.ActiveTrackColor);
     }
 
     private static ControlRegistry CreateControlRegistry() {

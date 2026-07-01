@@ -50,4 +50,8 @@
 	</ItemGroup>
 
 	<Import Project="..\..\build\LanguageKeyGeneration.targets" />
+
+	<ItemGroup>
+	  <InternalsVisibleTo Include="Kx.Tests" />
+	</ItemGroup>
 </Project>

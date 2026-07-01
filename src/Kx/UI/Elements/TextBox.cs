@@ -2,6 +2,8 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Sdk.Events;
+using Kx.Core.Extensions;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -19,6 +21,11 @@ public sealed class TextBox : UIElement {
     private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = SKColors.Gold, Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
     private readonly SKPaint _scrollBarPaint = new() { IsAntialias = true, Color = new SKColor(124, 110, 75, 160) };
     private readonly SKPaint _glowPaint = new() { IsAntialias = true, Color = new SKColor(255, 255, 255, 180), Style = SKPaintStyle.Stroke, StrokeWidth = 2f };
+    private KxColor _foregroundColor = new(255, 255, 255);
+    private KxColor _backgroundColor = new(16, 16, 16);
+    private KxColor _borderColor = new(255, 215, 0);
+    private KxColor _scrollBarColor = new(124, 110, 75, 160);
+    private KxColor _glowColor = new(255, 255, 255, 180);
 
     private string _text;
     private string _fontFamily = "Segoe UI";
@@ -166,26 +173,29 @@ public sealed class TextBox : UIElement {
         Invalidate();
     }
 
-    public SKColor ForegroundColor {
-        get => _textPaint.Color;
+    public KxColor ForegroundColor {
+        get => _foregroundColor;
         set {
-            _textPaint.Color = value;
+            _foregroundColor = value;
+            _textPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor BackgroundColor {
-        get => _backgroundPaint.Color;
+    public KxColor BackgroundColor {
+        get => _backgroundColor;
         set {
-            _backgroundPaint.Color = value;
+            _backgroundColor = value;
+            _backgroundPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
 
-    public SKColor BorderColor {
-        get => _borderPaint.Color;
+    public KxColor BorderColor {
+        get => _borderColor;
         set {
-            _borderPaint.Color = value;
+            _borderColor = value;
+            _borderPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -200,10 +210,11 @@ public sealed class TextBox : UIElement {
         }
     }
 
-    public SKColor ScrollBarColor {
-        get => _scrollBarPaint.Color;
+    public KxColor ScrollBarColor {
+        get => _scrollBarColor;
         set {
-            _scrollBarPaint.Color = value;
+            _scrollBarColor = value;
+            _scrollBarPaint.Color = value.ToSKColor();
             Invalidate();
         }
     }
@@ -213,12 +224,45 @@ public sealed class TextBox : UIElement {
     public override bool CanFocus => true;
     public bool GlowEnabled { get; set; }
     public float GlowRadius { get; set; } = 6f;
-    public SKColor GlowColor {
-        get => _glowPaint.Color;
+    public KxColor GlowColor {
+        get => _glowColor;
         set {
-            _glowPaint.Color = value;
+            _glowColor = value;
+            _glowPaint.Color = value.ToSKColor();
             Invalidate();
         }
+    }
+
+    /// <summary>
+    /// Assigns the foreground color and returns the same text box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same text box instance.</returns>
+    public TextBox WithForeground(KxColor color) {
+        ForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the background color and returns the same text box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same text box instance.</returns>
+    public TextBox WithBackground(KxColor color) {
+        BackgroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns border color and thickness and returns the same text box for fluent configuration.
+    /// </summary>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same text box instance.</returns>
+    public TextBox WithBorder(KxColor color, float thickness) {
+        BorderColor = color;
+        BorderThickness = thickness;
+        return this;
     }
 
     public override void OnDpiChanged(float scale) {
@@ -237,24 +281,28 @@ public sealed class TextBox : UIElement {
         DesiredSize = new Size((int)(320 * dpi), (int)(180 * dpi));
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
+        var skCanvas = canvas.As<SKCanvas>();
+        if (skCanvas is null)
+            return;
+
         if (_font is null || !Visible)
             return;
 
         Rectangle rect = LayoutRect;
         Rectangle contentRect = ContentRect;
 
-        canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
+        skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _backgroundPaint);
 
         if (GlowEnabled && BorderThickness > 0f) {
             using var glowImageFilter = SKImageFilter.CreateBlur(GlowRadius, GlowRadius);
             _glowPaint.ImageFilter = glowImageFilter;
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _glowPaint);
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _glowPaint);
             _glowPaint.ImageFilter = null;
         }
 
         if (BorderThickness > 0f)
-            canvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
+            skCanvas.DrawRect(rect.Left, rect.Top, rect.Width, rect.Height, _borderPaint);
 
         float availableTextWidth = Math.Max(8f, contentRect.Width - ScrollBarWidth - 4f);
         var wrappedWithStarts = GetWrappedLinesWithStartIndices(availableTextWidth);
@@ -264,12 +312,12 @@ public sealed class TextBox : UIElement {
         int maxScroll = Math.Max(0, totalTextHeight - contentRect.Height);
         ClampScrollOffset(maxScroll);
 
-        canvas.Save();
-        canvas.ClipRect(new SKRect(contentRect.Left, contentRect.Top, contentRect.Right - ScrollBarWidth, contentRect.Bottom));
+        skCanvas.Save();
+        skCanvas.ClipRect(new SKRect(contentRect.Left, contentRect.Top, contentRect.Right - ScrollBarWidth, contentRect.Bottom));
 
         float baseline = contentRect.Top - _font.Metrics.Ascent - _scrollOffset;
         foreach (var wl in wrappedWithStarts) {
-            canvas.DrawText(wl.line, contentRect.Left, baseline, _font, _textPaint);
+            skCanvas.DrawText(wl.line, contentRect.Left, baseline, _font, _textPaint);
             baseline += lineHeight;
         }
 
@@ -312,7 +360,7 @@ public sealed class TextBox : UIElement {
                             float selTop = baselineForLine + metrics.Ascent;
                             float selHeight = (metrics.Descent - metrics.Ascent);
                             var selRect = new SKRect(leftX, selTop, leftX + midW, selTop + selHeight);
-                            canvas.DrawRect(selRect, _selectionPaint);
+                            skCanvas.DrawRect(selRect, _selectionPaint);
                         }
                     }
                 }
@@ -322,18 +370,18 @@ public sealed class TextBox : UIElement {
                     using var invertPaint = new SKPaint { Style = SKPaintStyle.Fill, IsAntialias = false };
                     invertPaint.BlendMode = SKBlendMode.Difference;
                     invertPaint.Color = new SKColor(255, 255, 255);
-                    canvas.DrawRect(caretRect, invertPaint);
+                    skCanvas.DrawRect(caretRect, invertPaint);
                 }
                 else {
                     using var caretPaint = new SKPaint { Color = _textPaint.Color, StrokeWidth = Math.Max(_caretWidth, 1f * DpiScale), IsAntialias = true };
-                    canvas.DrawLine(caretX, caretTop, caretX, caretBottom, caretPaint);
+                    skCanvas.DrawLine(caretX, caretTop, caretX, caretBottom, caretPaint);
                 }
             }
         }
 
-        canvas.Restore();
+        skCanvas.Restore();
 
-        DrawScrollBar(canvas, contentRect, totalTextHeight, maxScroll);
+        DrawScrollBar(skCanvas, contentRect, totalTextHeight, maxScroll);
     }
 
     public override bool OnMouseDown(Point point) {

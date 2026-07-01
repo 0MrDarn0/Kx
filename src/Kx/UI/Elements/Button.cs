@@ -3,6 +3,7 @@
 
 using Kx.Core.Extensions;
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 
@@ -17,13 +18,14 @@ public class Button : UIElement {
     private bool _bold;
     private bool _italic;
     private bool _isEnabled = true;
-    private SKColor _foregroundColor = new(0, 0, 0, 255);
-    private SKColor _backgroundColor = new(245, 245, 245, 255);
-    private SKColor _hoverBackgroundColor = new(220, 220, 220, 255);
-    private SKColor _pressedBackgroundColor = new(200, 200, 200, 255);
-    private SKColor _disabledBackgroundColor = new(240, 240, 240, 255);
-    private SKColor _disabledForegroundColor = new(160, 160, 160, 255);
-    private SKColor _borderColor = new(180, 180, 180, 255);
+    private KxColor _foregroundColor = new(0, 0, 0, 255);
+    private KxColor _backgroundColor = new(245, 245, 245, 255);
+    private KxColor _hoverBackgroundColor = new(220, 220, 220, 255);
+    private KxColor _pressedBackgroundColor = new(200, 200, 200, 255);
+    private KxColor _disabledBackgroundColor = new(240, 240, 240, 255);
+    private KxColor _disabledForegroundColor = new(160, 160, 160, 255);
+    private KxColor _borderColor = new(180, 180, 180, 255);
+    private float _borderThickness = 1f;
 
     public string Text {
         get => _text;
@@ -86,7 +88,7 @@ public class Button : UIElement {
 
     public override bool CanFocus => IsEnabled;
 
-    public SKColor ForegroundColor {
+    public KxColor ForegroundColor {
         get => _foregroundColor;
         set {
             _foregroundColor = value;
@@ -94,7 +96,7 @@ public class Button : UIElement {
         }
     }
 
-    public SKColor BackgroundColor {
+    public KxColor BackgroundColor {
         get => _backgroundColor;
         set {
             _backgroundColor = value;
@@ -102,7 +104,7 @@ public class Button : UIElement {
         }
     }
 
-    public SKColor HoverBackgroundColor {
+    public KxColor HoverBackgroundColor {
         get => _hoverBackgroundColor;
         set {
             _hoverBackgroundColor = value;
@@ -110,7 +112,7 @@ public class Button : UIElement {
         }
     }
 
-    public SKColor PressedBackgroundColor {
+    public KxColor PressedBackgroundColor {
         get => _pressedBackgroundColor;
         set {
             _pressedBackgroundColor = value;
@@ -118,7 +120,7 @@ public class Button : UIElement {
         }
     }
 
-    public SKColor DisabledBackgroundColor {
+    public KxColor DisabledBackgroundColor {
         get => _disabledBackgroundColor;
         set {
             _disabledBackgroundColor = value;
@@ -126,7 +128,7 @@ public class Button : UIElement {
         }
     }
 
-    public SKColor DisabledForegroundColor {
+    public KxColor DisabledForegroundColor {
         get => _disabledForegroundColor;
         set {
             _disabledForegroundColor = value;
@@ -134,23 +136,85 @@ public class Button : UIElement {
         }
     }
 
-    public SKColor BorderColor {
+    public KxColor BorderColor {
         get => _borderColor;
         set {
             _borderColor = value;
-            _borderPaint.Color = value;
+            Invalidate();
+        }
+    }
+
+    public float BorderThickness {
+        get => _borderThickness;
+        set {
+            _borderThickness = Math.Max(0f, value);
             Invalidate();
         }
     }
 
     public event Action? Click;
 
+    /// <summary>
+    /// Assigns the foreground color and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithForeground(KxColor color) {
+        ForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns the disabled foreground color and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="color">The color to apply.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithDisabledForeground(KxColor color) {
+        DisabledForegroundColor = color;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns border color and thickness and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="color">The border color to apply.</param>
+    /// <param name="thickness">The border thickness to apply.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithBorder(KxColor color, float thickness) {
+        BorderColor = color;
+        BorderThickness = thickness;
+        return this;
+    }
+
+    /// <summary>
+    /// Assigns button background colors for all interaction states and returns the same button.
+    /// </summary>
+    /// <param name="normal">The default background color.</param>
+    /// <param name="hover">The hover background color.</param>
+    /// <param name="pressed">The pressed background color.</param>
+    /// <param name="disabled">The disabled background color.</param>
+    /// <returns>The same button instance.</returns>
+    public Button WithButtonStates(KxColor normal, KxColor hover, KxColor pressed, KxColor disabled) {
+        BackgroundColor = normal;
+        HoverBackgroundColor = hover;
+        PressedBackgroundColor = pressed;
+        DisabledBackgroundColor = disabled;
+        return this;
+    }
+
+    /// <summary>
+    /// Attaches a click handler and returns the same button for fluent configuration.
+    /// </summary>
+    /// <param name="onClick">The callback invoked for click events.</param>
+    /// <returns>The same button instance.</returns>
+    public Button OnClick(Action onClick) {
+        ArgumentNullException.ThrowIfNull(onClick);
+        Click += onClick;
+        return this;
+    }
+
     private bool _isPressed;
     private bool _isHovered;
-
-    private readonly SKPaint _textPaint = new() { IsAntialias = true, Color = new SKColor(0, 0, 0, 255) };
-    private readonly SKPaint _bgPaint = new() { IsAntialias = true, Color = new SKColor(230, 230, 230, 255) };
-    private readonly SKPaint _borderPaint = new() { IsAntialias = true, Color = new SKColor(180, 180, 180, 255), StrokeWidth = 1, Style = SKPaintStyle.Stroke };
 
     private SKFont? _font;
     private SKTypeface? _typeface;
@@ -162,7 +226,6 @@ public class Button : UIElement {
 
     public Button(IVisualContext ctx, string id, string text) : base(ctx, id) {
         _text = text;
-        _borderPaint.Color = _borderColor;
         UpdateFont();
     }
 
@@ -194,7 +257,7 @@ public class Button : UIElement {
     public override void OnDpiChanged(float scale) {
         base.OnDpiChanged(scale);
         UpdateFont();
-        _borderPaint.StrokeWidth = Math.Max(1f, scale);
+        _borderThickness = Math.Max(1f, scale);
         Invalidate();
     }
 
@@ -202,6 +265,7 @@ public class Button : UIElement {
         UpdateFont();
 
         var text = Text ?? string.Empty;
+        _font ??= new SKFont(SKTypeface.Default, _scaledFontSize);
         _font.MeasureText(text, out SKRect textBounds);
 
         var padH = (int)Math.Ceiling((Padding.Left + Padding.Right) * dpi);
@@ -221,7 +285,7 @@ public class Button : UIElement {
     }
 
     // UIElement verlangt protected abstract OnDraw(SKCanvas)
-    protected override void OnDraw(SKCanvas canvas) {
+    protected override void OnDraw(IKxCanvas canvas) {
         if (!Visible)
             return;
 
@@ -233,36 +297,32 @@ public class Button : UIElement {
                 ? _hoverImage ?? _normalImage
                 : _normalImage;
 
+        KxColor textColor;
+
         if (stateImage is not null) {
-            canvas.DrawBitmap(stateImage, new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom));
-            _textPaint.Color = IsEnabled
-                ? ForegroundColor
-                : DisabledForegroundColor;
-        }
-        else {
+            canvas.DrawBitmap(stateImage, LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
+            textColor = IsEnabled
+                ? _foregroundColor
+                : _disabledForegroundColor;
+        } else {
+            KxColor backgroundColor;
+
             if (!IsEnabled) {
-                _bgPaint.Color = DisabledBackgroundColor;
-                _textPaint.Color = DisabledForegroundColor;
-            }
-            else if (_isPressed) {
-                _bgPaint.Color = PressedBackgroundColor;
-                _textPaint.Color = ForegroundColor;
-            }
-            else if (_isHovered || IsFocused) {
-                _bgPaint.Color = HoverBackgroundColor;
-                _textPaint.Color = ForegroundColor;
-            }
-            else {
-                _bgPaint.Color = BackgroundColor;
-                _textPaint.Color = ForegroundColor;
+                backgroundColor = _disabledBackgroundColor;
+                textColor = _disabledForegroundColor;
+            } else if (_isPressed) {
+                backgroundColor = _pressedBackgroundColor;
+                textColor = _foregroundColor;
+            } else if (_isHovered || IsFocused) {
+                backgroundColor = _hoverBackgroundColor;
+                textColor = _foregroundColor;
+            } else {
+                backgroundColor = _backgroundColor;
+                textColor = _foregroundColor;
             }
 
-            _borderPaint.Color = BorderColor;
-
-            var skRect = new SKRect(r.Left, r.Top, r.Right, r.Bottom);
-
-            canvas.DrawRect(skRect, _bgPaint);
-            canvas.DrawRect(skRect, _borderPaint);
+            canvas.DrawRect(r.Left, r.Top, r.Right, r.Bottom, backgroundColor);
+            canvas.DrawRectStroke(r.Left, r.Top, r.Right, r.Bottom, _borderColor, _borderThickness);
         }
 
         var text = Text ?? string.Empty;
@@ -273,7 +333,7 @@ public class Button : UIElement {
         float x = r.Left + (r.Width - textBounds.Width) / 2f - textBounds.Left;
         float y = r.Top + (r.Height - textBounds.Height) / 2f - textBounds.Top;
 
-        canvas.DrawText(text, x, y, _font, _textPaint);
+        canvas.DrawText(text, x, y, _scaledFontSize, textColor, _fontFamily, _bold, _italic);
     }
 
     // Input Handling
@@ -380,8 +440,7 @@ public class Button : UIElement {
             var weight = _bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
             var slant = _italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
             _typeface = SKTypeface.FromFamilyName(_fontFamily, weight, SKFontStyleWidth.Normal, slant);
-        }
-        else {
+        } else {
             _typeface?.Dispose();
             _typeface = null;
         }

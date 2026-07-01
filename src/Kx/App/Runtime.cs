@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Sdk.DI;
-using Kx.Sdk.WindowHost;
 using Kx.Core.DI;
 using Kx.Core.Plugin;
+using Kx.Sdk.DI;
+using Kx.Sdk.WindowHost;
 using Kx.Utility;
 
 namespace Kx.App;
@@ -38,6 +38,7 @@ public sealed class Runtime {
     }
 
     public void Start() {
+        GlobalExceptionHandler.RegisterShutdownHandler(ShutdownAsync);
         StartAsync().GetAwaiter().GetResult();
     }
 
@@ -59,6 +60,16 @@ public sealed class Runtime {
         _started = true;
         ConfigurePaths();
         ConfigureServices();
+
+        GlobalExceptionHandler.RegisterShutdownHandler(async () => {
+            try {
+                await ShutdownAsync().ConfigureAwait(false);
+            }
+            catch {
+                Environment.Exit(1);
+            }
+        });
+
         await _lifecycleCoordinator.StartAsync();
         _window = _windowCoordinator.Show(_windowType!, ShutdownAsync);
     }

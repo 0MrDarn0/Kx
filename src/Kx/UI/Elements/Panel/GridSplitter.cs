@@ -1,13 +1,10 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Drawing;
-
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
 using Kx.UI.Layout;
-
-using SkiaSharp;
 
 using uOrientation = Kx.UI.Layout.Orientation;
 
@@ -21,15 +18,46 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
     private float _secondStartSize;
     private GridLength _firstStartLength;
     private GridLength _secondStartLength;
+    private KxColor _trackColor = new(110, 110, 110, 96);
+    private KxColor _hoverTrackColor = new(150, 150, 150, 132);
+    private KxColor _activeTrackColor = new(214, 214, 214, 176);
+    private KxColor _gripColor = new(255, 255, 255, 180);
 
     public uOrientation Orientation { get; set; } = uOrientation.Vertical;
     public float MinSegmentSize { get; set; } = 48f;
     public int? TargetColumn { get; set; }
     public int? TargetRow { get; set; }
-    public SKColor TrackColor { get; set; } = new SKColor(110, 110, 110, 96);
-    public SKColor HoverTrackColor { get; set; } = new SKColor(150, 150, 150, 132);
-    public SKColor ActiveTrackColor { get; set; } = new SKColor(214, 214, 214, 176);
-    public SKColor GripColor { get; set; } = new SKColor(255, 255, 255, 180);
+    public KxColor TrackColor {
+        get => _trackColor;
+        set {
+            _trackColor = value;
+            Invalidate();
+        }
+    }
+
+    public KxColor HoverTrackColor {
+        get => _hoverTrackColor;
+        set {
+            _hoverTrackColor = value;
+            Invalidate();
+        }
+    }
+
+    public KxColor ActiveTrackColor {
+        get => _activeTrackColor;
+        set {
+            _activeTrackColor = value;
+            Invalidate();
+        }
+    }
+
+    public KxColor GripColor {
+        get => _gripColor;
+        set {
+            _gripColor = value;
+            Invalidate();
+        }
+    }
 
     public override bool OnMouseDown(Point p) {
         if (!Bounds.Contains(p))
@@ -74,31 +102,20 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         return wasDragging || _isHovered;
     }
 
-    protected override void OnDraw(SKCanvas canvas) {
-        var rect = new SKRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
+    protected override void OnDraw(IKxCanvas canvas) {
+        var rect = new KxRect(LayoutRect.Left, LayoutRect.Top, LayoutRect.Right, LayoutRect.Bottom);
         if (rect.IsEmpty)
             return;
 
         var trackRect = GetTrackRect(rect);
 
         var trackColor = _isDragging
-            ? ActiveTrackColor
+            ? _activeTrackColor
             : _isHovered
-                ? HoverTrackColor
-                : TrackColor;
+                ? _hoverTrackColor
+                : _trackColor;
 
-        using var trackPaint = new SKPaint {
-            Color = trackColor,
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
-        using var gripPaint = new SKPaint {
-            Color = GripColor,
-            Style = SKPaintStyle.Fill,
-            IsAntialias = true
-        };
-
-        canvas.DrawRoundRect(trackRect, 2f * DpiScale, 2f * DpiScale, trackPaint);
+        canvas.DrawRoundedRect(trackRect.Left, trackRect.Top, trackRect.Right, trackRect.Bottom, 2f * DpiScale, 2f * DpiScale, trackColor);
 
         const float gripThickness = 2f;
         const float gripLength = 18f;
@@ -109,7 +126,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             float centerY = trackRect.MidY;
             for (int offset = -1; offset <= 1; offset++) {
                 float y = centerY + offset * gripSpacing;
-                DrawGrip(canvas, gripPaint, new SKRect(centerX - gripThickness / 2f, y - gripLength / 2f, centerX + gripThickness / 2f, y + gripLength / 2f), gripThickness);
+                DrawGrip(canvas, centerX - gripThickness / 2f, y - gripLength / 2f, centerX + gripThickness / 2f, y + gripLength / 2f, gripThickness, _gripColor);
             }
 
             return;
@@ -119,27 +136,27 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
         float horizontalCenterY = trackRect.MidY;
         for (int offset = -1; offset <= 1; offset++) {
             float x = horizontalCenterX + offset * gripSpacing;
-            DrawGrip(canvas, gripPaint, new SKRect(x - gripLength / 2f, horizontalCenterY - gripThickness / 2f, x + gripLength / 2f, horizontalCenterY + gripThickness / 2f), gripThickness);
+            DrawGrip(canvas, x - gripLength / 2f, horizontalCenterY - gripThickness / 2f, x + gripLength / 2f, horizontalCenterY + gripThickness / 2f, gripThickness, _gripColor);
         }
     }
 
-    private SKRect GetTrackRect(SKRect bounds) {
+    private KxRect GetTrackRect(KxRect bounds) {
         float visualThickness = Math.Max(3f * DpiScale, 4f * DpiScale);
         float edgeInset = 1f * DpiScale;
 
         if (Orientation == uOrientation.Vertical) {
             float width = Math.Min(visualThickness, bounds.Width);
             float left = bounds.MidX - width / 2f;
-            return new SKRect(left, bounds.Top + edgeInset, left + width, Math.Max(bounds.Top + edgeInset, bounds.Bottom - edgeInset));
+            return new KxRect(left, bounds.Top + edgeInset, left + width, Math.Max(bounds.Top + edgeInset, bounds.Bottom - edgeInset));
         }
 
         float height = Math.Min(visualThickness, bounds.Height);
         float top = bounds.MidY - height / 2f;
-        return new SKRect(bounds.Left + edgeInset, top, Math.Max(bounds.Left + edgeInset, bounds.Right - edgeInset), top + height);
+        return new KxRect(bounds.Left + edgeInset, top, Math.Max(bounds.Left + edgeInset, bounds.Right - edgeInset), top + height);
     }
 
-    private static void DrawGrip(SKCanvas canvas, SKPaint paint, SKRect gripRect, float radius) {
-        canvas.DrawRoundRect(gripRect, radius, radius, paint);
+    private static void DrawGrip(IKxCanvas canvas, float left, float top, float right, float bottom, float radius, KxColor color) {
+        canvas.DrawRoundedRect(left, top, right, bottom, radius, radius, color);
     }
 
     private bool TryCaptureStartSizes() {
@@ -155,8 +172,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
             _secondStartLength = grid.Columns[secondIndex].Width;
             _firstStartSize = grid.Columns[firstIndex].ActualWidth;
             _secondStartSize = grid.Columns[secondIndex].ActualWidth;
-        }
-        else {
+        } else {
             _firstStartLength = grid.Rows[firstIndex].Height;
             _secondStartLength = grid.Rows[secondIndex].Height;
             _firstStartSize = grid.Rows[firstIndex].ActualHeight;
@@ -193,8 +209,7 @@ public sealed class GridSplitter(IVisualContext ctx, string id) : UIElement(ctx,
 
         if (Orientation == uOrientation.Vertical) {
             ApplyColumnResize(grid.Columns[firstIndex], grid.Columns[secondIndex], firstSize, secondSize);
-        }
-        else {
+        } else {
             ApplyRowResize(grid.Rows[firstIndex], grid.Rows[secondIndex], firstSize, secondSize);
         }
 

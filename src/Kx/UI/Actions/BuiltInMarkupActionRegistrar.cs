@@ -2,12 +2,11 @@
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
 using Kx.Sdk.Events;
+using Kx.Sdk.Rendering;
 using Kx.Sdk.UI.Actions;
 using Kx.Sdk.UI.Commands;
 using Kx.Sdk.UI.Payloads;
 using Kx.Sdk.UI.VisualTree;
-
-using SkiaSharp;
 
 namespace Kx.UI.Actions;
 
@@ -98,16 +97,16 @@ internal static class BuiltInMarkupActionRegistrar {
 
         switch (visual) {
             case Kx.UI.Elements.Label label:
-                label.Text.Value = value;
-                break;
+            label.Text.Value = value;
+            break;
 
             case Kx.UI.Elements.Button button:
-                button.Text = value;
-                button.Context.RequestRender();
-                break;
+            button.Text = value;
+            button.Context.RequestRender();
+            break;
 
             default:
-                throw new InvalidOperationException($"The 'setText' markup action does not support visuals of type '{visual.GetType().Name}'.");
+            throw new InvalidOperationException($"The 'setText' markup action does not support visuals of type '{visual.GetType().Name}'.");
         }
     }
 
@@ -123,16 +122,15 @@ internal static class BuiltInMarkupActionRegistrar {
         }
 
         var visual = ResolveTarget(context, targetId);
-        var color = SKColor.Parse(colorValue);
+        var color = KxColor.Parse(colorValue);
 
-        switch (visual) {
-            case Kx.UI.Elements.Label label:
-                label.Color.Value = color;
-                break;
+        Action apply = visual switch {
+            Kx.UI.Elements.Label label => () => label.ForegroundColor = color,
+            _ => () => throw new InvalidOperationException(
+            $"The 'setColor' markup action does not support visuals of type '{visual.GetType().Name}'.")
+        };
 
-            default:
-                throw new InvalidOperationException($"The 'setColor' markup action does not support visuals of type '{visual.GetType().Name}'.");
-        }
+        apply();
     }
 
     private static void PublishEvent(IMarkupActionContext context) {

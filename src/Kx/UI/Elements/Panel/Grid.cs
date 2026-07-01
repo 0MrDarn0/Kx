@@ -1,11 +1,9 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Sdk.UI;
 using Kx.Core.Extensions;
+using Kx.Sdk.UI;
 using Kx.UI.Layout;
-
-using SkiaSharp;
 
 namespace Kx.UI.Elements.Panel;
 
@@ -69,8 +67,10 @@ public class Grid(IVisualContext ctx, string id) : Panel(ctx, id) {
         float remainingWidth = finalRect.Width - fixedWidth;
         float remainingHeight = finalRect.Height - fixedHeight;
 
-        if (remainingWidth < 0) remainingWidth = 0;
-        if (remainingHeight < 0) remainingHeight = 0;
+        if (remainingWidth < 0)
+            remainingWidth = 0;
+        if (remainingHeight < 0)
+            remainingHeight = 0;
 
         // If there are star columns but totalStarWidth is zero (defensive), treat each star as weight 1
         if (totalStarWidth == 0 && Columns.Any(c => c.Width.UnitType == GridUnitType.Star))
@@ -117,28 +117,6 @@ public class Grid(IVisualContext ctx, string id) : Panel(ctx, id) {
                 height += Rows[child.GridRow + r].ActualHeight;
 
             child.Arrange(new Rectangle((int)x, (int)y, (int)width, (int)height), dpi);
-        }
-    }
-
-    protected override void DrawDebugOverlay(SKCanvas canvas) {
-        base.DrawDebugOverlay(canvas);
-
-        using var paint = new SKPaint {
-            Color = new SKColor(255, 255, 255, 190),
-            Style = SKPaintStyle.Fill,
-            StrokeWidth = 5
-        };
-
-        float x = LayoutRect.Left;
-        foreach (var col in Columns) {
-            x += col.ActualWidth;
-            canvas.DrawLine(x, LayoutRect.Top, x, LayoutRect.Bottom, paint);
-        }
-
-        float y = LayoutRect.Top;
-        foreach (var row in Rows) {
-            y += row.ActualHeight;
-            canvas.DrawLine(LayoutRect.Left, y, LayoutRect.Right, y, paint);
         }
     }
 
