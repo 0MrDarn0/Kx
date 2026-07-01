@@ -246,7 +246,7 @@ controls:
             textBinding: updater.buttons.settings
             enabledBinding: updater.buttons.settingsEnabled
             color: "#E8D9B4"
-            onClick: openWindow:Settings
+            onClick: runCommand:kxUpdater.openSettings
             gridRow: 0
             gridColumn: 6
             margin:

@@ -14,7 +14,7 @@ launcher:
     resolveFromAppDirectory: true
     closeUpdaterOnSuccess: false
   website:
-    url: http://www.idb-lab.de/
+    url: https://www.idb-lab.de/
 ui:
   language: en
 serverStatus:

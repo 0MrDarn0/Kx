@@ -84,6 +84,7 @@ public sealed class MainWindow(IWindowHost host, ITrayService tray, ILoggingServ
     }
 
     private void BuildUi() {
+        host.SetSize(750, 800);
         Grid root = CreateRootGrid();
         BuilderUiControls controls = CreateUiControls();
 
