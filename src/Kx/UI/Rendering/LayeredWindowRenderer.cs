@@ -54,50 +54,22 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     private byte[]? _zeroRowBuffer;
 
     // Debug / Overlay
-    private readonly object _perfLock = new();
-    private readonly Queue<long> _frameTimestamps = new();
-    private const int FrameHistory = 60;
-
-    private bool _showDebugRasterOverlay;
-    private bool _showPerfOverlay = false;
-    private bool _showContentRectDebug;
+    private readonly RenderOverlayRegistry _overlayRegistry = new();
 
     public long LastRenderDurationMs { get; private set; }
     public int LastPresentError { get; private set; }
-
-    private readonly object _cpuLock = new();
-    private TimeSpan _lastTotalProcTime = TimeSpan.Zero;
-    private long _lastCpuSampleMs = 0;
-
-    // Reusable/perf fields (add near other private fields)
-    private Process? _cachedProcess;
-    private SKPaint? _perfBgPaint;
-    private SKPaint? _perfTextPaint;
-    private SKPaint? _perfTitlePaint;
-    private SKFont? _perfMonoFont;
-    private SKPaint? _barBgPaint;
-    private SKPaint? _barFillPaint;
-
-    private long _lastOverlayUpdateMs = 0;
-    private const int OverlayUpdateIntervalMs = 200;
-
-    // Cached metric values (updated only every OverlayUpdateIntervalMs)
-    private double _cachedCpuPercent = 0.0;
-    private long _cachedManagedKb = 0;
-    private int _cachedHandleCount = 0;
-    private int _cachedThreadCount = 0;
-    private string _cachedUptime = "—";
 
     private bool _disposed;
 
     public LayeredWindowRenderer(WindowContext ctx) {
         _ctx = ctx;
+        InitializeOverlays();
         StartRenderWorker();
     }
 
-    public void ToggleDebugOverlay() => _showDebugRasterOverlay = !_showDebugRasterOverlay;
-    public void TogglePerfOverlay() => _showPerfOverlay = !_showPerfOverlay;
-    public void ToggleContentRectDebug() => _showContentRectDebug = !_showContentRectDebug;
+    public void ToggleDebugOverlay() => ToggleOverlay(DebugRasterOverlay.OverlayId);
+    public void TogglePerfOverlay() => ToggleOverlay(PerformanceOverlay.OverlayId);
+    public void ToggleContentRectDebug() => ToggleOverlay(ContentRectOverlay.OverlayId);
     public void RequestRender() => Interlocked.Exchange(ref _needsRender, 1);
 
     public void Dispose() {
@@ -126,7 +98,8 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             catch { }
 
             try {
-                // Dispose resources (best-effort)
+                try { _overlayRegistry.Dispose(); }
+                catch { }
                 try { _bgSurface?.Dispose(); }
                 catch { }
                 try { _bgRenderBitmap?.Dispose(); }
@@ -135,22 +108,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 catch { }
                 try { _uiPresentBitmap?.Dispose(); }
                 catch { }
-
-                // dispose cached paints/fonts if any
-                try { _perfBgPaint?.Dispose(); }
-                catch { }
-                try { _perfTextPaint?.Dispose(); }
-                catch { }
-                try { _perfTitlePaint?.Dispose(); }
-                catch { }
-                try { _perfMonoFont?.Dispose(); }
-                catch { }
-                try { _barBgPaint?.Dispose(); }
-                catch { }
-                try { _barFillPaint?.Dispose(); }
-                catch { }
-                try { _cachedProcess?.Dispose(); }
-                catch { }
             }
             finally {
                 _bgSurface = null;
@@ -158,14 +115,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
                 _uiSurface = null;
                 _uiPresentBitmap = null;
                 _zeroRowBuffer = null;
-
-                _perfBgPaint = null;
-                _perfTextPaint = null;
-                _perfTitlePaint = null;
-                _perfMonoFont = null;
-                _barBgPaint = null;
-                _barFillPaint = null;
-                _cachedProcess = null;
             }
         }
 
@@ -226,15 +175,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             deviceWidth = 1;
         if (deviceHeight <= 0)
             deviceHeight = 1;
-    }
-
-    private void RecordFrameTimestamp() {
-        long now = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
-        lock (_perfLock) {
-            _frameTimestamps.Enqueue(now);
-            while (_frameTimestamps.Count > FrameHistory)
-                _frameTimestamps.Dequeue();
-        }
     }
 
     // Sichert Lebenszeit von memDcHandle und hbitmapHandle, selektiert hbitmap und liefert das vorherige Objekt.
@@ -979,7 +919,6 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
     //  Draw + Overlays
     // ============================================================
     private void Draw(SKCanvas canvas, Size size) {
-        RecordFrameTimestamp();
         var renderCanvas = new SkiaCanvas(canvas);
 
         DrawWindowFrame(canvas, size);
@@ -992,14 +931,17 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
             Debug.WriteLine($"UI render error: {ex}");
         }
 
-        if (_showDebugRasterOverlay)
-            DrawDebugRaster(canvas, size);
+        var overlayContext = new RenderOverlayContext(
+            _ctx,
+            _ctx.Frame,
+            canvas,
+            size,
+            LastRenderDurationMs,
+            _bgRenderBitmap?.Width ?? 0,
+            _bgRenderBitmap?.Height ?? 0,
+            RequestRender);
 
-        if (_showPerfOverlay)
-            DrawPerfOverlay(canvas, size);
-
-        if (_showContentRectDebug)
-            DrawContentRectDebug(canvas, size);
+        _overlayRegistry.DrawOverlays(overlayContext);
     }
 
     private void DrawWindowFrame(SKCanvas canvas, Size size) {
@@ -1168,223 +1110,14 @@ public unsafe class LayeredWindowRenderer : IWindowRenderer, IDisposable {
         }
     }
 
-    private void DrawDebugRaster(SKCanvas canvas, Size size) {
-        float scale = Math.Max(1f, _ctx.Target.DeviceDpi / 96f);
-
-        int width = size.Width;
-        int height = size.Height;
-
-        int basNumberSpacing = 80;
-        int numberSpacing = Math.Max(8, (int)(basNumberSpacing * scale));
-
-        int baseRasterSpacing = 25;
-        int rasterSpacing = Math.Max(8, (int)(baseRasterSpacing * scale));
-        float mouseMarkerSize = 4f;
-
-        using var linePaint = new SKPaint {
-            Color = new SKColor(0xFF, 0xFF, 0xFF, 0x28),
-            StrokeWidth = 1,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
-        using var axisPaint = new SKPaint {
-            Color = new SKColor(0xFF, 0xFF, 0x00, 0xFF),
-            StrokeWidth = 2,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke
-        };
-
-        using var textPaint = new SKPaint {
-            Color = new SKColor(0, 255, 100, 220),
-            IsAntialias = true
-        };
-
-        float fontSize = Math.Max(7f, 12f * scale);
-        using var font = new SKFont(SKTypeface.Default, fontSize);
-
-        for (int x = 0; x < width; x += rasterSpacing)
-            canvas.DrawLine(x, 0, x, height, linePaint);
-
-        for (int y = 0; y < height; y += rasterSpacing)
-            canvas.DrawLine(0, y, width, y, linePaint);
-
-        canvas.DrawLine(0, 0, width, 0, axisPaint);
-        canvas.DrawLine(0, 0, 0, height, axisPaint);
-
-        var metrics = font.Metrics;
-        float baselineOffset = -(metrics.Descent + metrics.Ascent) / 2f;
-
-        for (int x = 0; x < width; x += numberSpacing) {
-            string sx = x.ToString();
-            canvas.DrawText(sx, x + 2, 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
-        }
-
-        for (int y = 0; y < height; y += numberSpacing) {
-            string sy = y.ToString();
-            canvas.DrawText(sy, 2, y + 2 + baselineOffset + fontSize, SKTextAlign.Left, font, textPaint);
-        }
-
-        try {
-            var cursorScreen = System.Windows.Forms.Cursor.Position;
-            int cursorX = cursorScreen.X - _ctx.Target.Left;
-            int cursorY = cursorScreen.Y - _ctx.Target.Top;
-            if (cursorX >= 0 && cursorX < width && cursorY >= 0 && cursorY < height) {
-                using var cursorPaint = new SKPaint { Color = SKColors.Lime, IsAntialias = true };
-                canvas.DrawCircle(cursorX, cursorY, mouseMarkerSize * scale, cursorPaint);
-                string pos = $"{cursorX},{cursorY}";
-                canvas.DrawText(pos, cursorX + 8f * scale, cursorY - 8f * scale, SKTextAlign.Left, font, textPaint);
-                RequestRender();
-            }
-        }
-        catch { /* ignore */ }
+    private void InitializeOverlays() {
+        _overlayRegistry.Register(new DebugRasterOverlay());
+        _overlayRegistry.Register(new PerformanceOverlay());
+        _overlayRegistry.Register(new ContentRectOverlay());
     }
 
-    private void DrawPerfOverlay(SKCanvas canvas, Size size) {
-        if (!_showPerfOverlay)
-            return;
-
-        long nowMs = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
-
-        // Lazy init cached Process
-        if (_cachedProcess is null) {
-            try { _cachedProcess = Process.GetCurrentProcess(); }
-            catch { _cachedProcess = null; }
-        }
-
-        // Lazy create shared paints/fonts to avoid per-frame allocation
-        _perfBgPaint ??= new SKPaint { Color = new SKColor(0, 0, 0, 160), IsAntialias = true, Style = SKPaintStyle.Fill };
-        _perfTextPaint ??= new SKPaint { Color = SKColors.Lime, IsAntialias = true };
-        _perfTitlePaint ??= new SKPaint { Color = SKColors.White, IsAntialias = true };
-        _perfMonoFont ??= new SKFont(SKTypeface.FromFamilyName("Consolas"), 12);
-        _barBgPaint ??= new SKPaint { Color = new SKColor(255, 255, 255, 30), IsAntialias = true };
-        _barFillPaint ??= new SKPaint { Color = SKColors.Lime, IsAntialias = true };
-
-        // Update cached, moderately expensive metrics only every OverlayUpdateIntervalMs
-        if (nowMs - _lastOverlayUpdateMs >= OverlayUpdateIntervalMs) {
-            _lastOverlayUpdateMs = nowMs;
-
-            try {
-                // managed heap snapshot (cheap-ish, but avoid every frame)
-                _cachedManagedKb = GC.GetTotalMemory(false) / 1024;
-
-                if (_cachedProcess is not null) {
-                    try {
-                        _cachedHandleCount = _cachedProcess.HandleCount;
-                        _cachedThreadCount = _cachedProcess.Threads.Count;
-                        var uptime = DateTime.Now - _cachedProcess.StartTime;
-                        _cachedUptime = uptime.TotalSeconds >= 1 ? $"{uptime:hh\\:mm\\:ss}" : "—";
-                    }
-                    catch {
-                        _cachedHandleCount = 0;
-                        _cachedThreadCount = 0;
-                        _cachedUptime = "—";
-                    }
-                }
-            }
-            catch { /* best effort */ }
-
-            // CPU% sampling (still uses existing _lastTotalProcTime/_lastCpuSampleMs)
-            try {
-                lock (_cpuLock) {
-                    if (_cachedProcess is not null) {
-                        var totalProc = _cachedProcess.TotalProcessorTime;
-                        if (_lastCpuSampleMs != 0) {
-                            double deltaProcMs = (totalProc - _lastTotalProcTime).TotalMilliseconds;
-                            double deltaWallMs = Math.Max(1.0, nowMs - _lastCpuSampleMs);
-                            _cachedCpuPercent = (deltaProcMs / deltaWallMs) * 100.0 / Math.Max(1, Environment.ProcessorCount);
-                            _cachedCpuPercent = Math.Max(0.0, Math.Min(100.0, _cachedCpuPercent));
-                        }
-                        _lastTotalProcTime = totalProc;
-                        _lastCpuSampleMs = nowMs;
-                    }
-                }
-            }
-            catch { _cachedCpuPercent = 0.0; }
-        }
-
-        // FPS calculation (cheap, already based on timestamps)
-        double fps = 0;
-        lock (_perfLock) {
-            int frameCount = _frameTimestamps.Count;
-            if (frameCount >= 2) {
-                long first = _frameTimestamps.Peek();
-                long last = _frameTimestamps.Last();
-                double span = Math.Max(1, last - first);
-                fps = (frameCount - 1) * 1000.0 / span;
-            }
-        }
-
-        long lastRenderMs = LastRenderDurationMs;
-        int bufW = _bgRenderBitmap?.Width ?? 0;
-        int bufH = _bgRenderBitmap?.Height ?? 0;
-
-        // Layout
-        float padding = 12f;
-        float lineHeight = 16f;
-        float boxWidth = 320f;
-        float barHeight = 8f;
-
-        // Lines shown before uptime
-        var preLines = new (string, string)[] {
-        ("FPS", fps > 0 ? $"{fps:F1}" : "—"),
-        ("Render (last)", $"{lastRenderMs} ms"),
-        ("CPU", $"{_cachedCpuPercent:F1} %"),
-        ("Managed", $"{_cachedManagedKb:N0} KB"),
-        ("WorkingSet", $"{Process.GetCurrentProcess().WorkingSet64 / 1024:N0} KB"), // inexpensive to read
-        ("GC (0/1/2)", $"{GC.CollectionCount(0)}/{GC.CollectionCount(1)}/{GC.CollectionCount(2)}"),
-        ("Handles", _cachedHandleCount.ToString()),
-        ("Threads", _cachedThreadCount.ToString()),
-        ("Buffer", $"{bufW}x{bufH}")
-    };
-
-        int totalSlots = preLines.Length + 1 /*uptime*/ + 1 /*bar*/;
-        float boxHeight = padding * 2 + lineHeight * totalSlots;
-        var rect = new SKRect(padding, padding, padding + boxWidth, padding + boxHeight);
-
-        canvas.DrawRoundRect(rect, 6, 6, _perfBgPaint);
-
-        float x = rect.Left + padding;
-        float y = rect.Top + padding + lineHeight;
-
-        void DrawLineLocal(string label, string value) {
-            canvas.DrawText(label, x, y, SKTextAlign.Left, _perfMonoFont, _perfTitlePaint);
-            canvas.DrawText(value, x + 150, y, SKTextAlign.Left, _perfMonoFont, _perfTextPaint);
-            y += lineHeight;
-        }
-
-        foreach (var (lab, val) in preLines)
-            DrawLineLocal(lab, val);
-
-        // Draw uptime before bar (cached)
-        DrawLineLocal("Uptime", _cachedUptime);
-
-        // Bar slot (own line, avoids overlap)
-        float barX = x;
-        float barWidth = boxWidth - 2 * padding;
-        float barSlotTop = y;
-        float barY = barSlotTop + (lineHeight - barHeight) / 2f;
-
-        float normalized = Math.Min(1f, lastRenderMs / 50f);
-        _barFillPaint.Color = normalized < 0.5 ? SKColors.Lime : SKColors.OrangeRed;
-
-        canvas.DrawRect(barX, barY, barWidth, barHeight, _barBgPaint);
-        canvas.DrawRect(barX, barY, barWidth * normalized, barHeight, _barFillPaint);
-    }
-
-    private void DrawContentRectDebug(SKCanvas canvas, Size size) {
-        var rect = _ctx.Frame!.GetContentRect(size);
-
-        using var paint = new SKPaint {
-            Color = new SKColor(255, 0, 0, 200),
-            IsStroke = true,
-            StrokeWidth = 3,
-            IsAntialias = true
-        };
-
-        // 1px nach innen, damit der Rahmen nicht vom Frame überdeckt wird
-        rect.Inflate(-1, -1);
-
-        canvas.DrawRect(rect, paint);
+    private void ToggleOverlay(string overlayId) {
+        _overlayRegistry.Toggle(overlayId);
+        RequestRender();
     }
 }
