@@ -49,7 +49,7 @@ internal sealed class NewsCoordinator : IDisposable {
 
     public void ApplyChangelogEntries(string changelogText) {
         _newsEntries = ParseNewsEntries(changelogText);
-        _setNewsTitles(_newsEntries.Select(entry => entry.Title).ToArray());
+        _setNewsTitles([.. _newsEntries.Select(entry => entry.Title)]);
 
         if (_newsEntries.Count == 0) {
             _setSelectedIndex(-1);
@@ -140,7 +140,7 @@ internal sealed class NewsCoordinator : IDisposable {
             string line = rawLine.TrimEnd();
             string trimmedLine = line.Trim();
 
-            if (trimmedLine.StartsWith("#", StringComparison.Ordinal)) {
+            if (trimmedLine.StartsWith('#')) {
                 AddNewsEntry(entries, currentTitle, currentContent);
                 currentTitle = trimmedLine.TrimStart('#', ' ');
                 currentContent.Clear();

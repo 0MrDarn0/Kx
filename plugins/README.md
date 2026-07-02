@@ -4,5 +4,9 @@
 
 Use this area for plugins that can be shared across multiple `Kx`-based apps.
 
-App-specific plugins stay beside their owning app, for example:
-- `apps/KxUpdater/Plugins/KalTheme`
+## Reusable Plugins
+
+- **KalCipher** — Kalonline encryption/decryption services
+- **ThemePlugin** — Convention-based YAML theme loader for window frames and content definitions
+
+App-specific plugins (when needed) stay beside their owning app under `apps/<AppName>/Plugins/`.

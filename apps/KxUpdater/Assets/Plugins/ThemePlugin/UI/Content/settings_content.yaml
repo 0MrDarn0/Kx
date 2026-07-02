@@ -34,7 +34,7 @@ controls:
           name: "cascadia_code"
           size: 25
           style: "Regular"
-          resource: "Plugins:KalTheme:Fonts:cascadia_code:CaskaydiaCoveNerdFont-SemiBoldItalic.ttf"
+          resource: "Plugins:ThemePlugin:Fonts:cascadia_code:CaskaydiaCoveNerdFont-SemiBoldItalic.ttf"
         gridRow: 0
         gridColumn: 0
         margin:
@@ -72,9 +72,9 @@ controls:
             id: btn_back
             text: Back
             color: "#F5F5F5"
-            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            normalImage: "Plugins:ThemePlugin:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:ThemePlugin:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:ThemePlugin:Buttons:btn_default_click.png"
             onClick: openWindow:MainWindow
             gridRow: 0
             gridColumn: 0

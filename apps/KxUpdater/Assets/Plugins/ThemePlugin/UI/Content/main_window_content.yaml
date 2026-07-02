@@ -234,9 +234,9 @@ controls:
               top: 0
               right: 4
               bottom: 0
-            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            normalImage: "Plugins:ThemePlugin:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:ThemePlugin:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:ThemePlugin:Buttons:btn_default_click.png"
             font:
               name: "Segoe UI"
               size: 11
@@ -254,9 +254,9 @@ controls:
               top: 0
               right: 4
               bottom: 0
-            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            normalImage: "Plugins:ThemePlugin:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:ThemePlugin:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:ThemePlugin:Buttons:btn_default_click.png"
             font:
               name: "Segoe UI"
               size: 11
@@ -274,9 +274,9 @@ controls:
               top: 0
               right: 4
               bottom: 0
-            normalImage: "Plugins:KalTheme:Buttons:btn_default_normal.png"
-            hoverImage: "Plugins:KalTheme:Buttons:btn_default_hover.png"
-            pressedImage: "Plugins:KalTheme:Buttons:btn_default_click.png"
+            normalImage: "Plugins:ThemePlugin:Buttons:btn_default_normal.png"
+            hoverImage: "Plugins:ThemePlugin:Buttons:btn_default_hover.png"
+            pressedImage: "Plugins:ThemePlugin:Buttons:btn_default_click.png"
             font:
               name: "Segoe UI"
               size: 11

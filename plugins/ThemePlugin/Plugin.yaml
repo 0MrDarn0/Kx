@@ -1,0 +1,7 @@
+name: Kx.ThemePlugin
+version: 1.0.0
+apiVersion: 1.0.0
+entryType: Kx.Plugin.Theme.EntryPoint
+description: "Convention-based YAML theme plugin for Kx apps"
+author: "Christian Schnuck"
+dependencies: []

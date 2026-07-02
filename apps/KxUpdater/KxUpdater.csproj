@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -40,12 +40,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- IDE visibility for plugin source files -->
-		<None Include="Plugins\**\*" Exclude="Plugins\**\bin\**;Plugins\**\obj\**" />
+		<PluginProject Include="..\..\plugins\ThemePlugin\ThemePlugin.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PluginProject Include="Plugins\KalTheme\KalTheme.csproj" />
+	  <Folder Include="Assets\Plugins\ThemePlugin\Buttons\" />
 	</ItemGroup>
 
 	<Import Project="..\..\build\PluginCopy.targets" />

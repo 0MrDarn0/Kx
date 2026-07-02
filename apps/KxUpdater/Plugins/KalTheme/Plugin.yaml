@@ -1,7 +1,0 @@
-name: Theme.KalOnline
-version: 1.0.0
-apiVersion: 1.0.0
-entryType: KxUpdater.Plugin.KalTheme
-description: "KalOnline visual theme plugin for KxUpdater"
-author: "Christian Schnuck"
-dependencies: []
