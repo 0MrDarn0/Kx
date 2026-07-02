@@ -1,19 +1,18 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Drawing;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
+
 using SkiaSharp;
-using System.Collections.Generic;
 
 namespace Kx.UI.Elements;
 
 public sealed class TreeView : UIElement {
     public sealed class Node {
         public string Name { get; set; }
-        public List<Node> Children { get; } = new();
+        public List<Node> Children { get; } = [];
         public bool IsExpanded { get; set; }
 
         public Node(string name) {
@@ -27,8 +26,8 @@ public sealed class TreeView : UIElement {
     private SKFont? _font;
     private float _fontSize = 12f;
 
-    private readonly List<Node> _roots = new();
-    private readonly List<(Node node, int level)> _visible = new();
+    private readonly List<Node> _roots = [];
+    private readonly List<(Node node, int level)> _visible = [];
     private int _selectedIndex = -1;
     private int _hoveredIndex = -1;
 
@@ -96,8 +95,7 @@ public sealed class TreeView : UIElement {
                 if (node.IsExpanded) {
                     canvas.DrawLine(iconX, iconY + 2f, iconX + (iconSize / 2f), iconY + iconSize - 1f, _textColor, stroke);
                     canvas.DrawLine(iconX + iconSize, iconY + 2f, iconX + (iconSize / 2f), iconY + iconSize - 1f, _textColor, stroke);
-                }
-                else {
+                } else {
                     canvas.DrawLine(iconX + 2f, iconY, iconX + iconSize - 1f, iconY + (iconSize / 2f), _textColor, stroke);
                     canvas.DrawLine(iconX + 2f, iconY + iconSize, iconX + iconSize - 1f, iconY + (iconSize / 2f), _textColor, stroke);
                 }

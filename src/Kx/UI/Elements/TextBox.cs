@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using Kx.Sdk.Events;
 using Kx.Core.Extensions;
+using Kx.Sdk.Events;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
 using Kx.Sdk.UI.Elements;
@@ -306,7 +306,7 @@ public sealed class TextBox : UIElement {
 
         float availableTextWidth = Math.Max(8f, contentRect.Width - ScrollBarWidth - 4f);
         var wrappedWithStarts = GetWrappedLinesWithStartIndices(availableTextWidth);
-        List<string> wrappedLines = wrappedWithStarts.Select(x => x.line).ToList();
+        List<string> wrappedLines = [..wrappedWithStarts.Select(x => x.line)];
         int lineHeight = GetLineHeight();
         int totalTextHeight = wrappedLines.Count * lineHeight;
         int maxScroll = Math.Max(0, totalTextHeight - contentRect.Height);
@@ -316,8 +316,8 @@ public sealed class TextBox : UIElement {
         skCanvas.ClipRect(new SKRect(contentRect.Left, contentRect.Top, contentRect.Right - ScrollBarWidth, contentRect.Bottom));
 
         float baseline = contentRect.Top - _font.Metrics.Ascent - _scrollOffset;
-        foreach (var wl in wrappedWithStarts) {
-            skCanvas.DrawText(wl.line, contentRect.Left, baseline, _font, _textPaint);
+        foreach (var (line, start) in wrappedWithStarts) {
+            skCanvas.DrawText(line, contentRect.Left, baseline, _font, _textPaint);
             baseline += lineHeight;
         }
 
@@ -329,7 +329,7 @@ public sealed class TextBox : UIElement {
                 var (line, start) = wrappedWithStarts[i];
                 if (_caretIndex <= start + line.Length) {
                     var relative = _caretIndex - start;
-                    string left = line.Substring(0, Math.Max(0, relative));
+                    string left = line[..Math.Max(0, relative)];
                     var xOffset = _font.MeasureText(left);
                     caretX = contentRect.Left + xOffset;
                     caretY = contentRect.Top + i * lineHeight - _font.Metrics.Ascent - _scrollOffset;
@@ -352,7 +352,7 @@ public sealed class TextBox : UIElement {
                         int overlapStart = Math.Max(lineStart, selStart);
                         int overlapEnd = Math.Min(lineEnd, selEnd);
                         if (overlapStart < overlapEnd) {
-                            string left = line.Substring(0, Math.Max(0, overlapStart - lineStart));
+                            string left = line[..Math.Max(0, overlapStart - lineStart)];
                             string mid = line.Substring(Math.Max(0, overlapStart - lineStart), overlapEnd - overlapStart);
                             float leftX = contentRect.Left + _font.MeasureText(left);
                             float midW = _font.MeasureText(mid);
@@ -371,8 +371,7 @@ public sealed class TextBox : UIElement {
                     invertPaint.BlendMode = SKBlendMode.Difference;
                     invertPaint.Color = new SKColor(255, 255, 255);
                     skCanvas.DrawRect(caretRect, invertPaint);
-                }
-                else {
+                } else {
                     using var caretPaint = new SKPaint { Color = _textPaint.Color, StrokeWidth = Math.Max(_caretWidth, 1f * DpiScale), IsAntialias = true };
                     skCanvas.DrawLine(caretX, caretTop, caretX, caretBottom, caretPaint);
                 }
@@ -500,7 +499,7 @@ public sealed class TextBox : UIElement {
             return false;
         int s = Math.Min(_selectionStart, _selectionEnd);
         int e = Math.Max(_selectionStart, _selectionEnd);
-        var selected = _text.Substring(s, e - s);
+        var selected = _text[s..e ];
         try {
             System.Windows.Forms.Clipboard.SetText(selected);
             return true;
@@ -515,7 +514,7 @@ public sealed class TextBox : UIElement {
             return false;
         int s = Math.Min(_selectionStart, _selectionEnd);
         int e = Math.Max(_selectionStart, _selectionEnd);
-        var selected = _text.Substring(s, e - s);
+        var selected = _text[s..e ];
         try {
             System.Windows.Forms.Clipboard.SetText(selected);
             PushUndoSnapshot();
@@ -560,86 +559,86 @@ public sealed class TextBox : UIElement {
         try {
             switch (key) {
                 case KeyCode.Backspace:
-                    if (DeleteSelectionIfAny()) {
-                        Invalidate();
-                        return true;
-                    }
-                    if (_caretIndex > 0) {
-                        PushUndoSnapshot();
-                        _text = _text.Remove(_caretIndex - 1, 1);
-                        _caretIndex = Math.Max(0, _caretIndex - 1);
-                        _redoStack.Clear();
-                        ResetCaretBlink();
-                        Invalidate();
-                        return true;
-                    }
+                if (DeleteSelectionIfAny()) {
+                    Invalidate();
+                    return true;
+                }
+                if (_caretIndex > 0) {
+                    PushUndoSnapshot();
+                    _text = _text.Remove(_caretIndex - 1, 1);
+                    _caretIndex = Math.Max(0, _caretIndex - 1);
+                    _redoStack.Clear();
+                    ResetCaretBlink();
+                    Invalidate();
+                    return true;
+                }
 
-                    return false;
+                return false;
                 case KeyCode.Left:
-                    if (_caretIndex > 0) {
-                        _caretIndex--;
-                        Invalidate();
-                        return true;
-                    }
-                    return false;
+                if (_caretIndex > 0) {
+                    _caretIndex--;
+                    Invalidate();
+                    return true;
+                }
+                return false;
                 case KeyCode.Right:
-                    if (_caretIndex < _text.Length) {
-                        _caretIndex++;
-                        ResetCaretBlink();
-                        Invalidate();
-                        return true;
-                    }
-                    return false;
+                if (_caretIndex < _text.Length) {
+                    _caretIndex++;
+                    ResetCaretBlink();
+                    Invalidate();
+                    return true;
+                }
+                return false;
                 case KeyCode.Enter:
-                    if (Multiline) {
-                        if (!DeleteSelectionIfAny()) {
-                            PushUndoSnapshot();
-                            _text = _text.Insert(_caretIndex, "\n");
-                            _caretIndex++;
-                            _redoStack.Clear();
-                        }
-                        ResetCaretBlink();
-                        Invalidate();
-                        return true;
-                    }
-                    return false;
-                case KeyCode.Space:
+                if (Multiline) {
                     if (!DeleteSelectionIfAny()) {
                         PushUndoSnapshot();
-                        _text = _text.Insert(_caretIndex, " ");
+                        _text = _text.Insert(_caretIndex, "\n");
                         _caretIndex++;
                         _redoStack.Clear();
                     }
                     ResetCaretBlink();
                     Invalidate();
                     return true;
+                }
+                return false;
+                case KeyCode.Space: // TODO: one button press inserts 2x space in some cases, investigate
+                if (!DeleteSelectionIfAny()) {
+                    PushUndoSnapshot();
+                    _text = _text.Insert(_caretIndex, " ");
+                    _caretIndex++;
+                    _redoStack.Clear();
+                }
+                ResetCaretBlink();
+                Invalidate();
+                return true;
                 case KeyCode.Tab:
-                    if (!DeleteSelectionIfAny()) {
-                        PushUndoSnapshot();
-                        _text = _text.Insert(_caretIndex, "\t");
-                        _caretIndex++;
-                        _redoStack.Clear();
-                    }
+                if (!DeleteSelectionIfAny()) {
+                    PushUndoSnapshot();
+                    _text = _text.Insert(_caretIndex, "\t");
+                    _caretIndex++;
+                    _redoStack.Clear();
+                }
+                ResetCaretBlink();
+                Invalidate();
+                return true;
+                case KeyCode.Delete:
+                if (DeleteSelectionIfAny()) {
+                    Invalidate();
+                    return true;
+                }
+
+                if (_caretIndex < _text.Length) {
+                    PushUndoSnapshot();
+                    _text = _text.Remove(_caretIndex, 1);
+                    _redoStack.Clear();
                     ResetCaretBlink();
                     Invalidate();
                     return true;
-                case KeyCode.Delete:
-                    if (DeleteSelectionIfAny()) {
-                        Invalidate();
-                        return true;
-                    }
-
-                    if (_caretIndex < _text.Length) {
-                        PushUndoSnapshot();
-                        _text = _text.Remove(_caretIndex, 1);
-                        _redoStack.Clear();
-                        ResetCaretBlink();
-                        Invalidate();
-                        return true;
-                    }
-                    return false;
+                }
+                return false;
                 default:
-                    break;
+                break;
             }
         }
         catch { /* ignore errors in best-effort input handling */ }
@@ -674,7 +673,7 @@ public sealed class TextBox : UIElement {
         if (!IsFocused || ReadOnly || string.IsNullOrEmpty(text))
             return false;
 
-        var cleaned = new string(text.Where(c => !char.IsControl(c)).ToArray());
+        var cleaned = new string([.. text.Where(c => !char.IsControl(c))]);
         if (string.IsNullOrEmpty(cleaned))
             return false;
 
@@ -709,7 +708,7 @@ public sealed class TextBox : UIElement {
         try {
             var snap = new TextSnapshot(_text ?? string.Empty, _caretIndex, _selectionStart, _selectionEnd);
             if (_undoStack.Count > 0) {
-                var last = _undoStack[_undoStack.Count - 1];
+                var last = _undoStack[^1];
                 if (last.Text == snap.Text && last.CaretIndex == snap.CaretIndex && last.SelectionStart == snap.SelectionStart && last.SelectionEnd == snap.SelectionEnd)
                     return;
             }
@@ -726,7 +725,7 @@ public sealed class TextBox : UIElement {
             return false;
 
         _redoStack.Add(new TextSnapshot(_text ?? string.Empty, _caretIndex, _selectionStart, _selectionEnd));
-        var snap = _undoStack[_undoStack.Count - 1];
+        var snap = _undoStack[^1];
         _undoStack.RemoveAt(_undoStack.Count - 1);
         ApplySnapshot(snap);
         return true;
@@ -737,7 +736,7 @@ public sealed class TextBox : UIElement {
             return false;
 
         _undoStack.Add(new TextSnapshot(_text ?? string.Empty, _caretIndex, _selectionStart, _selectionEnd));
-        var snap = _redoStack[_redoStack.Count - 1];
+        var snap = _redoStack[^1];
         _redoStack.RemoveAt(_redoStack.Count - 1);
         ApplySnapshot(snap);
         return true;
@@ -979,8 +978,7 @@ public sealed class TextBox : UIElement {
             SKFontStyleSlant slant = Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
 
             _typeface = SKTypeface.FromFamilyName(FontFamily, weight, SKFontStyleWidth.Normal, slant);
-        }
-        else {
+        } else {
             _typeface?.Dispose();
             _typeface = null;
         }

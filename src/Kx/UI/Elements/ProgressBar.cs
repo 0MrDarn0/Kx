@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Christian Schnuck
 // Licensed under the GPL-3.0 (see LICENSE.txt)
 
-using System.Drawing;
-
 using Kx.Core.Extensions;
 using Kx.Sdk.Rendering;
 using Kx.Sdk.UI;
@@ -12,15 +10,12 @@ using SkiaSharp;
 
 namespace Kx.UI.Elements;
 
-public sealed class ProgressBar : UIElement {
+public sealed class ProgressBar(IVisualContext context, string id) : UIElement(context, id) {
     private KxColor _fillColor = SKColors.Goldenrod.ToKxColor();
     private KxColor _backgroundColor = SKColors.Transparent.ToKxColor();
     private KxColor _borderColor = SKColors.Black.ToKxColor();
     private float _progress;
     private float _borderThickness = 1f;
-
-    public ProgressBar(IVisualContext context, string id) : base(context, id) {
-    }
 
     public float Progress {
         get => _progress;
