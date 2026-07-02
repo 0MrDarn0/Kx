@@ -15,6 +15,10 @@ using Kx.Sdk.Updater;
 namespace Kx.Tests;
 
 public sealed class FileBasedUpdateFlowTests {
+    public FileBasedUpdateFlowTests() {
+        TestLanguageBootstrap.Initialize();
+    }
+
     [Fact]
     public async Task WhenManifestHasNoDifferencesThenCheckManifestUsesGenericUpToDateStatus() {
         string rootDirectory = CreateTempDirectory();
