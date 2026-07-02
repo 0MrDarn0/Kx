@@ -79,20 +79,20 @@ public sealed class Example : IPlugin {
         ArgumentNullException.ThrowIfNull(frameRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        frameRegistry.Register(name, MarkupYamlLoader.Load<WindowFrameDefinition>(GetUiPath(relativePathSegments)));
+        frameRegistry.Register(name, MarkupYamlLoader.Load<WindowFrameDefinition>(GetMarkupPath(relativePathSegments)));
     }
 
     private static void RegisterWindowContentDefinition(IWindowContentRegistry contentRegistry, string name, params string[] relativePathSegments) {
         ArgumentNullException.ThrowIfNull(contentRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
-        contentRegistry.Register(name, MarkupYamlLoader.Load<WindowContentDefinition>(GetUiPath(relativePathSegments)));
+        contentRegistry.Register(name, MarkupYamlLoader.Load<WindowContentDefinition>(GetMarkupPath(relativePathSegments)));
     }
 
-    private static string GetUiPath(params string[] relativePathSegments) {
+    private static string GetMarkupPath(params string[] relativePathSegments) {
         var segments = new string[relativePathSegments.Length + 2];
         segments[0] = Path.GetDirectoryName(typeof(Example).Assembly.Location) ?? AppContext.BaseDirectory;
-        segments[1] = "UI";
+        segments[1] = "Markup";
 
         for (int i = 0; i < relativePathSegments.Length; i++)
             segments[i + 2] = relativePathSegments[i];

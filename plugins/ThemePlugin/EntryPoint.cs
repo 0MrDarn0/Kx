@@ -34,7 +34,7 @@ public sealed class EntryPoint : IPlugin {
     private static void RegisterAllFrames(IWindowFrameRegistry frameRegistry, Kx.Sdk.Logging.ILoggingService logger) {
         ArgumentNullException.ThrowIfNull(frameRegistry);
 
-        foreach (var framePath in Directory.EnumerateFiles(GetUiPath("Frames"), $"*{FrameFileSuffix}", SearchOption.TopDirectoryOnly)) {
+        foreach (var framePath in Directory.EnumerateFiles(GetMarkupPath("Frames"), $"*{FrameFileSuffix}", SearchOption.TopDirectoryOnly)) {
             try {
                 var frameName = GetDefinitionNameFromFilePath(framePath, FrameFileSuffix);
                 frameRegistry.Register(frameName, MarkupYamlLoader.Load<WindowFrameDefinition>(framePath));
@@ -48,7 +48,7 @@ public sealed class EntryPoint : IPlugin {
     private static void RegisterAllContent(IWindowContentRegistry contentRegistry, Kx.Sdk.Logging.ILoggingService logger) {
         ArgumentNullException.ThrowIfNull(contentRegistry);
 
-        foreach (var contentPath in Directory.EnumerateFiles(GetUiPath("Content"), $"*{ContentFileSuffix}", SearchOption.TopDirectoryOnly)) {
+        foreach (var contentPath in Directory.EnumerateFiles(GetMarkupPath("Content"), $"*{ContentFileSuffix}", SearchOption.TopDirectoryOnly)) {
             try {
                 var windowName = GetDefinitionNameFromFilePath(contentPath, ContentFileSuffix);
                 var contentDefinition = MarkupYamlLoader.Load<WindowContentDefinition>(contentPath);
@@ -75,7 +75,7 @@ public sealed class EntryPoint : IPlugin {
     }
 
     private static IEnumerable<(string WindowName, string FrameName)> EnumerateDefaultFrameMappings() {
-        foreach (var framePath in Directory.EnumerateFiles(GetUiPath("Frames"), $"*{FrameFileSuffix}", SearchOption.TopDirectoryOnly)) {
+        foreach (var framePath in Directory.EnumerateFiles(GetMarkupPath("Frames"), $"*{FrameFileSuffix}", SearchOption.TopDirectoryOnly)) {
             var fileName = Path.GetFileNameWithoutExtension(framePath);
             if (fileName.EndsWith(FrameFileSuffix[..^".yaml".Length], StringComparison.OrdinalIgnoreCase)) {
                 var windowName = GetDefinitionNameFromFilePath(framePath, FrameFileSuffix);
@@ -109,12 +109,12 @@ public sealed class EntryPoint : IPlugin {
         return string.Concat(parts.Select(static part => char.ToUpperInvariant(part[0]) + part[1..]));
     }
 
-    private static string GetUiPath(string folderName) {
+    private static string GetMarkupPath(string folderName) {
         ArgumentException.ThrowIfNullOrWhiteSpace(folderName);
 
         return Path.Combine(
             Path.GetDirectoryName(typeof(EntryPoint).Assembly.Location) ?? AppContext.BaseDirectory,
-            "UI",
+            "Markup",
             folderName);
     }
 }

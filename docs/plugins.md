@@ -62,13 +62,17 @@ It demonstrates:
 
 The sample app in `examples/Kx.Example.App` is the simplest host that demonstrates how this plugin is consumed.
 
-## UI assets inside a plugin
+## Markup assets inside a plugin
 
-The example plugin loads files from a `UI` folder next to its output assembly.
+The example plugin loads files from a `Markup` folder next to its output assembly.
 
 Typical asset kinds:
-- `Frames/*.yaml`
-- `Content/*.yaml`
+- `Markup/Frames/*.yaml` — window frame definitions
+- `Markup/Content/*.yaml` — window content definitions
+
+Binary assets use separate top-level folders alongside `Markup`:
+- `Images/` — image resources
+- `Fonts/` — font resources
 
 The plugin builds those paths relative to `typeof(Example).Assembly.Location`.
 
@@ -77,7 +81,7 @@ The plugin builds those paths relative to `typeof(Example).Assembly.Location`.
 1. implement `IPlugin`
 2. resolve the required registries from `context.Services`
 3. register controls, actions, commands, frames, and window content definitions
-4. keep plugin assets under a predictable `UI` folder
+4. keep plugin assets under `Markup/Frames` and `Markup/Content`; use `Images/` and `Fonts/` for binary resources
 5. use `IUiStateStore` for state-driven UI behavior
 6. log important plugin lifecycle events through `context.Logger`
 

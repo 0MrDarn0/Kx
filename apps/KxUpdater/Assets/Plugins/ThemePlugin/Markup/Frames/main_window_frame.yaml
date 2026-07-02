@@ -1,14 +1,14 @@
 frame:
   style: Image
-  topLeft: "Plugins:ThemePlugin:Frame:top_left.png"
-  topCenter: "Plugins:ThemePlugin:Frame:top_center.png"
-  topRight: "Plugins:ThemePlugin:Frame:top_right.png"
-  rightCenter: "Plugins:ThemePlugin:Frame:right_center.png"
-  bottomRight: "Plugins:ThemePlugin:Frame:bottom_right.png"
-  bottomCenter: "Plugins:ThemePlugin:Frame:bottom_center.png"
-  bottomLeft: "Plugins:ThemePlugin:Frame:bottom_left.png"
-  leftCenter: "Plugins:ThemePlugin:Frame:left_center.png"
-  fillBitmap: "Plugins:ThemePlugin:Frame:fill_bitmap.bmp"
+  topLeft: "Plugins:ThemePlugin:Images:Frame:top_left.png"
+  topCenter: "Plugins:ThemePlugin:Images:Frame:top_center.png"
+  topRight: "Plugins:ThemePlugin:Images:Frame:top_right.png"
+  rightCenter: "Plugins:ThemePlugin:Images:Frame:right_center.png"
+  bottomRight: "Plugins:ThemePlugin:Images:Frame:bottom_right.png"
+  bottomCenter: "Plugins:ThemePlugin:Images:Frame:bottom_center.png"
+  bottomLeft: "Plugins:ThemePlugin:Images:Frame:bottom_left.png"
+  leftCenter: "Plugins:ThemePlugin:Images:Frame:left_center.png"
+  fillBitmap: "Plugins:ThemePlugin:Images:Frame:fill_bitmap.bmp"
   fillColor: "#181818"
   useFillColor: true
   topWidthOffset: 7
@@ -78,9 +78,9 @@ controls:
     text: ""
     color: "#FFA500"
     layer: Frame
-    normalImage: "Plugins:ThemePlugin:Buttons:btn_exit_normal.png"
-    hoverImage: "Plugins:ThemePlugin:Buttons:btn_exit_hover.png"
-    pressedImage: "Plugins:ThemePlugin:Buttons:btn_exit_click.png"
+    normalImage: "Plugins:ThemePlugin:Images:Buttons:btn_exit_normal.png"
+    hoverImage: "Plugins:ThemePlugin:Images:Buttons:btn_exit_hover.png"
+    pressedImage: "Plugins:ThemePlugin:Images:Buttons:btn_exit_click.png"
     onClick: closeWindow
     bounds:
       x: -16

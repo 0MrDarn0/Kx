@@ -23,8 +23,11 @@
 
 
 	<ItemGroup>
+		<Compile Remove="Assets\Plugins\ThemePlugin\Buttons\**" />
 		<Compile Remove="Plugins\**" />
+		<EmbeddedResource Remove="Assets\Plugins\ThemePlugin\Buttons\**" />
 		<EmbeddedResource Remove="Plugins\**" />
+		<None Remove="Assets\Plugins\ThemePlugin\Buttons\**" />
 		<None Remove="Plugins\**" />
 		<Content Remove="Plugins\**" />
 	</ItemGroup>
@@ -39,12 +42,13 @@
 		</Content>
 	</ItemGroup>
 
+
 	<ItemGroup>
-		<PluginProject Include="..\..\plugins\ThemePlugin\ThemePlugin.csproj" />
+	  <Content Remove="Assets\Plugins\ThemePlugin\Buttons\**" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Assets\Plugins\ThemePlugin\Buttons\" />
+		<PluginProject Include="..\..\plugins\ThemePlugin\ThemePlugin.csproj" />
 	</ItemGroup>
 
 	<Import Project="..\..\build\PluginCopy.targets" />

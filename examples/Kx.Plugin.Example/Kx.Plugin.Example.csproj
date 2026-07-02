@@ -32,4 +32,9 @@
   <ItemGroup>
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Assets\Markup\Content\" />
+    <Folder Include="Assets\Markup\Frames\" />
+  </ItemGroup>
 </Project>
