@@ -14,6 +14,11 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace KxUpdateBuilder;
 
 internal sealed class UpdatePackageBuilder {
+    private static readonly HashSet<string> _excludedFileNames = new(StringComparer.OrdinalIgnoreCase) {
+        "Thumbs.db",
+        "desktop.ini"
+    };
+
     private static readonly IDeserializer _newsDeserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .IgnoreUnmatchedProperties()
@@ -41,7 +46,7 @@ internal sealed class UpdatePackageBuilder {
         Directory.CreateDirectory(updateFolder);
         Directory.CreateDirectory(uploadFolder);
 
-        string[] updateFiles = Directory.GetFiles(updateFolder, "*", SearchOption.AllDirectories);
+        string[] updateFiles = [.. Directory.GetFiles(updateFolder, "*", SearchOption.AllDirectories).Where(static filePath => !IsExcludedUpdateFile(filePath))];
         if (updateFiles.Length == 0)
             throw new InvalidOperationException("The update folder is empty. Add files before building the update manifest.");
 
@@ -68,11 +73,10 @@ internal sealed class UpdatePackageBuilder {
             });
         }
 
-        List<string> deletedFiles = previousMetadata.Files
+        List<string> deletedFiles = [.. previousMetadata.Files
             .Select(static file => file.Path)
             .Except(files.Select(static file => file.Path), StringComparer.OrdinalIgnoreCase)
-            .OrderBy(static path => path, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+            .OrderBy(static path => path, StringComparer.OrdinalIgnoreCase)];
 
         DeleteRemovedFiles(uploadFolder, deletedFiles);
 
@@ -144,11 +148,10 @@ internal sealed class UpdatePackageBuilder {
         string newsFilePath = Path.Combine(uploadFolder, "news.yaml");
         NewsDocument document = ReadNewsDocument(newsFilePath);
 
-        List<UpdateNewsEntry> entries = document.Entries
+        List<UpdateNewsEntry> entries = [.. document.Entries
             .Select(entry => new UpdateNewsEntry(
                 (entry.Title ?? string.Empty).Trim(),
-                (entry.Content ?? string.Empty).Trim()))
-            .ToList();
+                (entry.Content ?? string.Empty).Trim()))];
 
         return new UpdateNewsListResult(newsFilePath, entries);
     }
@@ -261,6 +264,12 @@ internal sealed class UpdatePackageBuilder {
             .TrimEnd('\n');
 
         return normalized.Length == 0 ? " " : normalized;
+    }
+
+    private static bool IsExcludedUpdateFile(string filePath) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        return _excludedFileNames.Contains(Path.GetFileName(filePath));
     }
 
     private static void DeleteLegacyPackageArtifacts(string uploadFolder) {
